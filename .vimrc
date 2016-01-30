@@ -55,6 +55,7 @@ call plug#begin('~/.vim/plugged')
 	Plug 'tpope/vim-abolish'
 	Plug 'tpope/vim-unimpaired'
 	Plug 'tpope/vim-afterimage'
+	Plug 'tpope/vim-dispatch'
 	Plug 'AndrewRadev/splitjoin.vim'
 
 	" REFACTORING
@@ -185,6 +186,7 @@ let g:ycm_autoclose_preview_window_after_completion = 1
 let g:ycm_min_num_identifier_candidate_chars = 4
 let g:ycm_extra_conf_globlist = ['~/repos/*']
 let g:ycm_filetype_specific_completion_to_disable = {'javascript': 1}
+let g:ycm_global_ycm_extra_conf = '~/.ycm_extra_conf.py' " ycm config fallback.
 nnoremap <leader>y :YcmForceCompileAndDiagnostics<cr>
 nnoremap <leader>g :YcmCompleter GoTo<CR>
 nnoremap <leader>gd :YcmCompleter GoToDefinition<CR>
@@ -240,3 +242,8 @@ function! Renamec()
 endfunction
 noremap <Leader>r :call Renamec()<CR>
 map <F12> :!cscope -R -k -b<CR>:cs reset<CR>
+
+" Change mode of cursor while in the terminal - does not appear to work.
+" let &t_SI = "\<Esc>[6 q"
+" let &t_SR = "\<Esc>[4 q" 
+" let &t_EI = "\<Esc>[2 q"
