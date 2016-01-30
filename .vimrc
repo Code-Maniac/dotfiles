@@ -41,7 +41,9 @@ call plug#begin('~/.vim/plugged')
 	Plug 'junegunn/limelight.vim'
 	Plug 'junegunn/gv.vim'
 
+	" NAVIGATION
 	Plug 'easymotion/vim-easymotion'
+	Plug 'unblevable/quick-scope'
 
 	Plug 'tpope/vim-repeat'
 	Plug 'tpope/vim-surround'
@@ -55,6 +57,19 @@ call plug#begin('~/.vim/plugged')
 	Plug 'tpope/vim-afterimage'
 	Plug 'AndrewRadev/splitjoin.vim'
 
+	" REFACTORING
+	" NOTE: after a bit of time looking into these
+	" they all seem to have annoying little bits of
+	" behaviour that just kills it for me.
+	" These 4 are dependencies for vim-refactor.
+	" Plug 'LucHermitte/lh-vim-lib'
+	" Plug 'LucHermitte/lh-brackets'
+	" Plug 'LucHermitte/lh-tags'
+	" Plug 'LucHermitte/lh-dev'
+	" The plugins i actually want - OR NOT
+	" Plug 'LucHermitte/vim-refactor'
+	" Plug 'LucHermitte/lh-cpp'
+
 	Plug 'Raimondi/delimitMate'
 
 	Plug 'Majutsushi/tagbar'
@@ -63,9 +78,11 @@ call plug#begin('~/.vim/plugged')
 	Plug 'justinmk/vim-gtfo'
 	"Plug 'scrooloose/nerdcommenter' " tpope-commentary is better.
 
-	Plug 'unblevable/quick-scope'
 
 	Plug 'https://github.com/Lokaltog/vim-powerline', { 'branch': 'develop' }
+
+	" for funsies
+	Plug 'vim-scripts/TeTrIs.vim'
 call plug#end()
 
 " set fullscreen mode on startup in gui mode.
@@ -182,6 +199,44 @@ map <leader>ll :Limelight!!<CR>
 
 " TECHNICAL
 set mouse=a
-set encoding=utf-8
 set fileencoding=utf-8
-set termencoding=utf-8
+
+" FUNCTION FOR C refactoring
+function! Renamec()
+	" store old buffer and restore later
+	let stored_buffer = bufnr("%")
+	
+	" start refactoring
+	let old_name = expand("<cword>")
+	let new_name = input("new name: ",old_name)
+
+	let cscope_out = system("cscope -L -d -F cscope.out -0 " . old_name)
+	let cscope_out_list = split(cscope_out,'\n')
+	
+	for cscope_line in cscope_out_list
+		let cscope_line_split = split(cscope_line,' ')
+		let subs_file = cscope_line_split[0]
+		let subs_lnr = cscope_line_split[2]
+		let subs_buffer = bufnr(subs_file)
+
+		if subs_buffer == -1
+			exe "edit ".subs_file
+			let do_close = 1
+			let subs_buffer = bufnr(subs_file)
+		else
+			let do_close = 0
+		endif
+
+		if subs_buffer != -1
+			exe "buffer ".subs_buffer
+			exe subs_lnr.",".subs_lnr."s/".old_name."/".new_name."/g"
+			exe "write"
+			if do_close == 1
+				exe "bd"
+			endif
+		endif
+	endfor
+	exe "buffer ".stored_buffer
+endfunction
+noremap <Leader>r :call Renamec()<CR>
+map <F12> :!cscope -R -k -b<CR>:cs reset<CR>
