@@ -58,6 +58,9 @@ call plug#begin('~/.vim/plugged')
 	Plug 'tpope/vim-dispatch'
 	Plug 'AndrewRadev/splitjoin.vim'
 
+	Plug 'Sirver/Ultisnips'
+	Plug 'Honza/vim-snippets'
+
 	" REFACTORING
 	" NOTE: after a bit of time looking into these
 	" they all seem to have annoying little bits of
@@ -203,47 +206,16 @@ map <leader>ll :Limelight!!<CR>
 set mouse=a
 set fileencoding=utf-8
 
-" FUNCTION FOR C refactoring
-function! Renamec()
-	" store old buffer and restore later
-	let stored_buffer = bufnr("%")
-	
-	" start refactoring
-	let old_name = expand("<cword>")
-	let new_name = input("new name: ",old_name)
-
-	let cscope_out = system("cscope -L -d -F cscope.out -0 " . old_name)
-	let cscope_out_list = split(cscope_out,'\n')
-	
-	for cscope_line in cscope_out_list
-		let cscope_line_split = split(cscope_line,' ')
-		let subs_file = cscope_line_split[0]
-		let subs_lnr = cscope_line_split[2]
-		let subs_buffer = bufnr(subs_file)
-
-		if subs_buffer == -1
-			exe "edit ".subs_file
-			let do_close = 1
-			let subs_buffer = bufnr(subs_file)
-		else
-			let do_close = 0
-		endif
-
-		if subs_buffer != -1
-			exe "buffer ".subs_buffer
-			exe subs_lnr.",".subs_lnr."s/".old_name."/".new_name."/g"
-			exe "write"
-			if do_close == 1
-				exe "bd"
-			endif
-		endif
-	endfor
-	exe "buffer ".stored_buffer
-endfunction
-noremap <Leader>r :call Renamec()<CR>
-map <F12> :!cscope -R -k -b<CR>:cs reset<CR>
-
 " Change mode of cursor while in the terminal - does not appear to work.
 " let &t_SI = "\<Esc>[6 q"
-" let &t_SR = "\<Esc>[4 q" 
+" let &t_SR = "\<Esc>[4 q"
 " let &t_EI = "\<Esc>[2 q"
+
+" ultisnips
+" Trigger configuration.
+let g:UltiSnipsExpandTrigger="<c-s>"
+let g:UltiSnipsJumpForwardTrigger="<c-b>"
+let g:UltiSnipsJumpBackwardTrigger="<c-z>"
+
+" If you want :UltiSnipsEdit to split your window.
+let g:UltiSnipsEditSplit="vertical"
