@@ -76,16 +76,17 @@ call plug#begin('~/.vim/plugged')
 
 	Plug 'Raimondi/delimitMate'
 
-	Plug 'Majutsushi/tagbar'
+	"Plug 'Majutsushi/tagbar'
 
 	Plug 'scrooloose/nerdtree'
 	Plug 'justinmk/vim-gtfo'
 	"Plug 'scrooloose/nerdcommenter' " tpope-commentary is better.
 
 
-	Plug 'https://github.com/Lokaltog/vim-powerline', { 'branch': 'develop' }
-
-	" for funsies
+	"Plug 'https://github.com/Lokaltog/vim-powerline', { 'branch': 'develop' }
+	Plug 'vim-airline/vim-airline'
+	Plug 'vim-airline/vim-airline-themes'
+" for funsies
 	Plug 'vim-scripts/TeTrIs.vim'
 call plug#end()
 
@@ -103,11 +104,14 @@ syntax enable
 set background=dark
 colorscheme solarized
 
+set guifont=Hack
+
 " GENERAL STUFF
 set ruler                           " always show cursor position.
 set showmode                        " display curent mode.
 set showcmd                         " display incomplete commands.
-set nu                              " show line numbers.
+"set nu                              " show line numbers.
+set relativenumber
 set undofile                        " stores undo state even when files are closed.
 set title                           " show file in titlebar
 set showmatch                       " shows matching bracket - briefly jumps to it.
@@ -196,7 +200,17 @@ nnoremap <leader>gd :YcmCompleter GoToDefinition<CR>
 nnoremap <leader>gc :YcmCompleter GoToDeclaration<CR>
 
 " VIM-Powerline
-set laststatus=2
+"set laststatus=2
+"let g:Powerline_symbols='fancy'
+
+" VIM-AIRA-LINE
+let g:airline#extentions#tabline#enabled = 1
+let g:airline_powerline_fonts = 1
+
+let g:airline_section_b = '%{strftime("%c")}'
+let g:airline_section_y = 'BN: %{bufnr("%")}'
+
+
 
 " LIMELIGHT - not entirely sure I like limelight. Struggling to find a reason to use it.
 let g:limelight_conceal_ctermfg = 'gray'
