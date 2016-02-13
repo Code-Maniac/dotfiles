@@ -110,7 +110,7 @@ set guifont=Hack
 set ruler                           " always show cursor position.
 set showmode                        " display curent mode.
 set showcmd                         " display incomplete commands.
-"set nu                              " show line numbers.
+set nu                              " show line numbers.
 set relativenumber
 set undofile                        " stores undo state even when files are closed.
 set title                           " show file in titlebar
