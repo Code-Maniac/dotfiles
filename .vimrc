@@ -31,8 +31,14 @@
 
 " PLUGINS
 call plug#begin('~/.vim/plugged')
+	" COLORSCHEME
+	Plug 'altercation/vim-colors-solarized', { 'do':'mv ./colors/solarized.vim ../../colors/solarized.vim' }
+
+	" CODE GENERATION
 	Plug 'valloric/youcompleteme', { 'do':'./install.py --clang-completer'}
 	Plug 'rdnetto/YCM-Generator', { 'branch': 'stable' }
+	Plug 'Sirver/Ultisnips'
+	Plug 'Honza/vim-snippets'
 
 	Plug 'junegunn/vim-easy-align'
 	Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': 'yes \| ./install' }
@@ -57,9 +63,6 @@ call plug#begin('~/.vim/plugged')
 	Plug 'tpope/vim-afterimage'
 	Plug 'tpope/vim-dispatch'
 	Plug 'AndrewRadev/splitjoin.vim'
-
-	Plug 'Sirver/Ultisnips'
-	Plug 'Honza/vim-snippets'
 
 	" REFACTORING
 	" NOTE: after a bit of time looking into these
