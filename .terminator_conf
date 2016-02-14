@@ -8,7 +8,7 @@
     background_image = None
     use_system_font = False
     foreground_color = "#839496"
-    font = Inconsolata-g for Powerline Medium 10
+    font = Inconsolata-g for Powerline Medium 8
     background_color = "#002b36"
 [layouts]
   [[default]]
