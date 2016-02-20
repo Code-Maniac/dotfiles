@@ -51,7 +51,7 @@ call plug#begin('~/.vim/plugged')
 	Plug 'tpope/vim-fugitive'
 	Plug 'tpope/vim-commentary'
 	Plug 'tpope/vim-endwise'
-	Plug 'tpope/vim-speeddating'
+	"Plug 'tpope/vim-speeddating' "removed because can't easily remap
 	Plug 'tpope/vim-abolish'
 	Plug 'tpope/vim-unimpaired'
 	Plug 'tpope/vim-afterimage'
@@ -136,6 +136,12 @@ set ttyfast                         " smoother output, they claim
 set ignorecase
 set incsearch
 
+" WINDOW SWITCHING
+nnoremap <silent> <C-h> <C-w>h
+nnoremap <silent> <C-j> <C-w>j
+nnoremap <silent> <C-k> <C-w>k
+nnoremap <silent> <C-l> <C-w>l
+
 " Unicode support
 if has("multi_byte")
 	if &termencoding == ""
@@ -155,9 +161,9 @@ map <F7> :set fileencoding=
 map <F8> :set filetype=
 
 " Easy creation of new splits/tabs
-map <C-t> :tab split<SPACE>
-map <C-x> :split<SPACE>
-map <C-v> :vsplit<SPACE>
+nnoremap <C-t> :tab split<SPACE>
+nnoremap <C-x> :split<SPACE>
+nnoremap <C-v> :vsplit<SPACE>
 
 " Easy tab navigation
 "go to next tab by pressing tab
@@ -203,14 +209,12 @@ nnoremap <leader>gc :YcmCompleter GoToDeclaration<CR>
 "set laststatus=2
 "let g:Powerline_symbols='fancy'
 
-" VIM-AIRA-LINE
+" VIM-AIR-LINE
 let g:airline#extentions#tabline#enabled = 1
 let g:airline_powerline_fonts = 1
 
 let g:airline_section_b = '%{strftime("%c")}'
 let g:airline_section_y = 'BN: %{bufnr("%")}'
-
-
 
 " LIMELIGHT - not entirely sure I like limelight. Struggling to find a reason to use it.
 let g:limelight_conceal_ctermfg = 'gray'
