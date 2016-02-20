@@ -9,3 +9,4 @@ mkdir -p ~/.config/terminator
 ln -sf ~/.vimrc ~/.vim/init.vim
 ln -sf ~/.vim ~/.config/nvim
 ln -sf ~/.dotfiles/.terminator_conf ~/.config/terminator/config
+ln -sf ~/.dotfiles/.tmux.conf ~/.tmux.conf

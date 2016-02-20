@@ -1,6 +1,0 @@
-https://www.libsdl.org/release/SDL2-2.0.4.tar.gz
-https://www.libsdl.org/projects/SDL_image/release/SDL2_image-2.0.1.tar.gz
-https://www.libsdl.org/projects/SDL_ttf/release/SDL2_ttf-2.0.14.tar.gz
-https://www.libsdl.org/projects/SDL_mixer/release/SDL2_mixer-2.0.1.tar.gz
-https://sourceforge.net/projects/boost/files/1.60.0/boost_1_60_0.tar.gz
-https://github.com/g-truc/glm/archive/0.9.7.2.tar.gz

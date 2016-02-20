@@ -115,8 +115,8 @@ source $ZSH/oh-my-zsh.sh
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
 # Set editor
-export EDITOR="vim"
-bindkey -v
+#export EDITOR="vim"
+#bindkey -v
 
 # vi style incremental search
 bindkey '^R' history-incremental-search-backward
@@ -125,7 +125,7 @@ bindkey '^S' history-incremental-search-forward
 #bindkey '^N' history-search-forward
 
 # set auto completion of commands
-setopt AUTO_CD
+#setopt AUTO_CD
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
@@ -134,3 +134,5 @@ setopt AUTO_CD
 #}
 #zle -N ctrlp
 #bindkey "^P" ctrlp
+
+export TERM=xterm-256color
