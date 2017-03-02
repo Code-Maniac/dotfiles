@@ -1,4 +1,4 @@
-      " ██▒   █▓ ██▓ ███▄ ▄███▓ ██▀███   ▄████▄
+      "██▒   █▓ ██▓ ███▄ ▄███▓ ██▀███   ▄████▄
      " ▓██░   █▒▓██▒▓██▒▀█▀ ██▒▓██ ▒ ██▒▒██▀ ▀█
       " ▓██  █▒░▒██▒▓██    ▓██░▓██ ░▄█ ▒▒▓█    ▄
       "  ▒██ █░░░██░▒██    ▒██ ▒██▀▀█▄  ▒▓▓▄ ▄██▒
@@ -38,7 +38,8 @@ call plug#begin('~/.vim/plugged')
 	Plug 'valloric/youcompleteme', { 'do':'./install.py --clang-completer'}
 	Plug 'rdnetto/YCM-Generator', { 'branch': 'stable' }
 	Plug 'Sirver/Ultisnips'
-	Plug 'Honza/vim-snippets'
+	"Plug 'Honza/vim-snippets'
+	Plug 'code-maniac/vim-snippets' "personlized snippets
 
 	Plug 'junegunn/vim-easy-align'
 	Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': 'yes \| ./install' }
@@ -63,6 +64,8 @@ call plug#begin('~/.vim/plugged')
 	Plug 'tpope/vim-afterimage'
 	Plug 'tpope/vim-dispatch'
 	Plug 'AndrewRadev/splitjoin.vim'
+
+	Plug 'christoomey/vim-tmux-navigator'
 
 	" REFACTORING
 	" NOTE: after a bit of time looking into these
@@ -235,8 +238,13 @@ set fileencoding=utf-8
 " ultisnips
 " Trigger configuration.
 let g:UltiSnipsExpandTrigger="<c-s>"
-let g:UltiSnipsJumpForwardTrigger="<c-b>"
-let g:UltiSnipsJumpBackwardTrigger="<c-z>"
+let g:UltiSnipsJumpForwardTrigger="<c-j>"
+let g:UltiSnipsJumpBackwardTrigger="<c-k>"
 
-" If you want :UltiSnipsEdit to split your window.
-let g:UltiSnipsEditSplit="vertical"
+" If you want :UltiSnipsEdit to split your window. horzontally above the
+" current doc.
+let g:UltiSnipsEditSplit="horizontal"
+
+let g:UltiSnipsSnippetsDir = "~/.vim/plugged/vim-snippets/snippets"
+
+map <F2> :UltiSnipsEdit<CR>
