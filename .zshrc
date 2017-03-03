@@ -29,7 +29,6 @@
 # ░ ░          ░ ░     ░       ░  ░       ░         ░  ░         ░  ░        ░  ░░ ░
 # ░                  ░                                                           ░
 
-if [ "$TMUX" = "" ]; then tmux; fi
 
 # Path to your oh-my-zsh installation.
 export ZSH=/home/nick/.oh-my-zsh
@@ -138,3 +137,5 @@ bindkey '^S' history-incremental-search-forward
 #bindkey "^P" ctrlp
 
 export TERM=xterm-256color
+
+if [ "$TMUX" = "" ]; then tmux attach || tmux new; fi

@@ -1,6 +1,7 @@
 ln -sf ~/.dotfiles/.vimrc ~/.vimrc
 ln -sf ~/.dotfiles/.zshrc ~/.zshrc
 ln -sf ~/.dotfiles/.ycm_extra_conf.py ~/.ycm_extra_conf.py
+ln -sf ~/.dotfiles/.gdbinit ~/.gdbinit
 
 mkdir -p ~/.config
 mkdir -p ~/.vim
