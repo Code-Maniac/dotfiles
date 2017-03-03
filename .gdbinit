@@ -50,12 +50,14 @@ a valid GDB prompt, see the command `python print(gdb.prompt.prompt_help())`""",
 See the `prompt` attribute. This value is parsed as a Python format string in
 which `{pid}` is expanded with the process identifier of the target program.""",
                 #'default': '\[\e[1;35m\]>>>\[\e[0m\]'
-                'default': '\033[38;5;214m>>>\033[0;00m'
+                #'default': '\033[38;5;214m>>>\033[0;00m'
+                'default': '>>>'
             },
             'prompt_not_running': {
                 'doc': '`{status}` when the target program is not running.',
                 #'default': '\[\e[1;30m\]>>>\[\e[0m\]'
-                'default': '\033[38;5;214m>>>\033[0;00m'
+                #'default': '\033[38;5;214m>>>\033[0;00m'
+                'default': '>>>'
             },
             # divider
             'divider_fill_char_primary': {
@@ -242,9 +244,9 @@ class Dashboard(gdb.Command):
         # dashboard is printed to a separate file (dashboard -output ...)
         if self.is_running() and not self.output:
             width = Dashboard.get_term_width()
-            gdb.write(Dashboard.clear_screen())
-            gdb.write(divider(width, 'Output/messages', True))
-            gdb.write('\n')
+            #gdb.write(Dashboard.clear_screen())
+            #gdb.write(divider(width, 'Output/messages', True))
+            #gdb.write('\n')
             gdb.flush()
 
     def on_stop(self, _):
@@ -330,7 +332,7 @@ class Dashboard(gdb.Command):
             gdb.write('\n')
             gdb.flush()
             return
-        # process each display info
+        # # process each display info
         for output, instances in display_map.items():
             try:
                 fs = None
@@ -338,11 +340,13 @@ class Dashboard(gdb.Command):
                 if output:
                     fs = open(output, 'w')
                     fd = fs.fileno()
+                    #print(output)
                     # setup the terminal
                     fs.write(Dashboard.hide_cursor())
                 else:
                     fs = gdb
                     fd = 1
+                    continue
                 # get the terminal width (default main terminal if either
                 # the output is not a file)
                 try:
@@ -395,7 +399,7 @@ class Dashboard(gdb.Command):
         run('set pagination off')
         run('alias -a db = dashboard')
         #automatic redirection of different outputs. - only works with tmux with continuum...
-        run('dashboard source -output /dev/pts/13')
+        #run('dashboard source -output /dev/pts/13')
         run('dashboard stack -output /dev/pts/14')
         run('dashboard history -output /dev/pts/14')
         run('dashboard memory -output /dev/pts/11')
