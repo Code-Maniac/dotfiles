@@ -35,8 +35,10 @@ call plug#begin('~/vimfiles/plugged')
 	Plug 'altercation/vim-colors-solarized', { 'do':'mv ./colors/solarized.vim ../../colors/solarized.vim' }
 
 	" CODE GENERATION
-	Plug 'valloric/youcompleteme', { 'do':'./install.py --clang-completer'}
-	Plug 'rdnetto/YCM-Generator', { 'branch': 'stable' }
+	" Plug 'valloric/youcompleteme', { 'do':'./install.py --clang-completer'}
+	" Plug 'rdnetto/YCM-Generator', { 'branch': 'stable' }
+	"Plug 'Shougo/neocomplete.vim'
+	Plug 'Shougo/deoplete.nvim'
 	Plug 'Sirver/Ultisnips'
 	"Plug 'Honza/vim-snippets'
 	Plug 'code-maniac/vim-snippets' "personlized snippets
@@ -46,7 +48,7 @@ call plug#begin('~/vimfiles/plugged')
 
 	Plug 'junegunn/vim-easy-align'
 	" Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': 'yes \| ./install' }
-	" Plug 'Wincent/command-t'
+	Plug 'Wincent/command-t'
 	Plug 'junegunn/rainbow_parentheses.vim'
 	Plug 'junegunn/vim-github-dashboard'
 	Plug 'junegunn/limelight.vim'
@@ -149,6 +151,10 @@ set ttyfast                         " smoother output, they claim
 " SEARCH
 set ignorecase
 set incsearch
+
+" SET LOCATION OF VIMFILES SWAP,UNDO ETC
+set dir =~/vimfiles/vimswap//
+set undodir=~/vimfiles/vimundo//
 
 " WINDOW SWITCHING
 nnoremap <silent> <C-h> <C-w>h
@@ -256,6 +262,9 @@ let g:UltiSnipsJumpBackwardTrigger="<c-k>"
 " current doc.
 let g:UltiSnipsEditSplit="horizontal"
 
-let g:UltiSnipsSnippetsDir = "~/.vim/plugged/vim-snippets/snippets"
+" let g:UltiSnipsSnippetsDir = "~/.vim/plugged/vim-snippets/snippets"
+" different directory when using windows.
+let g:UltiSnipsSnippetsDir = "~/vimfiles/plugged/vim-snippets/snippets"
+
 
 map <F2> :UltiSnipsEdit<CR>
