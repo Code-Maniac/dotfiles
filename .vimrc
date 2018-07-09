@@ -35,7 +35,7 @@ call plug#begin('~/.vim/plugged')
 	Plug 'altercation/vim-colors-solarized', { 'do':'mv ./colors/solarized.vim ../../colors/solarized.vim' }
 
 	" CODE GENERATION
-	Plug 'valloric/youcompleteme', { 'do':'./install.py --clang-completer'}
+	" Plug 'valloric/youcompleteme', { 'do':'./install.py --clang-completer'}
 	Plug 'rdnetto/YCM-Generator', { 'branch': 'stable' }
 	Plug 'Sirver/Ultisnips'
 	"Plug 'Honza/vim-snippets'
@@ -141,6 +141,10 @@ set ttyfast                         " smoother output, they claim
 " SEARCH
 set ignorecase
 set incsearch
+
+" SET LOCATION OF VIMFILES SWAP, UNDO ETC
+set dir=~/.vim/swap//
+set undodir=~/.vim/.vim/undo//
 
 " WINDOW SWITCHING
 nnoremap <silent> <C-h> <C-w>h
