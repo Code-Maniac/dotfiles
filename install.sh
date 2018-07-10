@@ -10,8 +10,9 @@ rm -rf ./fonts
 ln -sf ~/.dotfiles/.vimrc ~/.vimrc
 ln -sf ~/.dotfiles/.zshrc ~/.zshrc
 ln -sf ~/.dotfiles/.ycm_extra_conf.py ~/.ycm_extra_conf.py
-ln -sf ~/.dotfiles/.gdbinit ~/.gdbinit
+# ln -sf ~/.dotfiles/.gdbinit ~/.gdbinit
 ln -sf ~/.dotfiles/.Xmodmap ~/.Xmodmap
+ln -sf ~/.dotfiles/.dircolors ~/.dircolors
 
 mkdir -p ~/.config
 mkdir -p ~/.vim

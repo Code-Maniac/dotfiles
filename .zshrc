@@ -57,6 +57,8 @@ bindkey '^S' history-incremental-search-forward
 
 # [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
+[ -e ~/.dircolors ] && eval $(dircolors -b ~/.dircolors) || eval $(dircolors -b)
+
 export TERM=xterm-256color
 
 if [ "$TMUX" = "" ]; then tmux attach || tmux new; fi

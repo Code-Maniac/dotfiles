@@ -32,10 +32,11 @@
 " PLUGINS
 call plug#begin('~/.vim/plugged')
 	" COLORSCHEME
-	"Plug 'altercation/vim-colors-solarized', { 'do':'mv ./colors/solarized.vim ../../colors/solarized.vim' }
+	Plug 'altercation/vim-colors-solarized', { 'do':'mv ./colors/solarized.vim ../../colors/solarized.vim' }
+	Plug 'rafi/awesome-vim-colorschemes'
 
 	" CODE GENERATION
-	Plug 'valloric/youcompleteme', { 'do':'./install.py --clang-completer'}
+	" Plug 'valloric/youcompleteme', { 'do':'./install.py --clang-completer'}
 	Plug 'rdnetto/YCM-Generator', { 'branch': 'stable' }
 	Plug 'Sirver/Ultisnips'
 	Plug 'code-maniac/vim-snippets' "personlized snippets
@@ -95,8 +96,9 @@ set t_Co=256
 
 " SYNTAX
 syntax enable
-"set background=dark
+set background=dark
 "colorscheme solarized
+colorscheme afterglow
 
 set guifont=Hack
 
@@ -211,6 +213,9 @@ nnoremap <leader>y :YcmForceCompileAndDiagnostics<cr>
 nnoremap <leader>g :YcmCompleter GoTo<CR>
 nnoremap <leader>gd :YcmCompleter GoToDefinition<CR>
 nnoremap <leader>gc :YcmCompleter GoToDeclaration<CR>
+
+" vertical diff
+set diffopt+=vertical
 
 " VIM-Powerline
 "set laststatus=2

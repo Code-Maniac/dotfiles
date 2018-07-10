@@ -6,15 +6,27 @@
   [[default]]
     palette = "#073642:#dc322f:#859900:#b58900:#268bd2:#d33682:#2aa198:#eee8d5:#002b36:#cb4b16:#586e75:#657b83:#839496:#6c71c4:#93a1a1:#fdf6e3"
     background_image = None
+    background_type = image
     use_system_font = False
+    cursor_color = "#000000"
     foreground_color = "#839496"
-    font = Inconsolata-g for Powerline Medium 8
+    font = Hack 8
     background_color = "#002b36"
+  [[Afterglow]]
+    palette = "#151515:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#d0d0d0:#505050:#ac4142:#7e8e50:#e5b567:#6c99bb:#9f4e85:#7dd6cf:#f5f5f5"
+    background_image = None
+    background_type = image
+    use_system_font = False
+    cursor_color = "#ffffff"
+    foreground_color = "#d0d0d0"
+    font = Hack 8
+    background_color = "#212121"
 [layouts]
   [[default]]
     [[[child1]]]
       type = Terminal
       parent = window0
+      profile = Afterglow
     [[[window0]]]
       type = Window
       parent = ""
