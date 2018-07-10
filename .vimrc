@@ -1,30 +1,30 @@
-      "██▒   █▓ ██▓ ███▄ ▄███▓ ██▀███   ▄████▄
-     " ▓██░   █▒▓██▒▓██▒▀█▀ ██▒▓██ ▒ ██▒▒██▀ ▀█
-      " ▓██  █▒░▒██▒▓██    ▓██░▓██ ░▄█ ▒▒▓█    ▄
-      "  ▒██ █░░░██░▒██    ▒██ ▒██▀▀█▄  ▒▓▓▄ ▄██▒
- " ██▓    ▒▀█░  ░██░▒██▒   ░██▒░██▓ ▒██▒▒ ▓███▀ ░
- " ▒▓▒    ░ ▐░  ░▓  ░ ▒░   ░  ░░ ▒▓ ░▒▓░░ ░▒ ▒  ░
- " ░▒     ░ ░░   ▒ ░░  ░      ░  ░▒ ░ ▒░  ░  ▒
- " ░        ░░   ▒ ░░      ░     ░░   ░ ░
-  " ░        ░   ░         ░      ░     ░ ░
-  " ░       ░                           ░
- " ███▄    █  ██▓ ▄████▄   ██ ▄█▀    ▄▄▄██▀▀▀▄▄▄     ▓██   ██▓ ▄████▄   ▒█████   ▄████▄   ██ ▄█▀
- " ██ ▀█   █ ▓██▒▒██▀ ▀█   ██▄█▒       ▒██  ▒████▄    ▒██  ██▒▒██▀ ▀█  ▒██▒  ██▒▒██▀ ▀█   ██▄█▒
+      ""██▒   █▓ ██▓ ███▄ ▄███▓ ██▀███   ▄████▄
+    "" ▓██░   █▒▓██▒▓██▒▀█▀ ██▒▓██ ▒ ██▒▒██▀ ▀█
+     "" ▓██  █▒░▒██▒▓██    ▓██░▓██ ░▄█ ▒▒▓█    ▄
+     ""  ▒██ █░░░██░▒██    ▒██ ▒██▀▀█▄  ▒▓▓▄ ▄██▒
+"" ██▓    ▒▀█░  ░██░▒██▒   ░██▒░██▓ ▒██▒▒ ▓███▀ ░
+"" ▒▓▒    ░ ▐░  ░▓  ░ ▒░   ░  ░░ ▒▓ ░▒▓░░ ░▒ ▒  ░
+"" ░▒     ░ ░░   ▒ ░░  ░      ░  ░▒ ░ ▒░  ░  ▒
+ "" ░        ░░   ▒ ░░      ░     ░░   ░ ░
+ "" ░        ░   ░         ░      ░     ░ ░
+ "" ░       ░                           ░
+"" ███▄    █  ██▓ ▄████▄   ██ ▄█▀    ▄▄▄██▀▀▀▄▄▄     ▓██   ██▓ ▄████▄   ▒█████   ▄████▄   ██ ▄█▀
+"" ██ ▀█   █ ▓██▒▒██▀ ▀█   ██▄█▒       ▒██  ▒████▄    ▒██  ██▒▒██▀ ▀█  ▒██▒  ██▒▒██▀ ▀█   ██▄█▒
 " ▓██  ▀█ ██▒▒██▒▒▓█    ▄ ▓███▄░       ░██  ▒██  ▀█▄   ▒██ ██░▒▓█    ▄ ▒██░  ██▒▒▓█    ▄ ▓███▄░
 " ▓██▒  ▐▌██▒░██░▒▓▓▄ ▄██▒▓██ █▄    ▓██▄██▓ ░██▄▄▄▄██  ░ ▐██▓░▒▓▓▄ ▄██▒▒██   ██░▒▓▓▄ ▄██▒▓██ █▄
 " ▒██░   ▓██░░██░▒ ▓███▀ ░▒██▒ █▄    ▓███▒   ▓█   ▓██▒ ░ ██▒▓░▒ ▓███▀ ░░ ████▓▒░▒ ▓███▀ ░▒██▒ █▄
 " ░ ▒░   ▒ ▒ ░▓  ░ ░▒ ▒  ░▒ ▒▒ ▓▒    ▒▓▒▒░   ▒▒   ▓▒█░  ██▒▒▒ ░ ░▒ ▒  ░░ ▒░▒░▒░ ░ ░▒ ▒  ░▒ ▒▒ ▓▒
 " ░ ░░   ░ ▒░ ▒ ░  ░  ▒   ░ ░▒ ▒░    ▒ ░▒░    ▒   ▒▒ ░▓██ ░▒░   ░  ▒     ░ ▒ ▒░   ░  ▒   ░ ░▒ ▒░
-   " ░   ░ ░  ▒ ░░        ░ ░░ ░     ░ ░ ░    ░   ▒   ▒ ▒ ░░  ░        ░ ░ ░ ▒  ░        ░ ░░ ░
-      "    ░  ░  ░ ░      ░  ░       ░   ░        ░  ░░ ░     ░ ░          ░ ░  ░ ░      ░  ░
-      "          ░                                    ░ ░     ░                 ░
- " ▄████▄   ▒█████  ▓█████▄ ▓█████  ███▄ ▄███▓ ▄▄▄       ███▄    █  ██▓ ▄▄▄       ▄████▄
+  " ░   ░ ░  ▒ ░░        ░ ░░ ░     ░ ░ ░    ░   ▒   ▒ ▒ ░░  ░        ░ ░ ░ ▒  ░        ░ ░░ ░
+     "    ░  ░  ░ ░      ░  ░       ░   ░        ░  ░░ ░     ░ ░          ░ ░  ░ ░      ░  ░
+     "          ░                                    ░ ░     ░                 ░
+" ▄████▄   ▒█████  ▓█████▄ ▓█████  ███▄ ▄███▓ ▄▄▄       ███▄    █  ██▓ ▄▄▄       ▄████▄
 " ▒██▀ ▀█  ▒██▒  ██▒▒██▀ ██▌▓█   ▀ ▓██▒▀█▀ ██▒▒████▄     ██ ▀█   █ ▓██▒▒████▄    ▒██▀ ▀█
 " ▒▓█    ▄ ▒██░  ██▒░██   █▌▒███   ▓██    ▓██░▒██  ▀█▄  ▓██  ▀█ ██▒▒██▒▒██  ▀█▄  ▒▓█    ▄
 " ▒▓▓▄ ▄██▒▒██   ██░░▓█▄   ▌▒▓█  ▄ ▒██    ▒██ ░██▄▄▄▄██ ▓██▒  ▐▌██▒░██░░██▄▄▄▄██ ▒▓▓▄ ▄██▒
 " ▒ ▓███▀ ░░ ████▓▒░░▒████▓ ░▒████▒▒██▒   ░██▒ ▓█   ▓██▒▒██░   ▓██░░██░ ▓█   ▓██▒▒ ▓███▀ ░
 " ░ ░▒ ▒  ░░ ▒░▒░▒░  ▒▒▓  ▒ ░░ ▒░ ░░ ▒░   ░  ░ ▒▒   ▓▒█░░ ▒░   ▒ ▒ ░▓   ▒▒   ▓▒█░░ ░▒ ▒  ░
-  " ░  ▒     ░ ▒ ▒░  ░ ▒  ▒  ░ ░  ░░  ░      ░  ▒   ▒▒ ░░ ░░   ░ ▒░ ▒ ░  ▒   ▒▒ ░  ░  ▒
+ " ░  ▒     ░ ▒ ▒░  ░ ▒  ▒  ░ ░  ░░  ░      ░  ▒   ▒▒ ░░ ░░   ░ ▒░ ▒ ░  ▒   ▒▒ ░  ░  ▒
 " ░        ░ ░ ░ ▒   ░ ░  ░    ░   ░      ░     ░   ▒      ░   ░ ░  ▒ ░  ░   ▒   ░
 " ░ ░          ░ ░     ░       ░  ░       ░         ░  ░         ░  ░        ░  ░░ ░
 " ░                  ░                                                           ░
@@ -32,13 +32,12 @@
 " PLUGINS
 call plug#begin('~/.vim/plugged')
 	" COLORSCHEME
-	Plug 'altercation/vim-colors-solarized', { 'do':'mv ./colors/solarized.vim ../../colors/solarized.vim' }
+	"Plug 'altercation/vim-colors-solarized', { 'do':'mv ./colors/solarized.vim ../../colors/solarized.vim' }
 
 	" CODE GENERATION
-	" Plug 'valloric/youcompleteme', { 'do':'./install.py --clang-completer'}
+	Plug 'valloric/youcompleteme', { 'do':'./install.py --clang-completer'}
 	Plug 'rdnetto/YCM-Generator', { 'branch': 'stable' }
 	Plug 'Sirver/Ultisnips'
-	"Plug 'Honza/vim-snippets'
 	Plug 'code-maniac/vim-snippets' "personlized snippets
 
 	Plug 'junegunn/vim-easy-align'
@@ -54,42 +53,31 @@ call plug#begin('~/.vim/plugged')
 
 	Plug 'tpope/vim-repeat'
 	Plug 'tpope/vim-surround'
-	Plug 'tpope/vim-ragtag' "vim-surround enhancement
+	Plug 'tpope/vim-ragtag'
 	Plug 'tpope/vim-fugitive'
 	Plug 'tpope/vim-commentary'
 	Plug 'tpope/vim-endwise'
-	"Plug 'tpope/vim-speeddating' "removed because can't easily remap
 	Plug 'tpope/vim-abolish'
 	Plug 'tpope/vim-unimpaired'
 	Plug 'tpope/vim-afterimage'
 	Plug 'tpope/vim-dispatch'
+	Plug 'vim-scripts/argtextobj.vim'
 	Plug 'AndrewRadev/splitjoin.vim'
+	Plug 'alvan/vim-closetag'
 
+	" BETTER VIM-TMUX WINDOW NAVIGATION 
 	Plug 'christoomey/vim-tmux-navigator'
-
-	" REFACTORING
-	" NOTE: after a bit of time looking into these
-	" they all seem to have annoying little bits of
-	" behaviour that just kills it for me.
-	" These 4 are dependencies for vim-refactor.
-	" Plug 'LucHermitte/lh-vim-lib'
-	" Plug 'LucHermitte/lh-brackets'
-	" Plug 'LucHermitte/lh-tags'
-	" Plug 'LucHermitte/lh-dev'
-	" The plugins i actually want - OR NOT
-	" Plug 'LucHermitte/vim-refactor'
-	" Plug 'LucHermitte/lh-cpp'
 
 	Plug 'Raimondi/delimitMate'
 
-	"Plug 'Majutsushi/tagbar'
-
+	" GUI FILE EXPLORER IN VIM
 	Plug 'scrooloose/nerdtree'
 	Plug 'justinmk/vim-gtfo'
-	"Plug 'scrooloose/nerdcommenter' " tpope-commentary is better.
 
+	" SYNTAX HIGHLIGHTING
+	Plug 'peterhoeg/vim-qml'
+	Plug 'bfrg/vim-cpp-modern'
 
-	"Plug 'https://github.com/Lokaltog/vim-powerline', { 'branch': 'develop' }
 	Plug 'vim-airline/vim-airline'
 	Plug 'vim-airline/vim-airline-themes'
 " for funsies
@@ -107,8 +95,8 @@ set t_Co=256
 
 " SYNTAX
 syntax enable
-set background=dark
-colorscheme solarized
+"set background=dark
+"colorscheme solarized
 
 set guifont=Hack
 
@@ -142,6 +130,11 @@ set ttyfast                         " smoother output, they claim
 set ignorecase
 set incsearch
 
+" MAKE COLUMN PAST 80 CHARACTERS DIFFERENT COLOR
+set textwidth=80
+set colorcolumn=+1
+hi ColorColumn guibg=#2d2d2d ctermbg=246
+
 " SET LOCATION OF VIMFILES SWAP, UNDO ETC
 set dir=~/.vim/swap//
 set undodir=~/.vim/.vim/undo//
@@ -151,6 +144,10 @@ nnoremap <silent> <C-h> <C-w>h
 nnoremap <silent> <C-j> <C-w>j
 nnoremap <silent> <C-k> <C-w>k
 nnoremap <silent> <C-l> <C-w>l
+
+" WINDOW RESIZING
+nnoremap <silent> + :exe "resize " . (winheight(0) * 3/2)<CR>
+nnoremap <silent> - :exe "resize " . (winheight(0) * 2/3)<CR>
 
 " Unicode support
 if has("multi_byte")
@@ -172,8 +169,8 @@ map <F8> :set filetype=
 
 " Easy creation of new splits/tabs
 nnoremap <C-t> :tab split<SPACE>
-nnoremap <C-x> :split<SPACE>
-nnoremap <C-v> :vsplit<SPACE>
+"nnoremap <C-x> :split<SPACE>
+"nnoremap <C-v> :vsplit<SPACE>
 
 " Easy tab navigation
 "go to next tab by pressing tab
