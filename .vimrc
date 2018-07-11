@@ -138,7 +138,7 @@ hi ColorColumn guibg=#2d2d2d ctermbg=246
 
 " SET LOCATION OF VIMFILES SWAP, UNDO ETC
 set dir=~/.vim/swap//
-set undodir=~/.vim/.vim/undo//
+set undodir=~/.vim/undo//
 
 " WINDOW SWITCHING
 nnoremap <silent> <C-h> <C-w>h

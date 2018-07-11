@@ -20,6 +20,8 @@ ln -sf ~/.dotfiles/.dircolors ~/.dircolors
 echo "Creating symlinks to directories."
 mkdir -p ~/.config
 mkdir -p ~/.vim
+mkdir -p ~/.vim/swap
+mkdir -p ~/.vim/undo
 mkdir -p ~/.config/terminator
 
 ln -sf ~/.vimrc ~/.vim/init.vim
