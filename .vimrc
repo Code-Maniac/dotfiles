@@ -31,18 +31,17 @@
 
 " PLUGINS
 call plug#begin('~/.vim/plugged')
-	" COLORSCHEME
-	Plug 'altercation/vim-colors-solarized', { 'do':'mv ./colors/solarized.vim ../../colors/solarized.vim' }
+	" COLORSCHEMES
 	Plug 'rafi/awesome-vim-colorschemes'
 
 	" CODE GENERATION
-	" Plug 'valloric/youcompleteme', { 'do':'./install.py --clang-completer'}
+	Plug 'valloric/youcompleteme', { 'do':'./install.py --clang-completer'}
 	Plug 'rdnetto/YCM-Generator', { 'branch': 'stable' }
 	Plug 'Sirver/Ultisnips'
 	Plug 'code-maniac/vim-snippets' "personlized snippets
 
 	Plug 'junegunn/vim-easy-align'
-	Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': 'yes \| ./install' }
+	Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': 'yes \| ./install --all' }
 	Plug 'junegunn/rainbow_parentheses.vim'
 	Plug 'junegunn/vim-github-dashboard'
 	Plug 'junegunn/limelight.vim'
@@ -170,7 +169,7 @@ map <F7> :set fileencoding=
 map <F8> :set filetype=
 
 " Easy creation of new splits/tabs
-nnoremap <C-t> :tab split<SPACE>
+"nnoremap <C-t> :tab split<SPACE>
 "nnoremap <C-x> :split<SPACE>
 "nnoremap <C-v> :vsplit<SPACE>
 
@@ -192,16 +191,37 @@ map <C-n> :NERDTreeToggle<CR>
 
 " FZF
 "open fzf
-map <C-p> :FZF<CR>
+map <C-t> :FZF<CR>
 "bind keys when in fzf window.
 let g:fzf_action = {
 	\ 'ctrl-t': 'tab split',
 	\ 'ctrl-x': 'split',
 	\ 'ctrl-v': 'vsplit' }
-"set how fzf opens
-let g:fzf_layout = { 'window': 'enew' }
-autocmd VimEnter * command! Colors
-	\ call fzf#vim#colors({'left': '15%', 'options': '--reverse --margin 30%, 0'})
+" set fzf layout
+if has('nvim')
+	let g:fzf_layout { 'window': 'enew' }
+else
+	let g:fzf_layout = { 'down': "25%" }
+endif
+
+" set fzf colors to current colorscheme
+let g:fzf_colors =
+\ { 'fg':      ['fg', 'Normal'],
+  \ 'bg':      ['bg', 'Normal'],
+  \ 'hl':      ['fg', 'Comment'],
+  \ 'fg+':     ['fg', 'CursorLine', 'CursorColumn', 'Normal'],
+  \ 'bg+':     ['bg', 'CursorLine', 'CursorColumn'],
+  \ 'hl+':     ['fg', 'Statement'],
+  \ 'info':    ['fg', 'PreProc'],
+  \ 'border':  ['fg', 'Ignore'],
+  \ 'prompt':  ['fg', 'Conditional'],
+  \ 'pointer': ['fg', 'Exception'],
+  \ 'marker':  ['fg', 'Keyword'],
+  \ 'spinner': ['fg', 'Label'],
+  \ 'header':  ['fg', 'Comment'] }
+
+" enable per command history.
+let g:fzf_history_dir = '~/.local/share/fzf-history'
 
 " YOUCOMPLETEME
 let g:ycm_autoclose_preview_window_after_completion = 1
@@ -209,6 +229,7 @@ let g:ycm_min_num_identifier_candidate_chars = 4
 let g:ycm_extra_conf_globlist = ['~/repos/*']
 let g:ycm_filetype_specific_completion_to_disable = {'javascript': 1}
 let g:ycm_global_ycm_extra_conf = '~/.ycm_extra_conf.py' " ycm config fallback.
+let g:ycm_confirm_extra_conf = 0
 nnoremap <leader>y :YcmForceCompileAndDiagnostics<cr>
 nnoremap <leader>g :YcmCompleter GoTo<CR>
 nnoremap <leader>gd :YcmCompleter GoToDefinition<CR>
