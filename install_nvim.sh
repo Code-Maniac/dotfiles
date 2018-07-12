@@ -17,7 +17,7 @@ sudo make install
 
 sudo rm -rf /tmp/neovim
 
-sudo apt-get -y install python-dev python3-dev python-pip python-pip3
+sudo apt-get -y install python-dev python3-dev
 
 sudo pip install neovim
 sudo pip3 install neovim

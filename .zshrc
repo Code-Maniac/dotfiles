@@ -55,6 +55,7 @@ bindkey '^S' history-incremental-search-forward
 # set auto completion of commands
 #setopt AUTO_CD
 
+stty -ixon
 
 [ -e ~/.dircolors ] && eval $(dircolors -b ~/.dircolors) || eval $(dircolors -b)
 
