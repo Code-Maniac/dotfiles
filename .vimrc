@@ -35,10 +35,27 @@ call plug#begin('~/.vim/plugged')
 	Plug 'rafi/awesome-vim-colorschemes'
 
 	" CODE GENERATION
-	Plug 'valloric/youcompleteme', { 'do':'./install.py --clang-completer'}
-	Plug 'rdnetto/YCM-Generator', { 'branch': 'stable' }
 	Plug 'Sirver/Ultisnips'
 	Plug 'code-maniac/vim-snippets' "personlized snippets
+
+	" CODE COMPLETION
+	if has('nvim')
+		Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
+	else
+	Plug 'Shougo/deoplete.nvim'
+		Plug 'roxma/nvim-yarp'
+		Plug 'roxma/vim-hug-neovim-rpc'
+	endif
+	" deoplete completion sources.
+	" c++
+	Plug 'zchee/libclang-python3'
+	Plug 'zchee/deoplete-clang'
+
+	" LANGUAGE SERVER
+	Plug 'autozimu/LanguageClient-neovim', {
+				\'branch': 'next',
+				\'do': 'bash install.sh',
+	\}
 
 	Plug 'junegunn/vim-easy-align'
 	Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': 'yes \| ./install --all' }
@@ -224,16 +241,37 @@ let g:fzf_colors =
 let g:fzf_history_dir = '~/.local/share/fzf-history'
 
 " YOUCOMPLETEME
-let g:ycm_autoclose_preview_window_after_completion = 1
-let g:ycm_min_num_identifier_candidate_chars = 4
-let g:ycm_extra_conf_globlist = ['~/repos/*']
-let g:ycm_filetype_specific_completion_to_disable = {'javascript': 1}
-let g:ycm_global_ycm_extra_conf = '~/.ycm_extra_conf.py' " ycm config fallback.
-let g:ycm_confirm_extra_conf = 0
-nnoremap <leader>y :YcmForceCompileAndDiagnostics<cr>
-nnoremap <leader>g :YcmCompleter GoTo<CR>
-nnoremap <leader>gd :YcmCompleter GoToDefinition<CR>
-nnoremap <leader>gc :YcmCompleter GoToDeclaration<CR>
+" let g:ycm_autoclose_preview_window_after_completion = 1
+" let g:ycm_min_num_identifier_candidate_chars = 4
+" let g:ycm_extra_conf_globlist = ['~/repos/*']
+" let g:ycm_filetype_specific_completion_to_disable = {'javascript': 1}
+" let g:ycm_global_ycm_extra_conf = '~/.ycm_extra_conf.py' " ycm config fallback.
+" let g:ycm_confirm_extra_conf = 0
+" nnoremap <leader>y :YcmForceCompileAndDiagnostics<cr>
+" nnoremap <leader>g :YcmCompleter GoTo<CR>
+" nnoremap <leader>gd :YcmCompleter GoToDefinition<CR>
+" nnoremap <leader>gc :YcmCompleter GoToDeclaration<CR>
+
+" DEOPLETE
+let g:deoplete#enable_at_startup = 1
+" use tab selection of popup menu with deoplete
+inoremap <expr> <tab> pumvisible() ? "\<C-n>" : "\<Tab>"
+inoremap <expr> <S-tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
+
+" LANGUAGE SERVER
+set hidden
+
+let g:LanguageClient_serverCommands = {
+	\ 'javascript': ['javascript-typescript-stdio'],
+	\ 'javascript.jsx': ['tcp://127.0.0.1:2089'],
+	\ 'python': ['pyls'],
+\}
+
+nnoremap <F5> :call LanguageClient_contextMenu()<CR>
+nnoremap <silent> K :call LanguageClient#textDocument_hover()<CR>
+nnoremap <silent> gd :call LanguageClient#Document_definition()<CR>
+nnoremap <silent> <F3> :call LanguageClient#textDocument_rename()<CR>
+
 
 " vertical diff
 set diffopt+=vertical
