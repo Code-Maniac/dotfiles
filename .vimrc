@@ -61,7 +61,6 @@ call plug#begin('~/.vim/plugged')
 	Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': 'yes \| ./install --all' }
 	Plug 'junegunn/rainbow_parentheses.vim'
 	Plug 'junegunn/vim-github-dashboard'
-	Plug 'junegunn/limelight.vim'
 	Plug 'junegunn/gv.vim'
 
 	" NAVIGATION
@@ -92,8 +91,9 @@ call plug#begin('~/.vim/plugged')
 	Plug 'justinmk/vim-gtfo'
 
 	" SYNTAX HIGHLIGHTING
-	Plug 'peterhoeg/vim-qml'
 	Plug 'bfrg/vim-cpp-modern'
+	Plug 'pangloss/vim-javascript'
+	Plug 'peterhoeg/vim-qml'
 
 	Plug 'vim-airline/vim-airline'
 	Plug 'vim-airline/vim-airline-themes'
@@ -240,18 +240,6 @@ let g:fzf_colors =
 " enable per command history.
 let g:fzf_history_dir = '~/.local/share/fzf-history'
 
-" YOUCOMPLETEME
-" let g:ycm_autoclose_preview_window_after_completion = 1
-" let g:ycm_min_num_identifier_candidate_chars = 4
-" let g:ycm_extra_conf_globlist = ['~/repos/*']
-" let g:ycm_filetype_specific_completion_to_disable = {'javascript': 1}
-" let g:ycm_global_ycm_extra_conf = '~/.ycm_extra_conf.py' " ycm config fallback.
-" let g:ycm_confirm_extra_conf = 0
-" nnoremap <leader>y :YcmForceCompileAndDiagnostics<cr>
-" nnoremap <leader>g :YcmCompleter GoTo<CR>
-" nnoremap <leader>gd :YcmCompleter GoToDefinition<CR>
-" nnoremap <leader>gc :YcmCompleter GoToDeclaration<CR>
-
 " DEOPLETE
 let g:deoplete#enable_at_startup = 1
 " use tab selection of popup menu with deoplete
@@ -284,12 +272,8 @@ set diffopt+=vertical
 let g:airline#extentions#tabline#enabled = 1
 let g:airline_powerline_fonts = 1
 
-let g:airline_section_b = '%{strftime("%c")}'
+"let g:airline_section_b = '%{strftime("%c")}'
 let g:airline_section_y = 'BN: %{bufnr("%")}'
-
-" LIMELIGHT - not entirely sure I like limelight. Struggling to find a reason to use it.
-let g:limelight_conceal_ctermfg = 'gray'
-map <leader>ll :Limelight!!<CR>
 
 " TECHNICAL
 set mouse=a
