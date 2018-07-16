@@ -1,6 +1,7 @@
 [global_config]
   title_receive_bg_color = "#c80003"
   title_transmit_bg_color = "#0076c9"
+  tab_position = hidden
 [keybindings]
 [profiles]
   [[default]]
@@ -17,6 +18,7 @@
     use_system_font = False
     cursor_color = "#ffffff"
     foreground_color = "#d0d0d0"
+    show_titlebar = False
     font = Hack 8
     background_color = "#212121"
 [layouts]
