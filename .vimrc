@@ -50,6 +50,8 @@ call plug#begin('~/.vim/plugged')
 	" c++
 	Plug 'zchee/libclang-python3'
 	Plug 'zchee/deoplete-clang'
+	" deoplete headers
+	Plug 'Shougo/neoinclude.vim'
 
 	" LANGUAGE SERVER
 	Plug 'autozimu/LanguageClient-neovim', {
