@@ -65,6 +65,9 @@ call plug#begin('~/.vim/plugged')
 	Plug 'junegunn/vim-github-dashboard'
 	Plug 'junegunn/gv.vim'
 
+	" DOXYGEN COMMENTING
+	Plug 'mrtazz/DoxygenToolkit.vim'
+
 	" NAVIGATION
 	Plug 'easymotion/vim-easymotion'
 	Plug 'unblevable/quick-scope'
@@ -92,14 +95,16 @@ call plug#begin('~/.vim/plugged')
 	Plug 'scrooloose/nerdtree'
 	Plug 'justinmk/vim-gtfo'
 
-	" SYNTAX HIGHLIGHTING
+	" BETTER SYNTAX HIGHLIGHTING
 	Plug 'bfrg/vim-cpp-modern'
 	Plug 'pangloss/vim-javascript'
 	Plug 'peterhoeg/vim-qml'
 
+	" AIRLINE THEMES
 	Plug 'vim-airline/vim-airline'
 	Plug 'vim-airline/vim-airline-themes'
-" for funsies
+
+	" FOR FUN
 	Plug 'vim-scripts/TeTrIs.vim'
 call plug#end()
 
@@ -135,12 +140,20 @@ set backspace=indent,eol,start      " liberal backspacing in insert mode
 set tabstop=8                       " tab stops
 set softtabstop=8
 set shiftwidth=8                    " number of spaces to use for each step of (auto)indent
+
+" TABS AND SPACING FOR WORK PROJECTS - may add more, this is for within linX vm.
+au BufRead,BufNewFile,BufEnter ~/host/projects/* setlocal ts=3 sts=0 sw=3 expandtab
+
 set noexpandtab
 set autoindent
 set copyindent
 set smarttab
+" (0 function arguments on seperate lines align better.
+" g0 aligns private, public with class
+" :0 aligns case statements to switch
+set cino+=(0,g0,:0 
 set list
-set listchars=tab:▸\ ,eol:¬,trail:~ "highlight tabs with an arrow. eol with ¬. trailing whitespace with ~.
+set listchars=tab:▸\ ,eol:¬,trail:~ "highlight tabs with an arrow. eol with ¬. trailing whitespace with ~
 
 set history=1000                    " many histories
 set smartcase
@@ -299,3 +312,8 @@ let g:UltiSnipsEditSplit="horizontal"
 let g:UltiSnipsSnippetsDir = "~/.vim/plugged/vim-snippets/snippets"
 
 map <F2> :UltiSnipsEdit<CR>
+
+" doxygen toolkit
+let g:DoxygenToolkit_briefTag_pre="\\brief "
+let g:DoxygenToolkit_paramTag_pre="\\param "
+let g:DoxygenToolkit_returnTag="\\return "

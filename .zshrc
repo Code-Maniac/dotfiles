@@ -48,9 +48,6 @@ antigen theme agnoster
 # antigen is finished
 antigen apply
 
-# vi style incremental search
-bindkey '^R' history-incremental-search-backward
-bindkey '^S' history-incremental-search-forward
 
 # set auto completion of commands
 #setopt AUTO_CD
