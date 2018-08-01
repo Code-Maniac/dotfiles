@@ -31,9 +31,10 @@ ln -sf ~/.dotfiles/.tmux.conf ~/.tmux.conf
 
 cp -r ~/.dotfiles/.git_template ~/.git_template
 git config --global init.templatedir "~/.git_template"
+# set difftool to vim.
 git config --global diff.tool vimdiff
 git config --global difftool.prompt false
-git config --global alias.d difftool
+git config --global alias.diff difftool
 
 echo "Installing oh-my-zsh"
 # install oh-my-zsh

@@ -140,18 +140,20 @@ set backspace=indent,eol,start      " liberal backspacing in insert mode
 set tabstop=8                       " tab stops
 set softtabstop=8
 set shiftwidth=8                    " number of spaces to use for each step of (auto)indent
-
-" TABS AND SPACING FOR WORK PROJECTS - may add more, this is for within linX vm.
-au BufRead,BufNewFile,BufEnter ~/host/projects/* setlocal ts=3 sts=0 sw=3 expandtab
-
 set noexpandtab
 set autoindent
+set smartindent
 set copyindent
+" set cindent
 set smarttab
+
+" TABS AND SPACING FOR WORK PROJECTS - may add more, this is for within linX vm.
+au BufRead,BufNewFile,BufEnter ~/host/projects/*.cpp,~/host/projects/*.h setlocal tabstop=3 softtabstop=0 shiftwidth=3 expandtab
+
 " (0 function arguments on seperate lines align better.
 " g0 aligns private, public with class
 " :0 aligns case statements to switch
-set cino+=(0,g0,:0 
+set cino+=(0,g0,:0,t0,l1
 set list
 set listchars=tab:▸\ ,eol:¬,trail:~ "highlight tabs with an arrow. eol with ¬. trailing whitespace with ~
 
@@ -317,3 +319,6 @@ map <F2> :UltiSnipsEdit<CR>
 let g:DoxygenToolkit_briefTag_pre="\\brief "
 let g:DoxygenToolkit_paramTag_pre="\\param "
 let g:DoxygenToolkit_returnTag="\\return "
+
+" delete trailing whitespace on write in certain filetypes
+autocmd BufWritePre *.c,*.cpp,*.h,*.hpp :%s/\s\+$//e
