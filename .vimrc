@@ -36,7 +36,10 @@ call plug#begin('~/.vim/plugged')
 
 	" CODE GENERATION
 	Plug 'Sirver/Ultisnips'
-	Plug 'code-maniac/vim-snippets' "personlized snippets
+	"personlized snippets
+	Plug 'code-maniac/vim-snippets', {
+		\'do': 'ln -s ~/.vim/plugged/vim-snippets/snippets ~/.dotfiles/snippets'
+	\}
 
 	" CODE COMPLETION
 	if has('nvim')
@@ -168,7 +171,11 @@ set incsearch
 " MAKE COLUMN PAST 80 CHARACTERS DIFFERENT COLOR
 set textwidth=80
 set colorcolumn=+1
-hi ColorColumn guibg=#2d2d2d ctermbg=246
+" hi ColorColumn guibg=#dddddd ctermbg=235
+hi ColorColumn guibg=#dddddd ctermbg=1
+
+" CHANGE COLOR OF THE DIFF ADD HIGHLIGHT TO MATCH CHANGE
+hi DiffAdd cterm=bold ctermbg=24
 
 " SET LOCATION OF VIMFILES SWAP, UNDO ETC
 set dir=~/.vim/swap//
@@ -283,7 +290,7 @@ set diffopt+=vertical
 
 " VIM-Powerline
 "set laststatus=2
-"let g:Powerline_symbols='fancy'
+let g:Powerline_symbols='fancy'
 
 " VIM-AIR-LINE
 let g:airline#extentions#tabline#enabled = 1

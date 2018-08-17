@@ -48,6 +48,9 @@ antigen theme agnoster
 # antigen is finished
 antigen apply
 
+#instead of using cp use rsync instead.
+alias cp="rsync -avz"
+
 
 # set auto completion of commands
 #setopt AUTO_CD
