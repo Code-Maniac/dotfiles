@@ -29,18 +29,6 @@ ln -sf ~/.vim ~/.config/nvim
 ln -sf ~/.dotfiles/.terminator_conf ~/.config/terminator/config
 ln -sf ~/.dotfiles/.tmux.conf ~/.tmux.conf
 
-# setup git
-cp -r ~/.dotfiles/.git_template ~/.git_template
-git config --global init.templatedir "~/.git_template"
-# set difftool to vim.
-git config --global diff.tool vimdiff
-git config --global difftool.prompt false
-git config --global alias.diff difftool
-# set mergtool to vimdiff
-git config --global merge.tool vimdiff
-git config --global merge.conflictstyle diff3
-git config --global mergetool.prompt false
-
 echo "Installing oh-my-zsh"
 # install oh-my-zsh
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"

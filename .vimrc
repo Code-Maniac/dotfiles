@@ -99,7 +99,8 @@ call plug#begin('~/.vim/plugged')
 	Plug 'justinmk/vim-gtfo'
 
 	" BETTER SYNTAX HIGHLIGHTING
-	Plug 'bfrg/vim-cpp-modern'
+	"Plug 'bfrg/vim-cpp-modern'
+	Plug 'code-maniac/vim-cpp-modern'
 	Plug 'pangloss/vim-javascript'
 	Plug 'peterhoeg/vim-qml'
 
@@ -151,7 +152,7 @@ set copyindent
 set smarttab
 
 " TABS AND SPACING FOR WORK PROJECTS - may add more, this is for within linX vm.
-au BufRead,BufNewFile,BufEnter ~/host/projects/*.cpp,~/host/projects/*.h setlocal tabstop=3 softtabstop=0 shiftwidth=3 expandtab
+au BufRead,BufNewFile,BufEnter ~/host/projects/r2_display/*.cpp,~/host/projects/r2_display/*.h setlocal tabstop=3 softtabstop=0 shiftwidth=3 expandtab
 
 " (0 function arguments on seperate lines align better.
 " g0 aligns private, public with class
