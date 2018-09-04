@@ -152,7 +152,7 @@ set copyindent
 set smarttab
 
 " TABS AND SPACING FOR WORK PROJECTS - may add more, this is for within linX vm.
-au BufRead,BufNewFile,BufEnter ~/host/projects/r2_display/*.cpp,~/host/projects/r2_display/*.h setlocal tabstop=3 softtabstop=0 shiftwidth=3 expandtab
+au BufRead,BufNewFile,BufEnter ~/host/projects/r2_display/*.cpp,~/host/projects/r2_display/*.h,~/host/projects/r2_display_tests/*.cpp,~/host/projects/r2_display_tests/*.h setlocal tabstop=3 softtabstop=0 shiftwidth=3 expandtab
 
 " (0 function arguments on seperate lines align better.
 " g0 aligns private, public with class
@@ -330,3 +330,5 @@ let g:DoxygenToolkit_returnTag="\\return "
 
 " delete trailing whitespace on write in certain filetypes
 autocmd BufWritePre *.c,*.cpp,*.h,*.hpp :%s/\s\+$//e
+
+let g:cpp_no_qt=0
