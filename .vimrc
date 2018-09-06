@@ -153,6 +153,7 @@ set smarttab
 
 " TABS AND SPACING FOR WORK PROJECTS - may add more, this is for within linX vm.
 au BufRead,BufNewFile,BufEnter ~/host/projects/r2_display/*.cpp,~/host/projects/r2_display/*.h,~/host/projects/r2_display_tests/*.cpp,~/host/projects/r2_display_tests/*.h setlocal tabstop=3 softtabstop=0 shiftwidth=3 expandtab
+au BufRead,BufNewFile,BufEnter ~/host/projects/r2_ecu_emulator/*.cpp,~/host/projects/r2_ecu_emulator/*.h,~/host/projects/r2_ecu_emulator_tests/*.cpp,~/host/projects/r2_ecu_emulator_tests/*.h setlocal tabstop=3 softtabstop=0 shiftwidth=3 expandtab
 
 " (0 function arguments on seperate lines align better.
 " g0 aligns private, public with class
@@ -330,5 +331,10 @@ let g:DoxygenToolkit_returnTag="\\return "
 
 " delete trailing whitespace on write in certain filetypes
 autocmd BufWritePre *.c,*.cpp,*.h,*.hpp :%s/\s\+$//e
+
+" go back to the line we were on when we last closed the file.
+if !exists('g:gitmerge') && !&diff
+	autocmd BufReadPost * if &filetype !=# 'gitcommit' | if line("'\'") > 0 && line("'\"") <= line("$") | exe "normal! g`\"" | endif
+endif
 
 let g:cpp_no_qt=0

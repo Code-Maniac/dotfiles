@@ -5,6 +5,7 @@ git config --global init.templatedir "~/.git_template"
 git config --global merge.tool vimdiff
 git config --global merge.conflictstyle diff3
 git config --global mergetool.prompt false
+git config --global mergetool.vimdiff.cmd 'let g:gitmerge=1'
 git config --global diff.tool vimdiff
 git config --global difftool.prompt false
 git config --global difftool.vimdiff.cmd "vimdiff -R $LOCAL -c ':se noreadonly' $REMOTE"
