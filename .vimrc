@@ -108,6 +108,9 @@ call plug#begin('~/.vim/plugged')
 	Plug 'vim-airline/vim-airline'
 	Plug 'vim-airline/vim-airline-themes'
 
+	" VIEW MAN PAGES IN VIM
+	Plug 'vim-utils/vim-man'
+
 	" FOR FUN
 	Plug 'vim-scripts/TeTrIs.vim'
 call plug#end()
@@ -139,6 +142,7 @@ set undofile                        " stores undo state even when files are clos
 set title                           " show file in titlebar
 set showmatch                       " shows matching bracket - briefly jumps to it.
 set backspace=indent,eol,start      " liberal backspacing in insert mode
+set nowrapscan                      " don't wrap to start of file when forward searching.
 
 " DEFAULT TAB STOPS & INDENTING
 set tabstop=8                       " tab stops
@@ -152,8 +156,8 @@ set copyindent
 set smarttab
 
 " TABS AND SPACING FOR WORK PROJECTS - may add more, this is for within linX vm.
-au BufRead,BufNewFile,BufEnter ~/host/projects/r2_display/*.cpp,~/host/projects/r2_display/*.h,~/host/projects/r2_display_tests/*.cpp,~/host/projects/r2_display_tests/*.h setlocal tabstop=3 softtabstop=0 shiftwidth=3 expandtab
-au BufRead,BufNewFile,BufEnter ~/host/projects/r2_ecu_emulator/*.cpp,~/host/projects/r2_ecu_emulator/*.h,~/host/projects/r2_ecu_emulator_tests/*.cpp,~/host/projects/r2_ecu_emulator_tests/*.h setlocal tabstop=3 softtabstop=0 shiftwidth=3 expandtab
+au BufRead,BufNewFile,BufEnter ~/projects/r2_display/*.cpp,~/projects/r2_display/*.h,~/projects/r2_display_tests/*.cpp,~/projects/r2_display_tests/*.h setlocal tabstop=3 softtabstop=0 shiftwidth=3 expandtab
+au BufRead,BufNewFile,BufEnter ~/projects/r2_ecu_emulator/*.cpp,~/projects/r2_ecu_emulator/*.h,~/projects/r2_ecu_emulator_tests/*.cpp,~/projects/r2_ecu_emulator_tests/*.h setlocal tabstop=3 softtabstop=0 shiftwidth=3 expandtab
 
 " (0 function arguments on seperate lines align better.
 " g0 aligns private, public with class
@@ -171,8 +175,21 @@ set ignorecase
 set incsearch
 
 " MAKE COLUMN PAST 80 CHARACTERS DIFFERENT COLOR
-set textwidth=80
-set colorcolumn=+1
+"autocmd bufreadpre *.c,*.cpp,*.h,*.hpp setlocal textwidth=80
+"autocmd bufreadpre *.c,*.cpp,*.h,*.hpp setlocal colorcolumn=+1
+
+let s:text_widths = [
+	\ ['cpp', 80 ],
+	\ ['c', 80 ],
+	\ ['hpp',80 ],
+	\ ['h', 80 ],
+	\ ['gitcommit', 80]
+\ ]
+for text_width in s:text_widths
+	execute "autocmd Filetype " . text_width[0] . " setlocal tw=" . text_width[1]
+	execute "autocmd Filetype " . text_width[0] . " setlocal colorcolumn=+1"
+endfor
+
 " hi ColorColumn guibg=#dddddd ctermbg=235
 hi ColorColumn guibg=#dddddd ctermbg=1
 
@@ -333,8 +350,17 @@ let g:DoxygenToolkit_returnTag="\\return "
 autocmd BufWritePre *.c,*.cpp,*.h,*.hpp :%s/\s\+$//e
 
 " go back to the line we were on when we last closed the file.
-if !exists('g:gitmerge') && !&diff
+if !&diff
 	autocmd BufReadPost * if &filetype !=# 'gitcommit' | if line("'\'") > 0 && line("'\"") <= line("$") | exe "normal! g`\"" | endif
+	" autocmd BufWinEnter * silent loadview
 endif
+
+" open man page bindings
+" open man page for word under cursor
+map <leader>k <Plug>(Man)
+" open man page for word under cursor in vsplit
+map <leader>v <Plug>(Vman)
+
+" autocmd BufWinLeave * mkview
 
 let g:cpp_no_qt=0

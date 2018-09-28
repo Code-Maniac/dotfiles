@@ -51,6 +51,13 @@ antigen apply
 #instead of using cp use rsync instead.
 alias cp="rsync -avz"
 
+vim_man()
+{
+	vim -c "Man $@" -c 'silent only'
+}
+
+# redirect man to vim-man
+alias man=vim_man
 
 # set auto completion of commands
 #setopt AUTO_CD
