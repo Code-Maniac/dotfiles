@@ -103,6 +103,7 @@ call plug#begin('~/.vim/plugged')
 	Plug 'code-maniac/vim-cpp-modern'
 	Plug 'pangloss/vim-javascript'
 	Plug 'peterhoeg/vim-qml'
+	Plug 'udalov/kotlin-vim'
 
 	" AIRLINE THEMES
 	Plug 'vim-airline/vim-airline'
@@ -110,6 +111,9 @@ call plug#begin('~/.vim/plugged')
 
 	" VIEW MAN PAGES IN VIM
 	Plug 'vim-utils/vim-man'
+
+	" MARKDOWN SUPPORT IN VIM
+	"Plug 'gabrielelana/vim-markdown'
 
 	" FOR FUN
 	Plug 'vim-scripts/TeTrIs.vim'
@@ -145,19 +149,15 @@ set backspace=indent,eol,start      " liberal backspacing in insert mode
 set nowrapscan                      " don't wrap to start of file when forward searching.
 
 " DEFAULT TAB STOPS & INDENTING
-set tabstop=8                       " tab stops
-set softtabstop=8
-set shiftwidth=8                    " number of spaces to use for each step of (auto)indent
-set noexpandtab
+set tabstop=4                       " tab stops
+set softtabstop=4
+set shiftwidth=4                    " number of spaces to use for each step of (auto)indent
+set expandtab
 set autoindent
 set smartindent
 set copyindent
 " set cindent
 set smarttab
-
-" TABS AND SPACING FOR WORK PROJECTS - may add more, this is for within linX vm.
-au BufRead,BufNewFile,BufEnter ~/projects/r2_display/*.cpp,~/projects/r2_display/*.h,~/projects/r2_display_tests/*.cpp,~/projects/r2_display_tests/*.h setlocal tabstop=3 softtabstop=0 shiftwidth=3 expandtab
-au BufRead,BufNewFile,BufEnter ~/projects/r2_ecu_emulator/*.cpp,~/projects/r2_ecu_emulator/*.h,~/projects/r2_ecu_emulator_tests/*.cpp,~/projects/r2_ecu_emulator_tests/*.h setlocal tabstop=3 softtabstop=0 shiftwidth=3 expandtab
 
 " (0 function arguments on seperate lines align better.
 " g0 aligns private, public with class
@@ -174,21 +174,28 @@ set ttyfast                         " smoother output, they claim
 set ignorecase
 set incsearch
 
-" MAKE COLUMN PAST 80 CHARACTERS DIFFERENT COLOR
-"autocmd bufreadpre *.c,*.cpp,*.h,*.hpp setlocal textwidth=80
-"autocmd bufreadpre *.c,*.cpp,*.h,*.hpp setlocal colorcolumn=+1
-
+" TEXT WIDTH BASED ON FILETYPE
 let s:text_widths = [
-	\ ['cpp', 80 ],
-	\ ['c', 80 ],
-	\ ['hpp',80 ],
-	\ ['h', 80 ],
-	\ ['gitcommit', 80]
+   \ ['cpp', 80 ],
+   \ ['c', 80 ],
+   \ ['hpp', 80 ],
+   \ ['h', 80 ],
+   \ ['gitcommit', 80],
+   \ ['javascript', 80]
 \ ]
 for text_width in s:text_widths
 	execute "autocmd Filetype " . text_width[0] . " setlocal tw=" . text_width[1]
 	execute "autocmd Filetype " . text_width[0] . " setlocal colorcolumn=+1"
 endfor
+
+" TABS AND SPACING FOR WORK PROJECTS - may add more, this is for within linX vm.
+au BufRead,BufNewFile,BufEnter ~/projects/r2_display/*.cpp,~/projects/r2_display/*.h,~/projects/r2_display_tests/*.cpp,~/projects/r2_display_tests/*.h setlocal tabstop=3 softtabstop=0 shiftwidth=3 expandtab
+
+au BufRead,BufNewFile,BufEnter ~/projects/r2_ecu_emulator/*.cpp,~/projects/r2_ecu_emulator/*.h,~/projects/r2_ecu_emulator_tests/*.cpp,~/projects/r2_ecu_emulator_tests/*.h setlocal tabstop=3 softtabstop=0 shiftwidth=3 expandtab
+
+au BufRead,BufNewFile,BufEnter ~/projects/createful_app/*.js setlocal tabstop=2 softtabstop=0 shiftwidth=2 expandtab
+
+
 
 " hi ColorColumn guibg=#dddddd ctermbg=235
 hi ColorColumn guibg=#dddddd ctermbg=1
