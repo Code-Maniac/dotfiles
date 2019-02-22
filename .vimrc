@@ -41,29 +41,30 @@ call plug#begin('~/.vim/plugged')
 		\'do': 'ln -s ~/.vim/plugged/vim-snippets/snippets ~/.dotfiles/snippets'
 	\}
 
-	" CODE COMPLETION
-	if has('nvim')
-		Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
-	else
-	Plug 'Shougo/deoplete.nvim'
-		Plug 'roxma/nvim-yarp'
-		Plug 'roxma/vim-hug-neovim-rpc'
-	endif
-	" deoplete completion sources.
-	" c++
-	Plug 'zchee/libclang-python3'
-	Plug 'zchee/deoplete-clang'
-	" deoplete headers
-	Plug 'Shougo/neoinclude.vim'
-
 	" LANGUAGE SERVER
 	Plug 'autozimu/LanguageClient-neovim', {
 				\'branch': 'next',
 				\'do': 'bash install.sh',
 	\}
 
-	Plug 'junegunn/vim-easy-align'
+	" CODE COMPLETION
+	if has('nvim')
+		Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
+	else
+		Plug 'Shougo/deoplete.nvim'
+		Plug 'roxma/nvim-yarp'
+		Plug 'roxma/vim-hug-neovim-rpc'
+	endif
+	" deoplete completion sources.
+	" c++
+	" Plug 'zchee/libclang-python3'
+	" Plug 'zchee/deoplete-clang'
+	" deoplete headers
+	Plug 'Shougo/neoinclude.vim'
+	Plug 'Shougo/echodoc.vim'
+
 	Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': 'yes \| ./install --all' }
+	Plug 'junegunn/vim-easy-align'
 	Plug 'junegunn/rainbow_parentheses.vim'
 	Plug 'junegunn/vim-github-dashboard'
 	Plug 'junegunn/gv.vim'
@@ -88,6 +89,9 @@ call plug#begin('~/.vim/plugged')
 	Plug 'vim-scripts/argtextobj.vim'
 	Plug 'AndrewRadev/splitjoin.vim'
 	Plug 'alvan/vim-closetag'
+
+	" BETTER VIM DIFF
+	Plug 'chrisbra/vim-diff-enhanced'
 
 	" BETTER VIM-TMUX WINDOW NAVIGATION 
 	Plug 'christoomey/vim-tmux-navigator'
@@ -158,6 +162,30 @@ set smartindent
 set copyindent
 " set cindent
 set smarttab
+
+" configure tabs for work projects
+let s:prolec_files = [
+	\ '~/projects/r2_display/*.c',
+	\ '~/projects/r2_display/*.cpp',
+	\ '~/projects/r2_display/*.h',
+	\ '~/projects/r2_display_tests/*.cpp',
+	\ '~/projects/r2_display_tests/*.h',
+	\ '~/projects/r2_ecu_emulator/*.cpp',
+	\ '~/projects/r2_ecu_emulator/*.h',
+	\ '~/projects/r2_ecu_emulator_tests/*.cpp',
+	\ '~/projects/r2_ecu_emulator_tests/*.h',
+	\ '~/projects/j1939_stack/*.c',
+	\ '~/projects/j1939_stack/*.cpp',
+	\ '~/projects/j1939_stack/*.h'
+\ ]
+
+for pf in s:prolec_files
+	execute "au BufRead,BufNewFile,BufEnter " . pf . " setlocal tabstop=3 softtabstop=0 shiftwidth=3 expandtab"
+endfor
+
+" TABS AND SPACING FOR WORK PROJECTS - may add more, this is for within linX vm.
+" au BufRead,BufNewFile,BufEnter ~/projects/r2_display/*.cpp,~/projects/r2_display/*.h,~/projects/r2_display_tests/*.cpp,~/projects/r2_display_tests/*.h setlocal tabstop=3 softtabstop=0 shiftwidth=3 expandtab
+" au BufRead,BufNewFile,BufEnter ~/projects/r2_ecu_emulator/*.cpp,~/projects/r2_ecu_emulator/*.h,~/projects/r2_ecu_emulator_tests/*.cpp,~/projects/r2_ecu_emulator_tests/*.h setlocal tabstop=3 softtabstop=0 shiftwidth=3 expandtab
 
 " (0 function arguments on seperate lines align better.
 " g0 aligns private, public with class
@@ -266,7 +294,7 @@ let g:fzf_action = {
 	\ 'ctrl-v': 'vsplit' }
 " set fzf layout
 if has('nvim')
-	let g:fzf_layout { 'window': 'enew' }
+	let g:fzf_layout = { 'window': 'enew' }
 else
 	let g:fzf_layout = { 'down': "25%" }
 endif
@@ -291,25 +319,34 @@ let g:fzf_colors =
 let g:fzf_history_dir = '~/.local/share/fzf-history'
 
 " DEOPLETE
-let g:deoplete#enable_at_startup = 1
+let g:deoplete#enable_at_startup=1
 " use tab selection of popup menu with deoplete
 inoremap <expr> <tab> pumvisible() ? "\<C-n>" : "\<Tab>"
 inoremap <expr> <S-tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
 
-" LANGUAGE SERVER
-set hidden
+" " LANGUAGE SERVER
+" let g:LanguageClient_serverCommands = {
+" 	\ 'javascript': ['javascript-typescript-stdio'],
+" 	\ 'javascript.jsx': ['tcp://127.0.0.1:2089'],
+" 	\ 'python': ['pyls'],
+" 	\ 'c': ['cquery', '--log-file=/tmp/cq.log'],
+" 	\ 'cpp': ['cquery', '--log-files=/tmp/cq.log'],
+" \}
 
-let g:LanguageClient_serverCommands = {
-	\ 'javascript': ['javascript-typescript-stdio'],
-	\ 'javascript.jsx': ['tcp://127.0.0.1:2089'],
-	\ 'python': ['pyls'],
-\}
+" let g:LanguageClient_loadSettings=1
+" let g:LanguageClient_settingsPath='~/.dotfiles/cquery_settings.json'
 
-nnoremap <F5> :call LanguageClient_contextMenu()<CR>
-nnoremap <silent> K :call LanguageClient#textDocument_hover()<CR>
-nnoremap <silent> gd :call LanguageClient#Document_definition()<CR>
-nnoremap <silent> <F3> :call LanguageClient#textDocument_rename()<CR>
+" set hidden
+" " set signcolumn=yes
 
+" set completefunc=LanguageClient#complete
+" set formatexpr=LanguageClient_textDocument_rangeFormatting()
+
+" nnoremap <silent> gh :call LanguageClient#textDocument_hover()<CR>
+" nnoremap <silent> gd :call LanguageClient#textDocument_definition()<CR>
+" nnoremap <silent> gr :call LanguageClient#textDocument_references()<CR>
+" nnoremap <silent> gs :call LanguageClient#textDocument_documentSymbol()<CR>
+" nnoremap <silent> gn :call LanguageClient#textDocument_rename()<CR>
 
 " vertical diff
 set diffopt+=vertical
@@ -371,3 +408,9 @@ map <leader>v <Plug>(Vman)
 " autocmd BufWinLeave * mkview
 
 let g:cpp_no_qt=0
+
+" ctags bindings and additional tags files
+map gd g<C-]>
+map <C-\> :tab split<CR>:exec("tag ".expand("<cword>"))<CR>
+map <A-]> :vsp <CR>:exec("tag ".expand("<cword>"))<CR>
+set tags+=/opt/Qt-5.4.0/5.4/gcc/include/tags

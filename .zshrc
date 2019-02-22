@@ -36,7 +36,7 @@
 # set theme of the command line.
 #ZSH_THEME="agnoster"
 
-export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/local/bin/lint:/usr/local/bin/lint/config:/opt/arm-toolchain/bin:/opt/XA/Qt-5.4.0/bin:/opt/arm-toolchain/bin"
 
 # load plugin manager and oh-my-zsh
 source ~/.antigen/antigen.zsh
@@ -50,10 +50,11 @@ antigen apply
 
 #instead of using cp use rsync instead.
 alias cp="rsync -avz"
+alias vim="nvim"
 
 vim_man()
 {
-	vim -c "Man $@" -c 'silent only'
+	\vim -c "Man $@" -c 'silent only'
 }
 
 # redirect man to vim-man

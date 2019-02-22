@@ -1,4 +1,25 @@
 #!/bin/sh
+
+echo "Installing applications"
+sudo apt-get install terminator
+sudo apt-get install vim
+sudo apt-get install tmux
+sudo apt-get install zsh
+sudo apt-get install git
+sudo apt-get install vlc
+sudo apt-get install g++
+sudo apt-get install gdb
+sudo apt-get install clang
+sudo apt-get install valgrind
+sudo apt-get install ctags
+sudo apt-get install python
+sudo apt-get install python3
+sudo apt-get install gimp
+sudo apt-get install krita
+sudo apt-get install imagemagick
+sudo apt-get install deluge
+
+
 # install fonts for vim powerline.
 echo "Installing powerline fonts."
 rm -rf ./fonts
@@ -42,3 +63,6 @@ curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 # antigen
 git clone https://github.com/zsh-users/antigen.git ~/.antigen
+
+#install fzf
+install_fzf.sh
