@@ -1,0 +1,5 @@
+#!/bin/bash
+
+SYMLINKS=".vimrc .zshrc"
+cd ~
+rm ${SYMLINKS}

@@ -37,31 +37,9 @@ call plug#begin('~/.vim/plugged')
 	" CODE GENERATION
 	Plug 'Sirver/Ultisnips'
 	"personlized snippets
-	Plug 'code-maniac/vim-snippets', {
+	Plug 'honza/vim-snippets', {
 		\'do': 'ln -s ~/.vim/plugged/vim-snippets/snippets ~/.dotfiles/snippets'
 	\}
-
-	" LANGUAGE SERVER
-	Plug 'autozimu/LanguageClient-neovim', {
-				\'branch': 'next',
-				\'do': 'bash install.sh',
-	\}
-
-	" CODE COMPLETION
-	if has('nvim')
-		Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
-	else
-		Plug 'Shougo/deoplete.nvim'
-		Plug 'roxma/nvim-yarp'
-		Plug 'roxma/vim-hug-neovim-rpc'
-	endif
-	" deoplete completion sources.
-	" c++
-	" Plug 'zchee/libclang-python3'
-	" Plug 'zchee/deoplete-clang'
-	" deoplete headers
-	Plug 'Shougo/neoinclude.vim'
-	Plug 'Shougo/echodoc.vim'
 
 	Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': 'yes \| ./install --all' }
 	Plug 'junegunn/vim-easy-align'
@@ -134,9 +112,9 @@ set t_Co=256
 
 " SYNTAX
 syntax enable
-set background=dark
+" set background=dark
 "colorscheme solarized
-colorscheme afterglow
+colorscheme iceberg
 
 set guifont=Hack
 
@@ -349,7 +327,7 @@ inoremap <expr> <S-tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
 " nnoremap <silent> gn :call LanguageClient#textDocument_rename()<CR>
 
 " vertical diff
-set diffopt+=vertical
+" set diffopt+=vertical
 
 " VIM-Powerline
 "set laststatus=2
