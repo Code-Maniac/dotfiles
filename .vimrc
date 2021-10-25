@@ -1,34 +1,3 @@
-      ""██▒   █▓ ██▓ ███▄ ▄███▓ ██▀███   ▄████▄
-    "" ▓██░   █▒▓██▒▓██▒▀█▀ ██▒▓██ ▒ ██▒▒██▀ ▀█
-     "" ▓██  █▒░▒██▒▓██    ▓██░▓██ ░▄█ ▒▒▓█    ▄
-     ""  ▒██ █░░░██░▒██    ▒██ ▒██▀▀█▄  ▒▓▓▄ ▄██▒
-"" ██▓    ▒▀█░  ░██░▒██▒   ░██▒░██▓ ▒██▒▒ ▓███▀ ░
-"" ▒▓▒    ░ ▐░  ░▓  ░ ▒░   ░  ░░ ▒▓ ░▒▓░░ ░▒ ▒  ░
-"" ░▒     ░ ░░   ▒ ░░  ░      ░  ░▒ ░ ▒░  ░  ▒
- "" ░        ░░   ▒ ░░      ░     ░░   ░ ░
- "" ░        ░   ░         ░      ░     ░ ░
- "" ░       ░                           ░
-"" ███▄    █  ██▓ ▄████▄   ██ ▄█▀    ▄▄▄██▀▀▀▄▄▄     ▓██   ██▓ ▄████▄   ▒█████   ▄████▄   ██ ▄█▀
-"" ██ ▀█   █ ▓██▒▒██▀ ▀█   ██▄█▒       ▒██  ▒████▄    ▒██  ██▒▒██▀ ▀█  ▒██▒  ██▒▒██▀ ▀█   ██▄█▒
-" ▓██  ▀█ ██▒▒██▒▒▓█    ▄ ▓███▄░       ░██  ▒██  ▀█▄   ▒██ ██░▒▓█    ▄ ▒██░  ██▒▒▓█    ▄ ▓███▄░
-" ▓██▒  ▐▌██▒░██░▒▓▓▄ ▄██▒▓██ █▄    ▓██▄██▓ ░██▄▄▄▄██  ░ ▐██▓░▒▓▓▄ ▄██▒▒██   ██░▒▓▓▄ ▄██▒▓██ █▄
-" ▒██░   ▓██░░██░▒ ▓███▀ ░▒██▒ █▄    ▓███▒   ▓█   ▓██▒ ░ ██▒▓░▒ ▓███▀ ░░ ████▓▒░▒ ▓███▀ ░▒██▒ █▄
-" ░ ▒░   ▒ ▒ ░▓  ░ ░▒ ▒  ░▒ ▒▒ ▓▒    ▒▓▒▒░   ▒▒   ▓▒█░  ██▒▒▒ ░ ░▒ ▒  ░░ ▒░▒░▒░ ░ ░▒ ▒  ░▒ ▒▒ ▓▒
-" ░ ░░   ░ ▒░ ▒ ░  ░  ▒   ░ ░▒ ▒░    ▒ ░▒░    ▒   ▒▒ ░▓██ ░▒░   ░  ▒     ░ ▒ ▒░   ░  ▒   ░ ░▒ ▒░
-  " ░   ░ ░  ▒ ░░        ░ ░░ ░     ░ ░ ░    ░   ▒   ▒ ▒ ░░  ░        ░ ░ ░ ▒  ░        ░ ░░ ░
-     "    ░  ░  ░ ░      ░  ░       ░   ░        ░  ░░ ░     ░ ░          ░ ░  ░ ░      ░  ░
-     "          ░                                    ░ ░     ░                 ░
-" ▄████▄   ▒█████  ▓█████▄ ▓█████  ███▄ ▄███▓ ▄▄▄       ███▄    █  ██▓ ▄▄▄       ▄████▄
-" ▒██▀ ▀█  ▒██▒  ██▒▒██▀ ██▌▓█   ▀ ▓██▒▀█▀ ██▒▒████▄     ██ ▀█   █ ▓██▒▒████▄    ▒██▀ ▀█
-" ▒▓█    ▄ ▒██░  ██▒░██   █▌▒███   ▓██    ▓██░▒██  ▀█▄  ▓██  ▀█ ██▒▒██▒▒██  ▀█▄  ▒▓█    ▄
-" ▒▓▓▄ ▄██▒▒██   ██░░▓█▄   ▌▒▓█  ▄ ▒██    ▒██ ░██▄▄▄▄██ ▓██▒  ▐▌██▒░██░░██▄▄▄▄██ ▒▓▓▄ ▄██▒
-" ▒ ▓███▀ ░░ ████▓▒░░▒████▓ ░▒████▒▒██▒   ░██▒ ▓█   ▓██▒▒██░   ▓██░░██░ ▓█   ▓██▒▒ ▓███▀ ░
-" ░ ░▒ ▒  ░░ ▒░▒░▒░  ▒▒▓  ▒ ░░ ▒░ ░░ ▒░   ░  ░ ▒▒   ▓▒█░░ ▒░   ▒ ▒ ░▓   ▒▒   ▓▒█░░ ░▒ ▒  ░
- " ░  ▒     ░ ▒ ▒░  ░ ▒  ▒  ░ ░  ░░  ░      ░  ▒   ▒▒ ░░ ░░   ░ ▒░ ▒ ░  ▒   ▒▒ ░  ░  ▒
-" ░        ░ ░ ░ ▒   ░ ░  ░    ░   ░      ░     ░   ▒      ░   ░ ░  ▒ ░  ░   ▒   ░
-" ░ ░          ░ ░     ░       ░  ░       ░         ░  ░         ░  ░        ░  ░░ ░
-" ░                  ░                                                           ░
-
 " PLUGINS
 call plug#begin('~/.vim/plugged')
 	" COLORSCHEMES
@@ -40,6 +9,15 @@ call plug#begin('~/.vim/plugged')
 	Plug 'honza/vim-snippets', {
 		\'do': 'ln -s ~/.vim/plugged/vim-snippets/snippets ~/.dotfiles/snippets'
 	\}
+
+	" auto completion
+    if has('nvim')
+        Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
+    else
+        Plug 'Shougo/deoplete.nvim'
+        Plug 'roxma/nvim-yarp'
+        Plug 'roxma/vim-hug-neovim-rpc'
+    endif
 
 	Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': 'yes \| ./install --all' }
 	Plug 'junegunn/vim-easy-align'
@@ -90,9 +68,6 @@ call plug#begin('~/.vim/plugged')
 	" AIRLINE THEMES
 	Plug 'vim-airline/vim-airline'
 	Plug 'vim-airline/vim-airline-themes'
-
-	" VIEW MAN PAGES IN VIM
-	Plug 'vim-utils/vim-man'
 
 	" MARKDOWN SUPPORT IN VIM
 	"Plug 'gabrielelana/vim-markdown'
@@ -204,10 +179,7 @@ au BufRead,BufNewFile,BufEnter ~/projects/createful_app/*.js setlocal tabstop=2 
 
 
 " hi ColorColumn guibg=#dddddd ctermbg=235
-hi ColorColumn guibg=#dddddd ctermbg=1
-
-" CHANGE COLOR OF THE DIFF ADD HIGHLIGHT TO MATCH CHANGE
-hi DiffAdd cterm=bold ctermbg=24
+" hi ColorColumn guibg=#dddddd ctermbg=1
 
 " SET LOCATION OF VIMFILES SWAP, UNDO ETC
 set dir=~/.vim/swap//
@@ -391,4 +363,3 @@ let g:cpp_no_qt=0
 map gd g<C-]>
 map <C-\> :tab split<CR>:exec("tag ".expand("<cword>"))<CR>
 map <A-]> :vsp <CR>:exec("tag ".expand("<cword>"))<CR>
-set tags+=/opt/Qt-5.4.0/5.4/gcc/include/tags

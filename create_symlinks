@@ -8,3 +8,4 @@ CURRENTDIR=$(pwd)
 cd ~
 ln -s ${CURRENTDIR}/.vimrc .vimrc
 ln -s ${CURRENTDIR}/.zshrc .zshrc
+ln -s ${CURRENTDIR}/.tmux.conf .tmux.conf
