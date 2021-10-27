@@ -37,40 +37,40 @@ call plug#begin('~/.vim/plugged')
 	" CODE GENERATION
 	Plug 'Sirver/Ultisnips'
 	"personlized snippets
-	Plug 'code-maniac/vim-snippets', {
+	Plug 'honza/vim-snippets', {
 		\'do': 'ln -s ~/.vim/plugged/vim-snippets/snippets ~/.dotfiles/snippets'
 	\}
 
-	" LANGUAGE SERVER
-	Plug 'autozimu/LanguageClient-neovim', {
-				\'branch': 'next',
-				\'do': 'bash install.sh',
-	\}
+	" SYNTAX HIGHLIGHTING
+	" Plug 'sheerun/vim-polyglot'
 
 	" CODE COMPLETION
 	if has('nvim')
 		Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
 	else
-		Plug 'Shougo/deoplete.nvim'
-		Plug 'roxma/nvim-yarp'
-		Plug 'roxma/vim-hug-neovim-rpc'
+        Plug 'Shougo/deoplete.nvim'
+        Plug 'roxma/nvim-yarp'
+        Plug 'roxma/vim-hug-neovim-rpc'
 	endif
-	" deoplete completion sources.
-	" c++
-	" Plug 'zchee/libclang-python3'
-	" Plug 'zchee/deoplete-clang'
+
 	" deoplete headers
+	Plug 'Shougo/neosnippet'
+	Plug 'Shougo/neosnippet-snippets'
 	Plug 'Shougo/neoinclude.vim'
 	Plug 'Shougo/echodoc.vim'
 
+	" language server
+	Plug 'prabirshrestha/async.vim' " required for vim-lsp
+	Plug 'prabirshrestha/vim-lsp' " Generic Language Protocol client
+	Plug 'mattn/vim-lsp-settings' " Automatically install and configure language servers
+	Plug 'lighttiger2505/deplete-vim-lsp'
+
+    " useful stuff
 	Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': 'yes \| ./install --all' }
-	Plug 'junegunn/vim-easy-align'
-	Plug 'junegunn/rainbow_parentheses.vim'
+	Plug 'frazrepo/vim-rainbow'
 	Plug 'junegunn/vim-github-dashboard'
 	Plug 'junegunn/gv.vim'
-
-	" DOXYGEN COMMENTING
-	Plug 'mrtazz/DoxygenToolkit.vim'
+	Plug 'junegunn/vim-emoji'
 
 	" NAVIGATION
 	Plug 'easymotion/vim-easymotion'
@@ -89,6 +89,7 @@ call plug#begin('~/.vim/plugged')
 	Plug 'vim-scripts/argtextobj.vim'
 	Plug 'AndrewRadev/splitjoin.vim'
 	Plug 'alvan/vim-closetag'
+	Plug 'ludovicchabant/vim-gutentags'
 
 	" BETTER VIM DIFF
 	Plug 'chrisbra/vim-diff-enhanced'
@@ -102,25 +103,9 @@ call plug#begin('~/.vim/plugged')
 	Plug 'scrooloose/nerdtree'
 	Plug 'justinmk/vim-gtfo'
 
-	" BETTER SYNTAX HIGHLIGHTING
-	"Plug 'bfrg/vim-cpp-modern'
-	Plug 'code-maniac/vim-cpp-modern'
-	Plug 'pangloss/vim-javascript'
-	Plug 'peterhoeg/vim-qml'
-	Plug 'udalov/kotlin-vim'
-
 	" AIRLINE THEMES
 	Plug 'vim-airline/vim-airline'
 	Plug 'vim-airline/vim-airline-themes'
-
-	" VIEW MAN PAGES IN VIM
-	Plug 'vim-utils/vim-man'
-
-	" MARKDOWN SUPPORT IN VIM
-	"Plug 'gabrielelana/vim-markdown'
-
-	" FOR FUN
-	Plug 'vim-scripts/TeTrIs.vim'
 call plug#end()
 
 " set fullscreen mode on startup in gui mode.
@@ -134,6 +119,7 @@ set t_Co=256
 
 " SYNTAX
 syntax enable
+filetype plugin indent on
 set background=dark
 "colorscheme solarized
 colorscheme afterglow
@@ -163,34 +149,9 @@ set copyindent
 " set cindent
 set smarttab
 
-" configure tabs for work projects
-let s:prolec_files = [
-	\ '~/projects/r2_display/*.c',
-	\ '~/projects/r2_display/*.cpp',
-	\ '~/projects/r2_display/*.h',
-	\ '~/projects/r2_display_tests/*.cpp',
-	\ '~/projects/r2_display_tests/*.h',
-	\ '~/projects/r2_ecu_emulator/*.cpp',
-	\ '~/projects/r2_ecu_emulator/*.h',
-	\ '~/projects/r2_ecu_emulator_tests/*.cpp',
-	\ '~/projects/r2_ecu_emulator_tests/*.h',
-	\ '~/projects/j1939_stack/*.c',
-	\ '~/projects/j1939_stack/*.cpp',
-	\ '~/projects/j1939_stack/*.h'
-\ ]
-
-for pf in s:prolec_files
-	execute "au BufRead,BufNewFile,BufEnter " . pf . " setlocal tabstop=3 softtabstop=0 shiftwidth=3 expandtab"
-endfor
-
-" TABS AND SPACING FOR WORK PROJECTS - may add more, this is for within linX vm.
-" au BufRead,BufNewFile,BufEnter ~/projects/r2_display/*.cpp,~/projects/r2_display/*.h,~/projects/r2_display_tests/*.cpp,~/projects/r2_display_tests/*.h setlocal tabstop=3 softtabstop=0 shiftwidth=3 expandtab
-" au BufRead,BufNewFile,BufEnter ~/projects/r2_ecu_emulator/*.cpp,~/projects/r2_ecu_emulator/*.h,~/projects/r2_ecu_emulator_tests/*.cpp,~/projects/r2_ecu_emulator_tests/*.h setlocal tabstop=3 softtabstop=0 shiftwidth=3 expandtab
-
-" (0 function arguments on seperate lines align better.
 " g0 aligns private, public with class
 " :0 aligns case statements to switch
-set cino+=(0,g0,:0,t0,l1
+set cino+=(0,W4,g0,:0,t0,l1
 set list
 set listchars=tab:▸\ ,eol:¬,trail:~ "highlight tabs with an arrow. eol with ¬. trailing whitespace with ~
 
@@ -209,21 +170,15 @@ let s:text_widths = [
    \ ['hpp', 80 ],
    \ ['h', 80 ],
    \ ['gitcommit', 80],
-   \ ['javascript', 80]
+   \ ['javascript', 80],
+   \ ['qml', 80]
 \ ]
 for text_width in s:text_widths
 	execute "autocmd Filetype " . text_width[0] . " setlocal tw=" . text_width[1]
 	execute "autocmd Filetype " . text_width[0] . " setlocal colorcolumn=+1"
 endfor
 
-" TABS AND SPACING FOR WORK PROJECTS - may add more, this is for within linX vm.
-au BufRead,BufNewFile,BufEnter ~/projects/r2_display/*.cpp,~/projects/r2_display/*.h,~/projects/r2_display_tests/*.cpp,~/projects/r2_display_tests/*.h setlocal tabstop=3 softtabstop=0 shiftwidth=3 expandtab
-
-au BufRead,BufNewFile,BufEnter ~/projects/r2_ecu_emulator/*.cpp,~/projects/r2_ecu_emulator/*.h,~/projects/r2_ecu_emulator_tests/*.cpp,~/projects/r2_ecu_emulator_tests/*.h setlocal tabstop=3 softtabstop=0 shiftwidth=3 expandtab
-
 au BufRead,BufNewFile,BufEnter ~/projects/createful_app/*.js setlocal tabstop=2 softtabstop=0 shiftwidth=2 expandtab
-
-
 
 " hi ColorColumn guibg=#dddddd ctermbg=235
 hi ColorColumn guibg=#dddddd ctermbg=1
@@ -258,27 +213,6 @@ endif
 " remain in visual mode when >> <<
 vnoremap < <gv
 vnoremap > >gv
-
-" mappings to switch fileencoding/type easily
-map <F7> :set fileencoding=
-map <F8> :set filetype=
-
-" Easy creation of new splits/tabs
-"nnoremap <C-t> :tab split<SPACE>
-"nnoremap <C-x> :split<SPACE>
-"nnoremap <C-v> :vsplit<SPACE>
-
-" Easy tab navigation
-"go to next tab by pressing tab
-map <TAB> :tabn<CR>
-"go to previous tab by pressing ctrl tab
-map <C-TAB> :tabp<CR>
-
-" easy-align
-" Start interactive EasyAlign in visual mode
-xmap ga <Plug>(EasyAlign)
-" Start interactive EasyAlign for a motion/text object
-nmap ga <Plug>(EasyAlign)
 
 "NERDTree
 "open NERDTree
@@ -320,33 +254,10 @@ let g:fzf_history_dir = '~/.local/share/fzf-history'
 
 " DEOPLETE
 let g:deoplete#enable_at_startup=1
+let g:neosnippet#enable_completed_snippet=1
 " use tab selection of popup menu with deoplete
 inoremap <expr> <tab> pumvisible() ? "\<C-n>" : "\<Tab>"
 inoremap <expr> <S-tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
-
-" " LANGUAGE SERVER
-" let g:LanguageClient_serverCommands = {
-" 	\ 'javascript': ['javascript-typescript-stdio'],
-" 	\ 'javascript.jsx': ['tcp://127.0.0.1:2089'],
-" 	\ 'python': ['pyls'],
-" 	\ 'c': ['cquery', '--log-file=/tmp/cq.log'],
-" 	\ 'cpp': ['cquery', '--log-files=/tmp/cq.log'],
-" \}
-
-" let g:LanguageClient_loadSettings=1
-" let g:LanguageClient_settingsPath='~/.dotfiles/cquery_settings.json'
-
-" set hidden
-" " set signcolumn=yes
-
-" set completefunc=LanguageClient#complete
-" set formatexpr=LanguageClient_textDocument_rangeFormatting()
-
-" nnoremap <silent> gh :call LanguageClient#textDocument_hover()<CR>
-" nnoremap <silent> gd :call LanguageClient#textDocument_definition()<CR>
-" nnoremap <silent> gr :call LanguageClient#textDocument_references()<CR>
-" nnoremap <silent> gs :call LanguageClient#textDocument_documentSymbol()<CR>
-" nnoremap <silent> gn :call LanguageClient#textDocument_rename()<CR>
 
 " vertical diff
 set diffopt+=vertical
@@ -366,11 +277,6 @@ let g:airline_section_y = 'BN: %{bufnr("%")}'
 set mouse=a
 set fileencoding=utf-8
 
-" Change mode of cursor while in the terminal - does not appear to work.
-" let &t_SI = "\<Esc>[6 q"
-" let &t_SR = "\<Esc>[4 q"
-" let &t_EI = "\<Esc>[2 q"
-
 " ultisnips
 " Trigger configuration.
 let g:UltiSnipsExpandTrigger="<c-s>"
@@ -381,14 +287,9 @@ let g:UltiSnipsJumpBackwardTrigger="<c-k>"
 " current doc.
 let g:UltiSnipsEditSplit="horizontal"
 
-let g:UltiSnipsSnippetsDir = "~/.vim/plugged/vim-snippets/snippets"
+let g:UltiSnipsSnippetsDir = "~/.vim/plugged/vim-snippets/UltiSnips"
 
 map <F2> :UltiSnipsEdit<CR>
-
-" doxygen toolkit
-let g:DoxygenToolkit_briefTag_pre="\\brief "
-let g:DoxygenToolkit_paramTag_pre="\\param "
-let g:DoxygenToolkit_returnTag="\\return "
 
 " delete trailing whitespace on write in certain filetypes
 autocmd BufWritePre *.c,*.cpp,*.h,*.hpp :%s/\s\+$//e
@@ -399,18 +300,13 @@ if !&diff
 	" autocmd BufWinEnter * silent loadview
 endif
 
-" open man page bindings
-" open man page for word under cursor
-map <leader>k <Plug>(Man)
-" open man page for word under cursor in vsplit
-map <leader>v <Plug>(Vman)
-
-" autocmd BufWinLeave * mkview
-
 let g:cpp_no_qt=0
 
 " ctags bindings and additional tags files
 map gd g<C-]>
 map <C-\> :tab split<CR>:exec("tag ".expand("<cword>"))<CR>
 map <A-]> :vsp <CR>:exec("tag ".expand("<cword>"))<CR>
-set tags+=/opt/Qt-5.4.0/5.4/gcc/include/tags
+
+set completefunc=emoji#complete
+
+let g:rainbow_active=1
