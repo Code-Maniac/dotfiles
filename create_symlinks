@@ -7,5 +7,7 @@ CURRENTDIR=$(pwd)
 # directory that we were originally in
 cd ~
 ln -s ${CURRENTDIR}/.vimrc .vimrc
+ln -s ${CURRENTDIR}/.vscode.init.vim .vscode.init.vim
+ln -s ${CURRENTDIR}/.vscode.init.vim ~/.config/nvim/init.vim
 ln -s ${CURRENTDIR}/.zshrc .zshrc
 ln -s ${CURRENTDIR}/.tmux.conf .tmux.conf
