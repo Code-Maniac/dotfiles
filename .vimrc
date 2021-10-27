@@ -63,7 +63,7 @@ call plug#begin('~/.vim/plugged')
 	Plug 'prabirshrestha/async.vim' " required for vim-lsp
 	Plug 'prabirshrestha/vim-lsp' " Generic Language Protocol client
 	Plug 'mattn/vim-lsp-settings' " Automatically install and configure language servers
-	Plug 'lighttiger2505/deplete-vim-lsp'
+	Plug 'lighttiger2505/deoplete-vim-lsp'
 
     " useful stuff
 	Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': 'yes \| ./install --all' }
