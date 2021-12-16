@@ -1,0 +1,64 @@
+- defaults:
+    link:
+        relink: true
+        force: true
+
+- clean: ['~']
+
+- create:
+    - ~/Downloads
+    - ./fonts
+    - ~/.antigen
+    - ~/.config
+    - ~/.config/nvim
+    - ~/.vim/undo-history
+    - ~/.local/share/nvim/backup//
+
+- shell:
+    - [git submodule update --init --recursive, Installing submodules]
+
+# here we handle package management - added for each package manager
+- sudo:
+    - aptget: [
+        python3,
+        python3-pip,
+        kitty,
+        tmux,
+        zsh,
+        vim,
+        neovim,
+        curl,
+        npm,
+]
+
+- brew: [
+    python3,
+    python3-pip,
+    kitty,
+    tmux,
+    zsh,
+    vim,
+    neovim,
+    curl,
+    npm,
+]
+
+- shell:
+    - [curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim, Installing vim-plug]
+    - [sh -c 'curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim', Installing vim-plug for neovim]
+    - [curl -L git.io/antigen > ~/.antigen/antigen.zsh, Installing antigen]
+    - [git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm, Installing tpm]
+    - [git clone --depth 1 https://github.com/dexpota/kitty-themes ~/.config/kitty/kitty-themes, Installing kitty themes]
+    - [sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)", Installing oh-my-zsh]
+    - rm -Rf ./jetbrains-fonts
+    - [git clone https://github.com/JetBrains/JetBrainsMono ./jetbrains-fonts && cp ./jetbrains-fonts/fonts/ttf/* ./fonts, Installing JetBrains fonts]
+    - rm -Rf ./jetbrains-fonts
+
+- link:
+    ~/.config/kitty/kitty.conf: kitty/kitty.conf
+    ~/.zshrc: zsh/zshrc
+    ~/.tmux.conf: tmux/tmux.conf
+    ~/.vimrc: vim/vimrc
+    ~/.config/nvim/init.vim: vim/init.vim
+    ~/.fonts: fonts
+    ~/.config/kitty/dracula.conf: ~/.config/kitty/kitty-themes/themes/Dracula.conf

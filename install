@@ -1,7 +1,39 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-./install_homebrew
-./install_antigen
-./create_symlinks
-./install_ohmyzsh
-./install_tpm
+set -e
+
+CONFIG="install.conf.yaml"
+DOTBOT_DIR="dotbot"
+
+DOTBOT_BIN="bin/dotbot"
+BASEDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# plugins directory
+SUDOPLUGIN="${BASEDIR}/dotbot-sudo/sudo.py"
+APTGETPLUGIN="${BASEDIR}/dotbot_plugin_aptget/aptget.py"
+PACMANPLUGIN="${BASEDIR}/dotbot-pacaur/pacaur.py"
+BREWPLUGIN="${BASEDIR}/dotbot-brew/brew.py"
+RUSTPLUGIN="${BASEDIR}/dotbot-rust/rust.py"
+
+# select a package manager plugin based on the os
+if [[ $OSTYPE == 'darwin'* ]]; then
+    # use brew for package management on macos
+    PKGPLUGIN=${BREWPLUGIN}
+    PKGFILE=./brew.packages.yaml
+elif [[ $OSTYPE == 'linux-gnu' ]]; then
+    # assume apt-get package for linux (expand on this later)
+    PKGPLUGIN=${APTGETPLUGIN}
+    PKGFILE=./aptget.packages.yaml
+fi
+
+cd "${BASEDIR}"
+git -C "${DOTBOT_DIR}" submodule sync --quiet --recursive
+git submodule update --init --recursive "${DOTBOT_DIR}"
+
+"${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" \
+    -d "${BASEDIR}" \
+    -c "${CONFIG}" \
+    -p "${RUSTPLUGIN}" \
+    -p "${SUDOPLUGIN}" \
+    -p "${APTGETPLUGIN}" \
+    "${@}" 

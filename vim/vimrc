@@ -1,7 +1,8 @@
 " PLUGINS
 call plug#begin('~/.vim/plugged')
 	" COLORSCHEMES
-	Plug 'rafi/awesome-vim-colorschemes'
+	" Plug 'rafi/awesome-vim-colorschemes'
+	Plug 'dracula/vim', {'as':'dracula'}
 
 	" CODE GENERATION
 	Plug 'Sirver/Ultisnips'
@@ -11,7 +12,7 @@ call plug#begin('~/.vim/plugged')
 	\}
 
 	" SYNTAX HIGHLIGHTING
-	" Plug 'sheerun/vim-polyglot'
+	Plug 'sheerun/vim-polyglot'
 
 	" CODE COMPLETION
 	if has('nvim')
@@ -36,14 +37,9 @@ call plug#begin('~/.vim/plugged')
 
     " useful stuff
 	Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': 'yes \| ./install --all' }
-	Plug 'frazrepo/vim-rainbow'
-	Plug 'junegunn/vim-github-dashboard'
-	Plug 'junegunn/gv.vim'
-	Plug 'junegunn/vim-emoji'
 
 	" NAVIGATION
 	Plug 'easymotion/vim-easymotion'
-	Plug 'unblevable/quick-scope'
 
 	Plug 'tpope/vim-repeat'
 	Plug 'tpope/vim-surround'
@@ -62,13 +58,11 @@ call plug#begin('~/.vim/plugged')
 	" BETTER VIM DIFF
 	Plug 'chrisbra/vim-diff-enhanced'
 
-	" BETTER VIM-TMUX WINDOW NAVIGATION 
+	" BETTER VIM-TMUX WINDOW NAVIGATION
 	Plug 'christoomey/vim-tmux-navigator'
 
-	Plug 'Raimondi/delimitMate'
-
 	" GUI FILE EXPLORER IN VIM
-	Plug 'scrooloose/nerdtree'
+	Plug 'preservim/nerdtree'
 	Plug 'justinmk/vim-gtfo'
 
 	" AIRLINE THEMES
@@ -85,16 +79,18 @@ if has("gui_running")
 endif
 
 " SET COMPAT AND COLOR MODE
-set nocompatible " Vim rather than Vi
-set t_Co=256
+" set nocompatible " Vim rather than Vi
+" set t_Co=256
 
-" SYNTAX
-syntax enable
-" set background=dark
-"colorscheme solarized
-colorscheme iceberg
+" COLORS
+set termguicolors
+set background=dark
+colorscheme dracula
+if &term =~ '256color'
+    set t_ut=
+endif
 
-set guifont="MesloLGS NF"
+" set guifont="MesloLGS NF"
 
 " GENERAL STUFF
 set ruler                           " always show cursor position.
@@ -147,15 +143,9 @@ for text_width in s:text_widths
 	execute "autocmd Filetype " . text_width[0] . " setlocal colorcolumn=+1"
 endfor
 
-au BufRead,BufNewFile,BufEnter ~/projects/createful_app/*.js setlocal tabstop=2 softtabstop=0 shiftwidth=2 expandtab
-
-
-" CHANGE COLOR OF THE DIFF ADD HIGHLIGHT TO MATCH CHANGE
-hi DiffAdd cterm=bold ctermbg=24
-
 " SET LOCATION OF VIMFILES SWAP, UNDO ETC
-set dir=~/.vim/swap//
-set undodir=~/.vim/undo//
+set dir=~/.vim/swap
+set undodir=~/.vim/undo
 
 " WINDOW SWITCHING
 nnoremap <silent> <C-h> <C-w>h
@@ -263,16 +253,4 @@ autocmd BufWritePre *.c,*.cpp,*.h,*.hpp :%s/\s\+$//e
 " go back to the line we were on when we last closed the file.
 if !&diff
 	autocmd BufReadPost * if &filetype !=# 'gitcommit' | if line("'\'") > 0 && line("'\"") <= line("$") | exe "normal! g`\"" | endif
-	" autocmd BufWinEnter * silent loadview
 endif
-
-let g:cpp_no_qt=0
-
-" ctags bindings and additional tags files
-map gd g<C-]>
-map <C-\> :tab split<CR>:exec("tag ".expand("<cword>"))<CR>
-map <A-]> :vsp <CR>:exec("tag ".expand("<cword>"))<CR>
-
-set completefunc=emoji#complete
-
-let g:rainbow_active=1
