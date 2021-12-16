@@ -76,6 +76,9 @@ call plug#begin('~/.vim/plugged')
 	Plug 'vim-airline/vim-airline-themes'
 call plug#end()
 
+" set the leader key
+let mapleader = ","
+
 " set fullscreen mode on startup in gui mode.
 if has("gui_running")
     set lines=1200 columns=1200

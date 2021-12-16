@@ -1,0 +1,6 @@
+#!/bin/bash
+
+./remove_antigen
+./remove_symlinks
+./remove_ohmyzsh
+./remove_tpm
