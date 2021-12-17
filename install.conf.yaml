@@ -58,6 +58,7 @@
     - mkdir -p ./sshkeys
     - [ssh-keygen -t ed25519 -N '' -f ./sshkeys/id_ed25519, Generate ed25519 ssh key]
     - [ssh-keygen -t rsa -N '' -f ./sshkeys/id_rsa, Generate rsa ssh key]
+    - [cp ./sshkeys/* ~/.ssh, Copy the sshkeys to .ssh]
     - [vim +'PlugInstall --sync' +qa, Get vim plugins]
     - [cp .gitconfig ~/.gitconfig, Copy default git config]
 
