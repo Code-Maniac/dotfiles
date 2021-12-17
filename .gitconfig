@@ -1,0 +1,23 @@
+[init]
+	templatedir = ~/.git_template
+[core]
+	editor = nvim
+[merge]
+	tool = vim-conflicted
+	conflictstyle = diff3
+[mergetool]
+	prompt = true
+[diff]
+	tool = nvimdiff
+[difftool]
+	prompt = true
+[difftool "nvimdiff"]
+	cmd = nvim -f -d -c \"wincmd l\" -c 'cd \"$GIT_PREFIX\"' \"$LOCAL\" \"$REMOTE\"
+[alias]
+	d = difftool
+	whatadded = log --diff-filter=A --
+	l = log --graph
+	lgb = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset%n' --abbrev-commit --date=relative --branches
+	fl = log --oneline --graph --all --decorate --abbrev-commit
+[mergetool "vim-conflicted"]
+	cmd = nvim +Conflicted

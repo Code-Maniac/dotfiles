@@ -29,7 +29,8 @@
         neovim,
         curl,
         npm,
-]
+        ripgrep,
+        git]
 
 - brew: [
     python3,
@@ -41,7 +42,8 @@
     neovim,
     curl,
     npm,
-]
+    ripgrep,
+    git]
 
 - shell:
     - [curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim, Installing vim-plug]
@@ -53,6 +55,12 @@
     - rm -Rf ./jetbrains-fonts
     - [git clone https://github.com/JetBrains/JetBrainsMono ./jetbrains-fonts && cp ./jetbrains-fonts/fonts/ttf/* ./fonts, Installing JetBrains fonts]
     - rm -Rf ./jetbrains-fonts
+    - mkdir -p ./sshkeys
+    - [ssh-keygen -t ed25519 -N '' -f ./sshkeys/id_ed25519, Generate ed25519 ssh key]
+    - [ssh-keygen -t rsa -N '' -f ./sshkeys/id_rsa, Generate rsa ssh key]
+    - [vim +'PlugInstall --sync' +qa, Get vim plugins]
+    - [cp .gitconfig ~/.gitconfig, Copy default git config]
+
 
 - link:
     ~/.config/kitty/kitty.conf: kitty/kitty.conf
@@ -60,5 +68,6 @@
     ~/.tmux.conf: tmux/tmux.conf
     ~/.vimrc: vim/vimrc
     ~/.config/nvim/init.vim: vim/init.vim
+    ~/.config/nvim/plugins: vim/plugins
     ~/.fonts: fonts
     ~/.config/kitty/dracula.conf: ~/.config/kitty/kitty-themes/themes/Dracula.conf

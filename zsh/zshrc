@@ -17,10 +17,24 @@ antigen theme romkatv/powerlevel10k
 # antigen is finished
 antigen apply
 
-#instead of using cp use rsync instead.
-alias cp="rsync -avz"
+# instead of using cp use rsync instead
+if hash rsync &> /dev/null
+then
+    alias cp="rsync -avz"
+fi
 
-# if [ "$TMUX" = "" ]; then tmux attach || tmux new; fi
+# if nvim is installed then use it instead of vim
+if hash nvim &> /dev/null
+then
+    alias vi="nvim"
+    alias vim="nvim"
+fi
+
+# for accidental vim commands in terminal
+alias :q='echo You are not editing a file, dummy'
+alias :wq='echo You are not editing a file, dummy'
+
+if [ "$TMUX" = "" ]; then tmux attach || tmux new; fi
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
