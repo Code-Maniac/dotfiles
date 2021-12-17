@@ -1,0 +1,7 @@
+#!/bin/bash
+
+./install_homebrew
+./install_antigen
+./create_symlinks
+./install_ohmyzsh
+./install_tpm
