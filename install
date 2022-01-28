@@ -35,5 +35,5 @@ git submodule update --init --recursive
     -c "${CONFIG}" \
     -p "${RUSTPLUGIN}" \
     -p "${SUDOPLUGIN}" \
-    -p "${APTGETPLUGIN}" \
+    #-p "${APTGETPLUGIN}" \
     "${@}" 

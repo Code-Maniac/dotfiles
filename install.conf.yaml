@@ -30,7 +30,9 @@
         curl,
         npm,
         ripgrep,
-        git]
+        git
+        autoconf
+        cmake]
 
 - brew: [
     python3,
