@@ -95,5 +95,3 @@ alias :wq='echo You are not editing a file, dummy'
 
 # finally if we are not in tmux session then make a new one
 if [ "$TMUX" = "" ]; then tmux attach || tmux new; fi
-
-echo $PATH
