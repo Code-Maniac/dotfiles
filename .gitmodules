@@ -17,3 +17,6 @@
 [submodule "dotbot-rust"]
 	path = dotbot-rust
 	url = https://github.com/alexcormier/dotbot-rust
+[submodule "scripts/sp"]
+	path = scripts/sp
+	url = https://gitlab.com/CodeGremlin/sp
