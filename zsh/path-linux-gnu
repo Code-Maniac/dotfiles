@@ -1,0 +1,6 @@
+# linux specific path items go in here
+/usr/games
+/usr/local/games
+/usr/local/bin/lint
+/usr/local/bin/lint/config
+/opt/arm-toolchain/bin

@@ -1,0 +1,4 @@
+# macos specific path items go in here
+
+# add homebrew installation dir
+/opt/homebrew/bin

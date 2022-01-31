@@ -12,23 +12,35 @@ export VIMRC=${DOTFILES}/vim/init.vim
 export VIMPLUGINS=${DOTFILES}/vim/plugins
 # zsh path information
 export ZSHRC=${DOTFILES}/zsh/zshrc
-export ZSHPATHFILE=${DOTFILES}/zsh/zshpath
 # tmux path information
 export TMUXRC=${DOTFILES}/tmux/tmux.conf
 # kitty path information
 export KITTYRC=${DOTFILES}/kitty/kitty.conf
 
-# export path based on what in the zshpath file
-# Removes leading and trailing white space
-# Ignores any line beginning with #
-# Ignores empty lines
-# I currently have plans to work this further into a common path file +
-# a system specific path file
-export PATH=$(cat ${ZSHPATHFILE} | sed -e 's/^[ \t]//' | sed -e 's/[ \t]*$//' | sed -e '/^$/d' | grep -v '^#' | tr '\n' ':')
+# get a path file based on the OSTYPE
+if [[ ${OSTYPE} == 'darwin'* ]]; then
+  PATH_APPEND='darwin'
+else
+  PATH_APPEND=${OSTYPE}
+fi
+export PATHFILE=${DOTFILES}/zsh/path-${PATH_APPEND}
 
-# keep backup path here just in case we manage to bodge the above
-# otherwise we have to call programs with pull paths which is a pain
-#export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+# initialise the path with bash default and then add the platform specific
+# path items from the selected file - if no path file for the os type then at
+# least this way the path will come out as something sensible and the system
+# will still be usable
+export PATH=$(env -i bash -c 'echo $PATH')
+if [ -f "${PATHFILE}" ]; then
+  # if the path file exists
+  # export path based on what in the path file
+  # Removes leading and trailing white space
+  # Ignores any line beginning with #
+  # Ignores empty lines
+  # I currently have plans to work this further into a common path file +
+  # a system specific path file
+  PATH+=$(cat ${PATHFILE} | sed -e 's/^[ \t]//' | sed -e 's/[ \t]*$//' | sed -e '/^$/d' | grep -v '^#' | tr '\n' ':')
+  echo $PATH
+fi
 
 # load plugin manager and oh-my-zsh
 source ~/.antigen/antigen.zsh
