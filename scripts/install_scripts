@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# get the directory of this script
+SCRIPTDIR=$(cd -- $(dirname -- ${BASH_SOURCE[0]}) &> /dev/null && pwd)
+cd ${SCRIPTDIR}
+
+# go through each of the scripts folders and run the install script
+for f in $(ls); do
+    # first check it's a directory
+    if [[ -d "${f}" ]]; then
+        # then get the install script and check that it's executable
+        cd ${f}
+        if [[ -x "./install" ]]; then
+            ./install
+        fi
+        cd ${SCRIPTDIR}
+    fi
+done

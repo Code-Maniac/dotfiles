@@ -20,3 +20,6 @@
 [submodule "scripts/sp"]
 	path = scripts/sp
 	url = https://gitlab.com/CodeGremlin/sp
+[submodule "scripts/extract"]
+	path = scripts/extract
+	url = https://gitlab.com/CodeGremlin/extract

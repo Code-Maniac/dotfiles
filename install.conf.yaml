@@ -64,6 +64,10 @@
     - [vim +'PlugInstall --sync' +qa, Get vim plugins]
     - [cp .gitconfig ~/.gitconfig, Copy default git config]
 
+- sudo:
+  - shell:
+    - [scripts/install_scripts, Installing scripts]
+
 
 - link:
     ~/.config/kitty/kitty.conf: kitty/kitty.conf
