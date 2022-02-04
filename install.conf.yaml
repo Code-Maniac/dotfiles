@@ -14,38 +14,24 @@
     - ~/.vim/undo-history
     - ~/.local/share/nvim/backup//
 
-- shell:
-    - [git submodule update --init --recursive, Installing submodules]
-
-# here we handle package management - added for each package manager
 - sudo:
-    - aptget: [
-        python3,
-        python3-pip,
-        kitty,
-        tmux,
-        zsh,
-        vim,
-        neovim,
-        curl,
-        npm,
-        ripgrep,
-        git
-        autoconf
-        cmake]
-
-- brew: [
-    python3,
-    python3-pip,
-    kitty,
-    tmux,
-    zsh,
-    vim,
-    neovim,
-    curl,
-    npm,
-    ripgrep,
-    git]
+  - omnipkg-update: true
+  - omnipkg-install: [
+      python3,
+      python3-pip,
+      kitty,
+      tmux,
+      zsh,
+      vim,
+      neovim,
+      curl,
+      npm,
+      ripgrep,
+      git,
+      autoconf,
+      cmake]
+  - omnipkg-upgrade: true
+  - omnipkg-dist-upgrade: true
 
 - shell:
     - [curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim, Installing vim-plug]
@@ -67,7 +53,6 @@
 - sudo:
   - shell:
     - [scripts/install_scripts, Installing scripts]
-
 
 - link:
     ~/.config/kitty/kitty.conf: kitty/kitty.conf
