@@ -8,12 +8,12 @@ Plug 'prabirshrestha/vim-lsp' " Generic Language Protocol client
 Plug 'mattn/vim-lsp-settings' " Automatically install and configure language servers
 Plug 'lighttiger2505/deoplete-vim-lsp'
 
+let g:deoplete#enable_at_startup=1
+
+inoremap <expr> <tab> pumvisible() ? "\<C-n>" : "\<Tab>"
+inoremap <expr> <S-tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
+
 function! s:on_lsp_buffer_enabled() abort
-    let g:deoplete#enable_at_startup=1
-
-    inoremap <expr> <tab> pumvisible() ? "\<C-n>" : "\<Tab>"
-    inoremap <expr> <S-tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
-
     setlocal omnifunc=lsp#complete
     setlocal signcolumn=yes
 

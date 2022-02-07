@@ -38,6 +38,10 @@ set backup
 set backupdir=~/.local/share/nvim/backup//
 set updatetime=300 " reduce time for loading syntax on large files
 set redrawtime=10000 " allow more time for loading syntax on large files
+" make the vim cursor much more visible by showing it in a crosshair - helpful
+" when using lsp or other plugins to jump around different files
+set cursorcolumn
+set cursorline
 
 " delete trailing whitespace on write in certain filetypes
 autocmd BufWritePre *.c,*.cpp,*.h,*.hpp :%s/\s\+$//e
