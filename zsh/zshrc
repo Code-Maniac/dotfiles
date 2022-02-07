@@ -17,12 +17,6 @@ else
   PATH_APPEND=${OSTYPE}
 fi
 export PATHFILE=${DOTFILES}/zsh/path-${PATH_APPEND}
-
-# initialise the path with bash default and then add the platform specific
-# path items from the selected file - if no path file for the os type then at
-# least this way the path will come out as something sensible and the system
-# will still be usable
-export PATH=$(env -i bash -c 'echo $PATH')
 if [ -r "${PATHFILE}" ]; then
   # if the path file exists
   # export path based on what in the path file

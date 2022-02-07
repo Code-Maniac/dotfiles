@@ -9,7 +9,6 @@ set smartindent
 set copyindent
 set smarttab
 set hidden
-set signcolumn=yes:1
 set relativenumber
 set number
 set ruler
