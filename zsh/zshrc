@@ -12,7 +12,9 @@ export KITTYRC=${DOTFILES}/kitty/kitty.conf
 
 # get a path file based on the OSTYPE
 if [[ ${OSTYPE} == 'darwin'* ]]; then
-  PATH_APPEND='darwin'
+  PATH_APPEND='darwin'else
+elif grep -q Microsoft /proc/version; then
+  PATH_APPEND='linux-wsl'
 else
   PATH_APPEND=${OSTYPE}
 fi
@@ -69,7 +71,7 @@ then
 fi
 
 # if vimcat is installed then add ccat alias
-if hash vimcat
+if hash vimcat &> /dev/null
 then
   alias ccat="vimcat"
 fi
@@ -77,7 +79,6 @@ fi
 # for accidental vim commands in terminal
 alias :q='echo You are not editing a file, dummy'
 alias :wq='echo You are not editing a file, dummy'
-
 
 # add fzf into the mix
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
