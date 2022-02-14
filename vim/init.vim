@@ -122,6 +122,7 @@ source ~/.config/nvim/plugins/vim-pasta.vim
 source ~/.config/nvim/plugins/auto-pairs.vim
 
 source ~/.config/nvim/plugins/vim-polyglot.vim
+source ~/.config/nvim/plugins/vim-bitbake.vim
 source ~/.config/nvim/plugins/deoplete.vim
 source ~/.config/nvim/plugins/lsp.vim
 source ~/.config/nvim/plugins/ultisnips.vim

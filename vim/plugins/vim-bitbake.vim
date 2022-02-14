@@ -1,0 +1,1 @@
+Plug 'kergoth/vim-bitbake'
