@@ -14,3 +14,6 @@
 [submodule "dotbot-omnipkg"]
 	path = dotbot-omnipkg
 	url = https://gitlab.com/CodeGremlin/dotbot-omnipkg.git
+[submodule "backgrounds"]
+	path = backgrounds
+	url = https://gitlab.com/codegremlin/backgrounds.git
