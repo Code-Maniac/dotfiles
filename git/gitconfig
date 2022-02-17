@@ -1,5 +1,6 @@
 [init]
 	templatedir = ~/.git_template
+	defaultBranch = master
 [core]
 	editor = nvim
 [merge]
@@ -21,3 +22,6 @@
 	fl = log --oneline --graph --all --decorate --abbrev-commit
 [mergetool "vim-conflicted"]
 	cmd = nvim +Conflicted
+[user]
+	name = Nick Jaycock
+	email = jaycock.n@gmail.com

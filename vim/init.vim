@@ -14,7 +14,7 @@ set number
 set ruler
 set termguicolors
 set undofile
-set spell
+set nospell
 set title
 set ignorecase
 set smartcase

@@ -46,7 +46,6 @@
     - [ssh-keygen -t rsa -N '' -f ./sshkeys/id_rsa, Generate rsa ssh key]
     - [cp ./sshkeys/* ~/.ssh, Copy the sshkeys to .ssh]
     - [vim +'PlugInstall --sync' +qa, Get vim plugins]
-    - [cp .gitconfig ~/.gitconfig, Copy default git config]
 
 - sudo:
   - shell:
@@ -62,3 +61,4 @@
     ~/.fonts: fonts
     ~/.config/kitty/dracula.conf: ~/.config/kitty/kitty-themes/themes/Dracula.conf
     ~/.config/pycodestyle: config/pycodestyle
+    ~/.gitconfig: git/gitconfig
