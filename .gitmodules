@@ -17,3 +17,6 @@
 [submodule "backgrounds"]
 	path = backgrounds
 	url = https://gitlab.com/codegremlin/backgrounds.git
+[submodule "scripts/roll"]
+	path = scripts/roll
+	url = https://gitlab.com/CodeGremlin/roll
