@@ -1,0 +1,29 @@
+#!/bin/bash
+
+KEYSDIR=~/.ssh
+ED25519=${KEYSDIR}/id_ed25519
+RSA=${KEYSDIR}/id_rsa
+
+EXITSTATUS=0
+
+if [ ! -d ${KEYSDIR} ]; then
+    if ! mkdir ${KEYSDIR}; then
+        exit 0
+    fi
+fi
+
+if [ ! -f ${ED25519} ]; then
+    if ! ssh-keygen -t ed25519 -N '' -f ${ED25519}; then
+        EXITSTATUS=1
+    fi
+fi
+
+if [ ! -f ${RSA} ]; then
+    if ! ssh-keygen -t rsa -N '' -f ${RSA}; then
+        EXITSTATUS=1
+    fi
+else
+    EXITSTATUS=0
+fi
+
+exit ${EXITSTATUS}

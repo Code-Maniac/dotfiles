@@ -20,3 +20,6 @@
 [submodule "scripts/roll"]
 	path = scripts/roll
 	url = https://github.com/code-maniac/roll
+[submodule "scripts/gitignore"]
+	path = scripts/gitignore
+	url = https://github.com/code-maniac/gitignore
