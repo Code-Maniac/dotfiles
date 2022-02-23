@@ -7,16 +7,16 @@
 	url = https://github.com/DrDynamic/dotbot-sudo.git
 [submodule "scripts/sp"]
 	path = scripts/sp
-	url = https://gitlab.com/CodeGremlin/sp
+	url = https://github.com/code-maniac/sp
 [submodule "scripts/extract"]
 	path = scripts/extract
-	url = https://gitlab.com/CodeGremlin/extract
+	url = https://github.com/code-maniac/extract
 [submodule "dotbot-omnipkg"]
 	path = dotbot-omnipkg
-	url = https://gitlab.com/CodeGremlin/dotbot-omnipkg.git
+	url = https://github.com/code-maniac/dotbot-omnipkg.git
 [submodule "backgrounds"]
 	path = backgrounds
-	url = https://gitlab.com/codegremlin/backgrounds.git
+	url = https://github.com/code-maniac/backgrounds
 [submodule "scripts/roll"]
 	path = scripts/roll
-	url = https://gitlab.com/CodeGremlin/roll
+	url = https://github.com/code-maniac/roll
