@@ -56,8 +56,13 @@ fi
 # if nvim is installed then use it instead of vim
 if hash nvim &> /dev/null
 then
-    alias vi="nvim"
-    alias vim="nvim"
+    NVIM="nvim"
+    alias vi=${NVIM}
+    alias vim=${NVIM}
+
+    # set nvim to the default editor
+    export EDITOR=${NVIM}
+    export VISUAL=${NVIM}
 fi
 
 # add symlinks for working with python
@@ -75,6 +80,12 @@ if hash vimcat &> /dev/null
 then
   alias ccat="vimcat"
 fi
+
+# add bitbake, recipetool and devtool alias'
+alias bb="bitbake"
+alias bbl="bitbake-layers"
+alias rp="recipetool"
+alias dt="devtool"
 
 # for accidental vim commands in terminal
 alias :q='echo You are not editing a file, dummy'
