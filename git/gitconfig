@@ -1,5 +1,4 @@
 [init]
-	templatedir = ~/.git_template
 	defaultBranch = master
 [core]
 	editor = nvim
@@ -25,3 +24,7 @@
 [user]
 	name = Nick Jaycock
 	email = jaycock.n@gmail.com
+[credential]
+	helper = store
+[color]
+	ui = auto

@@ -47,6 +47,8 @@
 - sudo:
   - shell:
     - [scripts/install_scripts, Installing scripts]
+    - [mkdir -p /opt/yp && mkdir -p /opt/yp/sstate-cache && mkdir -p /opt/yp/downloads, Make yocto downloads and state dirs]
+    - [chmod -R 777 /opt/yp, Make yocto dirs shared]
 
 - link:
     ~/.config/kitty/kitty.conf: kitty/kitty.conf
@@ -59,3 +61,4 @@
     ~/.config/kitty/dracula.conf: ~/.config/kitty/kitty-themes/themes/Dracula.conf
     ~/.config/pycodestyle: config/pycodestyle
     ~/.gitconfig: git/gitconfig
+    ~/.oe: oe
