@@ -28,7 +28,9 @@
     ripgrep,
     git,
     autoconf,
-    cmake]
+    cmake,
+    gnome-tweak-tool,
+    bmap-tools]
 - omnipkg-upgrade: true
 
 - shell:
