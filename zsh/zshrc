@@ -91,6 +91,15 @@ alias dt="devtool"
 alias :q='echo You are not editing a file, dummy'
 alias :wq='echo You are not editing a file, dummy'
 
+# colored man pages
+export LESS_TERMCAP_mb=$'\e[1;32m'
+export LESS_TERMCAP_md=$'\e[1;32m'
+export LESS_TERMCAP_me=$'\e[0m'
+export LESS_TERMCAP_se=$'\e[0m'
+export LESS_TERMCAP_so=$'\e[01;33m'
+export LESS_TERMCAP_ue=$'\e[0m'
+export LESS_TERMCAP_us=$'\e[1;4;31m'
+
 # add fzf into the mix
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
@@ -101,3 +110,4 @@ alias :wq='echo You are not editing a file, dummy'
 
 # finally if we are not in tmux session then make a new one
 if [ "$TMUX" = "" ]; then tmux attach || tmux new; fi
+
