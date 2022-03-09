@@ -31,7 +31,7 @@ set scrolloff=8
 set sidescrolloff=8
 set nojoinspaces
 set splitright
-set clipboard=unnamedplus
+set clipboard^=unnamed,unnamedplus
 set confirm
 set exrc
 set backup
@@ -83,6 +83,9 @@ imap ,, <Esc>A,<Esc>
 " Increament and decrement the number under the cursor
 nnoremap + <C-a>
 nnoremap - <C-x>
+
+" If the current file is gitcommit then move to the first line and first column
+autocmd FileType gitcommit call setpos('.', [0, 1, 1, 0])
 
 " -----------------------------------------------------------------------------
 " Plugins
