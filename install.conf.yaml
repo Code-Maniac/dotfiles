@@ -45,11 +45,13 @@
     - rm -Rf ./jetbrains-fonts
     - [./gen-ssh-keys, Generate ssh keys]
     - [nvim --headless +PlugInstall +qa, Get vim plugins]
+    - [curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y, Install Rust]
 
 - sudo:
   - shell:
     - [scripts/install_scripts, Installing scripts]
-    - [mkdir -p /opt/yp && mkdir -p /opt/yp/sstate-cache && mkdir -p /opt/yp/downloads, Make yocto downloads and state dirs]
+    - [curl https://commondatastorage.googleapis.com/git-repo-downloads/repo > /usr/local/bin/repo && chmod 755 /usr/local/bin/repo, Install Repo]
+    - [mkdir -p /opt/yp && mkdir -p /opt/yp/sstate-cache && mkdir -p /opt/yp/downloads, Make yocto downloads and sstate dirs]
     - [chmod -R 777 /opt/yp, Make yocto dirs shared]
 
 - link:

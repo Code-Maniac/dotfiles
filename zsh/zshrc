@@ -47,6 +47,11 @@ antigen theme romkatv/powerlevel10k
 # antigen is finished
 antigen apply
 
+# if on mac add an alias for nproc
+if [[ ${OSTYPE} == 'darwin'* ]]; then
+  alias nproc="sysctl -n hw.ncpu"
+fi
+
 # instead of using cp use rsync instead
 if hash rsync &> /dev/null
 then
