@@ -81,6 +81,22 @@ then
   alias ccat="vimcat"
 fi
 
+# add additional functionality to the make command if cargo is installed
+# if in a rust project directory then resolve make as cargo build instead of
+# make. Otherwise just resolve as make
+function cargomake() {
+  if cargo check &> /dev/null
+  then
+    cargo build $@
+  else
+    make $@
+  fi
+}
+if hash cargo &> /dev/null
+then
+  alias make="cargomake"
+fi
+
 # add bitbake, recipetool and devtool alias'
 alias bb="bitbake"
 alias bbl="bitbake-layers"

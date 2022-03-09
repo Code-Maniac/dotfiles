@@ -80,6 +80,10 @@ nmap <leader>x :!xdg-open %<cr><cr>
 imap ;; <Esc>A;<Esc>
 imap ,, <Esc>A,<Esc>
 
+" Increament and decrement the number under the cursor
+nnoremap + <C-a>
+nnoremap - <C-x>
+
 " -----------------------------------------------------------------------------
 " Plugins
 " -----------------------------------------------------------------------------
