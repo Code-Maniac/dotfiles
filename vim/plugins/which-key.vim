@@ -16,5 +16,8 @@ augroup WhichKeySetup
     autocmd User PlugLoaded call WhichKeySetup()
 augroup END
 
+nnoremap <silent><space> :WhichKey<CR>
+set timeoutlen=500
+
 endif
 

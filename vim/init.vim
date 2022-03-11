@@ -43,14 +43,8 @@ set redrawtime=10000 " allow more time for loading syntax on large files
 set cursorcolumn
 set cursorline
 
-" delete trailing whitespace on write in certain filetypes
-autocmd BufWritePre *.c,*.cpp,*.h,*.hpp :%s/\s\+$//e
-
-" go back to the line we were on when we last closed the file unless it's git
-" commit
-if !&diff
-	autocmd BufReadPost * if &filetype !=# 'gitcommit' | if line("'\'") > 0 && line("'\"") <= line("$") | exe "normal! g`\"" | endif
-endif
+" add additional / take away unwanted format options
+au VimEnter * set formatoptions+=pn | set formatoptions-=o
 
 " -----------------------------------------------------------------------------
 " Key maps
@@ -84,9 +78,6 @@ imap ,, <Esc>A,<Esc>
 nnoremap + <C-a>
 nnoremap - <C-x>
 
-" If the current file is gitcommit then move to the first line and first column
-autocmd FileType gitcommit call setpos('.', [0, 1, 1, 0])
-
 " -----------------------------------------------------------------------------
 " Plugins
 " -----------------------------------------------------------------------------
@@ -108,6 +99,7 @@ source ~/.config/nvim/plugins/vim-easymotion.vim
 source ~/.config/nvim/plugins/vim-tmux-navigator.vim
 source ~/.config/nvim/plugins/fzf.vim
 source ~/.config/nvim/plugins/which-key.vim
+source ~/.config/nvim/plugins/zen-mode.vim
 source ~/.config/nvim/plugins/nerdtree.vim
 
 source ~/.config/nvim/plugins/vim-repeat.vim
@@ -126,7 +118,7 @@ source ~/.config/nvim/plugins/argtextobj.vim
 source ~/.config/nvim/plugins/splitjoin.vim
 source ~/.config/nvim/plugins/vim-closetag.vim
 source ~/.config/nvim/plugins/vim-pasta.vim
-source ~/.config/nvim/plugins/auto-pairs.vim
+" source ~/.config/nvim/plugins/auto-pairs.vim
 
 source ~/.config/nvim/plugins/vim-polyglot.vim
 source ~/.config/nvim/plugins/vim-bitbake.vim
@@ -142,3 +134,12 @@ doautocmd User PlugLoaded
 " ------------------------------------------------------------------------------
 " Miscellaneous
 " ------------------------------------------------------------------------------
+
+" delete trailing whitespace on write in certain filetypes
+autocmd BufWritePre *.c,*.cpp,*.h,*.hpp :%s/\s\+$//e
+
+" go back to the line we were on when we last closed the file unless it's git
+" commit
+if !&diff
+    autocmd BufReadPost * if &filetype !=# 'gitcommit' | if line("'\'") > 0 && line("'\"") <= line("$") | exe "normal! g`\"" | endif
+endif
