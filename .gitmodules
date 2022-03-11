@@ -23,3 +23,12 @@
 [submodule "scripts/gitignore"]
 	path = scripts/gitignore
 	url = https://github.com/code-maniac/gitignore
+[submodule "jetbrainsmono"]
+	path = jetbrainsmono
+	url = https://github.com/JetBrains/JetBrainsMono
+[submodule "kitty/kitty-themes"]
+	path = kitty/kitty-themes
+	url = https://github.com/dexpota/kitty-themes
+[submodule "tmux/tpm"]
+	path = tmux/tpm
+	url = https://github.com/tmux-plugins/tpm
