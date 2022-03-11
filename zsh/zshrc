@@ -125,10 +125,48 @@ export LESS_TERMCAP_us=$'\e[1;4;31m'
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 # add some fzf config here
+if hash fzf &> /dev/null
+then
+  export FZF_DEFAULT_OPTS=" \
+    --height=40% \
+    --layout=reverse \
+    --info=inline \
+    --border \
+    --margin=1 \
+    --padding=1 \
+    --preview 'less {}' \
+    --preview-window right"
+
+
+  function do-fzf {
+    (files=$(fzf-tmux)
+    if [ "$?" -eq 0 ];
+    then
+      nvim ${files}
+    fi)
+  }
+
+  # define some functions for using fzf
+  # find is for finding files by name
+  function fzf-find-files {
+    FZF_DEFAULT_COMMAND="rg --files --hidden"
+    do-fzf
+  }
+  function fzf-find-all-files {
+    FZF_DEFAULT_COMMAND="rg --files --hidden --no-ignore"
+    do-fzf
+  }
+
+  # find fzf to ctrl-f
+  bindkey -s '^f' 'fzf-find-files^M'
+  bindkey -s '^s' 'fzf-find-all-files^M'
+
+  # make fzf-tmux default to 80%,80% window
+  alias fzf-tmux="fzf-tmux -p 80%,80%"
+fi
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 # finally if we are not in tmux session then make a new one
 if [ "$TMUX" = "" ]; then tmux attach || tmux new; fi
-

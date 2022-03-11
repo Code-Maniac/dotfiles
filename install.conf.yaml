@@ -30,7 +30,8 @@
     autoconf,
     cmake,
     gnome-tweak-tool,
-    bmap-tools]
+    bmap-tools,
+    fzf]
 - omnipkg-upgrade: true
 
 - shell:
