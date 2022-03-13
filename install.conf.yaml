@@ -30,7 +30,8 @@
     cmake,
     gnome-tweak-tool,
     bmap-tools,
-    fzf]
+    fzf,
+    bat]
 - omnipkg-upgrade: true
 
 - shell:

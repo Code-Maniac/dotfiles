@@ -134,9 +134,10 @@ then
     --border \
     --margin=1 \
     --padding=1 \
-    --preview 'less {}' \
+    --preview 'bat --color=always --style=grid --line-range :300 {}' \
     --preview-window right"
 
+  export BAT_THEME="Dracula"
 
   function do-fzf {
     (files=$(fzf-tmux)
@@ -156,10 +157,20 @@ then
     FZF_DEFAULT_COMMAND="rg --files --hidden --no-ignore"
     do-fzf
   }
+  function fzf-find-git-files {
+    if git status &> /dev/null
+    then
+      git ls-files | fzf
+    else
+      echo "Not in a git repo"
+    fi
+  }
+
 
   # find fzf to ctrl-f
   bindkey -s '^f' 'fzf-find-files^M'
   bindkey -s '^s' 'fzf-find-all-files^M'
+  bindkey -s '^g' 'fzf-find-git-files^M'
 
   # make fzf-tmux default to 80%,80% window
   alias fzf-tmux="fzf-tmux -p 80%,80%"
