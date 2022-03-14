@@ -51,7 +51,8 @@
     - [chmod -R 777 /opt/yp, Make yocto dirs shared]
 
 - link:
-    ~/.config/kitty: kitty
+    ~/.config/kitty/kitty.conf: kitty/kitty.conf
+    ~/.config/kitty/Dracula.conf: kitty/kitty-themes/themes/Dracula.conf
     ~/.zshrc: zsh/zshrc
     ~/.tmux.conf: tmux/tmux.conf
     ~/.tmux/plugins/tpm: tmux/tpm
