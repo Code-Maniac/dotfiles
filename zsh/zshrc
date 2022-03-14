@@ -12,11 +12,20 @@ export KITTYRC=${DOTFILES}/kitty/kitty.conf
 
 # get a path file based on the OSTYPE
 if [[ ${OSTYPE} == 'darwin'* ]]; then
-  PATH_APPEND='darwin'else
+  PATH_APPEND='darwin'
+  FZF_COMMAND=fzf-tmux
 elif grep -q Microsoft /proc/version; then
   PATH_APPEND='linux-wsl'
+  FZF_COMMAND=fzf
 else
   PATH_APPEND=${OSTYPE}
+  FZF_COMMAND=fzf
+
+  # on ubuntu bat is called batcat
+  if hash batcat &> /dev/null
+  then
+    alias bat='batcat'
+  fi
 fi
 export PATHFILE=${DOTFILES}/zsh/path-${PATH_APPEND}
 if [ -r "${PATHFILE}" ]; then
@@ -127,20 +136,26 @@ export LESS_TERMCAP_us=$'\e[1;4;31m'
 # add some fzf config here
 if hash fzf &> /dev/null
 then
+  if hash bat &> /dev/null
+  then
+    FZF_PREVIEW='bat --color=always --style=grid --line-range :300 {}'
+  else
+    FZF_PREVIEW='less'
+  fi
+
   export FZF_DEFAULT_OPTS=" \
     --height=40% \
     --layout=reverse \
     --info=inline \
     --border \
     --margin=1 \
-    --padding=1 \
-    --preview 'bat --color=always --style=grid --line-range :300 {}' \
+    --preview '${FZF_PREVIEW}' \
     --preview-window right"
 
   export BAT_THEME="Dracula"
 
   function do-fzf {
-    (files=$(fzf-tmux)
+    (files=$(${FZF_COMMAND})
     if [ "$?" -eq 0 ];
     then
       nvim ${files}
@@ -160,12 +175,20 @@ then
   function fzf-find-git-files {
     if git status &> /dev/null
     then
-      git ls-files | fzf
+      toplevelabs=$(git rev-parse --show-toplevel)
+      toplevel=$(realpath --relative-to=. ${toplevelabs})
+      gitfiles=$(git ls-tree --full-tree -r HEAD | awk -v toplevel=${toplevel} '{print toplevel "/" $NF}')
+
+      files=$(echo ${gitfiles} | ${FZF_COMMAND})
+
+      if [ "$?" -eq 0 ];
+      then
+        nvim ${files}
+      fi
     else
       echo "Not in a git repo"
     fi
   }
-
 
   # find fzf to ctrl-f
   bindkey -s '^f' 'fzf-find-files^M'

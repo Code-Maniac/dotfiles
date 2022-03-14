@@ -128,6 +128,9 @@ source ~/.config/nvim/plugins/ultisnips.vim
 
 source ~/.config/nvim/plugins/markdown-preview.vim
 
+" add time tracking with wakatime
+source ~/.config/nvim/plugins/wakatime.vim
+
 call plug#end()
 doautocmd User PlugLoaded
 
