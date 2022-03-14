@@ -190,10 +190,26 @@ then
     fi
   }
 
-  # find fzf to ctrl-f
+  # add keybindings for the above functions
   bindkey -s '^f' 'fzf-find-files^M'
   bindkey -s '^s' 'fzf-find-all-files^M'
   bindkey -s '^g' 'fzf-find-git-files^M'
+
+  # if docker is installed then add keybinding to ctrl-t for running image
+  if hash docker &> /dev/null
+  then
+    function fzf-docker-run {
+      image=$(docker image list | awk 'NR!=1 {print $1}' | grep -v "<none>")
+      selectedimage=$(echo ${image} | ${FZF_COMMAND})
+
+      if [ "$?" -eq 0 ];
+      then
+        docker run -it ${selectedimage}
+      fi
+    }
+
+    bindkey -s '^t' 'fzf-docker-run^M'
+  fi
 
   # make fzf-tmux default to 80%,80% window
   alias fzf-tmux="fzf-tmux -p 80%,80%"
