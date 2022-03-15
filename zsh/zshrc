@@ -13,20 +13,12 @@ export KITTYRC=${DOTFILES}/kitty/kitty.conf
 # get a path file based on the OSTYPE
 if [[ ${OSTYPE} == 'darwin'* ]]; then
   PATH_APPEND='darwin'
-  FZF_COMMAND=fzf-tmux
 elif grep -q Microsoft /proc/version; then
   PATH_APPEND='linux-wsl'
-  FZF_COMMAND=fzf
 else
   PATH_APPEND=${OSTYPE}
-  FZF_COMMAND=fzf
-
-  # on ubuntu bat is called batcat
-  if hash batcat &> /dev/null
-  then
-    alias bat='batcat'
-  fi
 fi
+
 export PATHFILE=${DOTFILES}/zsh/path-${PATH_APPEND}
 if [ -r "${PATHFILE}" ]; then
   # if the path file exists
@@ -131,89 +123,7 @@ export LESS_TERMCAP_ue=$'\e[0m'
 export LESS_TERMCAP_us=$'\e[1;4;31m'
 
 # add fzf into the mix
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-
-# add some fzf config here
-if hash fzf &> /dev/null
-then
-  if hash bat &> /dev/null
-  then
-    FZF_PREVIEW='bat --color=always --style=grid --line-range :300 {}'
-  else
-    FZF_PREVIEW='less'
-  fi
-
-  export FZF_DEFAULT_OPTS=" \
-    --height=40% \
-    --layout=reverse \
-    --info=inline \
-    --border \
-    --margin=1 \
-    --preview '${FZF_PREVIEW}' \
-    --preview-window right"
-
-  export BAT_THEME="Dracula"
-
-  function do-fzf {
-    (files=$(${FZF_COMMAND})
-    if [ "$?" -eq 0 ];
-    then
-      nvim ${files}
-    fi)
-  }
-
-  # define some functions for using fzf
-  # find is for finding files by name
-  function fzf-find-files {
-    FZF_DEFAULT_COMMAND="rg --files --hidden"
-    do-fzf
-  }
-  function fzf-find-all-files {
-    FZF_DEFAULT_COMMAND="rg --files --hidden --no-ignore"
-    do-fzf
-  }
-  function fzf-find-git-files {
-    if git status &> /dev/null
-    then
-      toplevelabs=$(git rev-parse --show-toplevel)
-      toplevel=$(realpath --relative-to=. ${toplevelabs})
-      gitfiles=$(git ls-tree --full-tree -r HEAD | awk -v toplevel=${toplevel} '{print toplevel "/" $NF}')
-
-      files=$(echo ${gitfiles} | ${FZF_COMMAND})
-
-      if [ "$?" -eq 0 ];
-      then
-        nvim ${files}
-      fi
-    else
-      echo "Not in a git repo"
-    fi
-  }
-
-  # add keybindings for the above functions
-  bindkey -s '^f' 'fzf-find-files^M'
-  bindkey -s '^s' 'fzf-find-all-files^M'
-  bindkey -s '^g' 'fzf-find-git-files^M'
-
-  # if docker is installed then add keybinding to ctrl-t for running image
-  if hash docker &> /dev/null
-  then
-    function fzf-docker-run {
-      image=$(docker image list | awk 'NR!=1 {print $1}' | grep -v "<none>")
-      selectedimage=$(echo ${image} | ${FZF_COMMAND})
-
-      if [ "$?" -eq 0 ];
-      then
-        docker run -it ${selectedimage}
-      fi
-    }
-
-    bindkey -s '^t' 'fzf-docker-run^M'
-  fi
-
-  # make fzf-tmux default to 80%,80% window
-  alias fzf-tmux="fzf-tmux -p 80%,80%"
-fi
+[[ ! -f ${DOTFILES}/zsh/fzf.zsh ]] || source ${DOTFILES}/zsh/fzf.zsh
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
