@@ -7,7 +7,7 @@ fi
 # define functions
 function do-fzf {
   (files=$(${FZF_COMMAND})
-  if [ "$?" -eq 0 ];
+  if [ ${#files} -gt 0 ]
   then
     nvim ${files}
   fi)
@@ -28,13 +28,13 @@ function fzf-find-all-files {
 function fzf-find-git-files {
   if git status &> /dev/null
   then
-    toplevelabs=$(git rev-parse --show-toplevel)
-    toplevel=$(realpath --relative-to=. ${toplevelabs})
-    gitfiles=$(git ls-tree --full-tree -r HEAD | awk -v toplevel=${toplevel} '{print toplevel "/" $NF}')
+    local toplevelabs=$(git rev-parse --show-toplevel)
+    local toplevel=$(realpath --relative-to=. ${toplevelabs})
+    local gitfiles=$(git ls-tree --full-tree -r HEAD | awk -v toplevel=${toplevel} '{print toplevel "/" $NF}')
 
-    files=$(echo ${gitfiles} | ${FZF_COMMAND})
+    local files=$(echo ${gitfiles} | ${FZF_COMMAND})
 
-    if [ "$?" -eq 0 ];
+    if [ ${#files} -gt 0 ]
     then
       nvim ${files}
     fi
@@ -50,10 +50,10 @@ function fzf-docker-run {
     return
   fi
 
-  image=$(docker image list | awk 'NR!=1 {print $1}' | grep -v "<none>")
-  selectedimage=$(echo ${image} | ${FZF_COMMAND})
+  local image=$(docker image list | awk 'NR!=1 {print $1}' | grep -v "<none>")
+  local selectedimage=$(echo ${image} | ${FZF_COMMAND})
 
-  if [ "$?" -eq 0 ];
+  if [ ${#selectedimage} -gt 0 ]
   then
     docker run -it ${selectedimage}
   fi
@@ -74,6 +74,24 @@ else
   fi
 fi
 
+function fzf-cd {
+  if git status &> /dev/null
+  then
+    # if in a git directory then find from root to max depth
+    local gitroot=$(realpath --relative-to=. $(git rev-parse --show-toplevel))
+    local directories=$(find ${gitroot} -type d )
+  else
+    # if not in git directory then find from current directory to max 1 depth
+    local directories=$(find -maxdepth 1 -type d)
+  fi
+
+  local dir=$(echo ${directories} | fzf)
+  if [ ${#dir} -gt 0 ]
+  then
+    cd ${dir}
+  fi
+}
+
 if hash bat &> /dev/null
 then
   FZF_PREVIEW='bat --color=always --style=grid --line-range :300 {}'
@@ -90,13 +108,14 @@ export FZF_DEFAULT_OPTS=" \
   --preview '${FZF_PREVIEW}' \
   --preview-window right"
 
-export BAT_THEME="Dracula"
+# export BAT_THEME="Dracula"
 
 # add keybindings for the above functions
 bindkey -s '^f' 'fzf-find-files^M'
 bindkey -s '^s' 'fzf-find-all-files^M'
 bindkey -s '^g' 'fzf-find-git-files^M'
 bindkey -s '^t' 'fzf-docker-run^M'
+bindkey -s '^y' 'fzf-cd^M'
 
 # make fzf-tmux default to 80%,80% window
 alias fzf-tmux="fzf-tmux -p 80%,80%"

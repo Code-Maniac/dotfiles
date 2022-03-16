@@ -100,6 +100,7 @@ source ~/.config/nvim/plugins/vim-tmux-navigator.vim
 source ~/.config/nvim/plugins/fzf.vim
 source ~/.config/nvim/plugins/which-key.vim
 source ~/.config/nvim/plugins/zen-mode.vim
+source ~/.config/nvim/plugins/twilight.vim
 source ~/.config/nvim/plugins/nerdtree.vim
 
 source ~/.config/nvim/plugins/vim-repeat.vim
@@ -118,7 +119,7 @@ source ~/.config/nvim/plugins/argtextobj.vim
 source ~/.config/nvim/plugins/splitjoin.vim
 source ~/.config/nvim/plugins/vim-closetag.vim
 source ~/.config/nvim/plugins/vim-pasta.vim
-" source ~/.config/nvim/plugins/auto-pairs.vim
+source ~/.config/nvim/plugins/delimitmate.vim
 
 source ~/.config/nvim/plugins/vim-polyglot.vim
 source ~/.config/nvim/plugins/vim-bitbake.vim
