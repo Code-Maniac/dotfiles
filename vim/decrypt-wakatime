@@ -1,0 +1,60 @@
+#!/bin/bash
+
+function create_fds {
+    tmpfile=$(mktemp /tmp/wakatime.sh.XXXXXX)
+
+    exec 3>"$tmpfile"
+    exec 4<"$tmpfile"
+}
+
+function destroy_fds {
+    # cleanup
+    exec 3<&-
+    exec 4>&-
+}
+
+TRIES=0
+MAX_TRIES=3
+
+INPUT="wakatime.cfg.aes"
+OUTPUT="wakatime.cfg"
+
+echo "Decrypting wakatime configuration"
+
+if [ ! -f ${INPUT} ]; then
+    echo "No file to decrypt"
+    exit 1
+fi
+
+STATUS=1
+while [ $TRIES -lt $MAX_TRIES ]
+do
+    # read a password
+    printf "Password: "
+    read -s password
+    echo
+
+    # create the fds that will be used with aespipe
+    create_fds
+
+    # md5 our password - this way we can use <20 characters for password
+    echo "$password" | md5sum >&3
+    DATA=$(cat ${INPUT} | aespipe -d -p 4)
+
+    # check that the resulting file is all text and if it is then we consider
+    # password to be correct
+    # otherwise retry for max of 3 tries total
+    if [[ "${DATA}" = *[![:ascii:]]* ]]; then
+        destroy_fds
+        echo "Incorrect Password."
+        ((TRIES+=1))
+    else
+        destroy_fds
+        echo "Password correct, ${INPUT} decrypted to ${OUTPUT}"
+        echo "${DATA}" > ${OUTPUT}
+        STATUS=0
+        break
+    fi
+done
+
+exit ${STATUS}

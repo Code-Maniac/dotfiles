@@ -1,0 +1,54 @@
+#!/bin/bash
+
+function create_fds {
+    tmpfile=$(mktemp /tmp/wakatime.sh.XXXXXX)
+
+    exec 3>"$tmpfile"
+    exec 4<"$tmpfile"
+}
+
+function destroy_fds {
+    # cleanup
+    exec 3<&-
+    exec 4>&-
+}
+
+TRIES=0
+MAX_TRIES=3
+
+INPUT="wakatime.cfg"
+OUTPUT="wakatime.cfg.aes"
+
+echo "Encrypting ${INPUT}"
+
+if [ ! -f ${INPUT} ]; then
+    echo "No file to encrypt"
+    exit 1
+fi
+
+STATUS=1
+while [ $TRIES -lt $MAX_TRIES ]
+do
+    printf "Password: "
+    read -s password1
+    echo
+
+    printf "Confirm password: "
+    read -s password2
+    echo
+
+    if [ "${password1}" = "${password2}" ]; then
+        create_fds
+
+        echo "${password1}" | md5sum >&3
+        cat ${INPUT} | aespipe -p 4 > ${OUTPUT}
+
+        destroy_fds
+        STATUS=0
+        break
+    else
+        echo "Passwords do not match"
+        ((TRIES+=1))
+    fi
+done
+

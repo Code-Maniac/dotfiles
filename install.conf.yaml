@@ -7,9 +7,14 @@
 
 - create:
     - ~/Downloads
+    - ~/Downloads
+    - ~/projects
     - ~/.antigen
     - ~/.config
+    - ~/.config/kitty
     - ~/.config/nvim
+    - ~/.tmux
+    - ~/.tmux/plugins
     - ~/.vim/undo-history
     - ~/.local/share/nvim/backup//
 
@@ -40,8 +45,20 @@
     - [curl -L git.io/antigen > ~/.antigen/antigen.zsh, Installing antigen]
     - [sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)", Installing oh-my-zsh]
     - [./gen-ssh-keys, Generate ssh keys]
-    - [nvim --headless +PlugInstall +qa, Get vim plugins]
     - [curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y, Install Rust]
+    -
+      command: cd vim && ./decrypt-wakatime && ln -sf vim/wakatime.cfg ~/.wakatime.cfg
+      description: Decrypt wakatime api-key
+      stdin: true
+      stdout: true
+
+# Link wakatime.cfg before running nvim to get plugins - otherwise it hangs due to prompt for key
+- link:
+    ~/.wakatime.cfg: vim/wakatime.cfg
+
+# Now run PlugInstall on nvim
+- shell:
+  - [nvim --headless +PlugInstall +qa, Get vim plugins]
 
 - sudo:
   - shell:
