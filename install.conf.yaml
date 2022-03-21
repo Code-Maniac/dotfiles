@@ -17,6 +17,9 @@
     - ~/.tmux/plugins
     - ~/.vim/undo-history
     - ~/.local/share/nvim/backup//
+    - ~/.oe
+    - ~/.oe/downloads
+    - ~/.oe/sstate-cache
 
 - omnipkg-update: true
 - omnipkg-install: [
@@ -46,6 +49,7 @@
     - [sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)", Installing oh-my-zsh]
     - [./gen-ssh-keys, Generate ssh keys]
     - [curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y, Install Rust]
+    - [cat oe/site.conf.sed | sed 's@~@'"$HOME"'@g' > oe/site.conf, Replace ~ in yocto site.conf]
     -
       command: cd vim && ./decrypt-wakatime && ln -sf vim/wakatime.cfg ~/.wakatime.cfg
       description: Decrypt wakatime api-key
@@ -64,8 +68,6 @@
   - shell:
     - [scripts/install_scripts, Installing scripts]
     - [curl https://commondatastorage.googleapis.com/git-repo-downloads/repo > /usr/local/bin/repo && chmod 755 /usr/local/bin/repo, Install Repo]
-    - [mkdir -p /opt/yp && mkdir -p /opt/yp/sstate-cache && mkdir -p /opt/yp/downloads, Make yocto downloads and sstate dirs]
-    - [chmod -R 777 /opt/yp, Make yocto dirs shared]
 
 - link:
     ~/.config/kitty/kitty.conf: kitty/kitty.conf
@@ -79,4 +81,4 @@
     ~/.fonts: jetbrainsmono/fonts/ttf
     ~/.config/pycodestyle: config/pycodestyle
     ~/.gitconfig: git/gitconfig
-    ~/.oe: oe
+    ~/.oe/site.conf: oe/site.conf
