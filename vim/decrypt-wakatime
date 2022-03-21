@@ -1,5 +1,11 @@
 #!/bin/bash
 
+if [[ ${OSTYPE} == 'darwin'* ]]; then
+    MD5=md5
+else
+    MD5=md5sum
+fi
+
 function create_fds {
     tmpfile=$(mktemp /tmp/wakatime.sh.XXXXXX)
 
@@ -38,7 +44,7 @@ do
     create_fds
 
     # md5 our password - this way we can use <20 characters for password
-    echo "$password" | md5sum >&3
+    echo "$password" | ${MD5} | awk '{print $1}' >&3
     DATA=$(cat ${INPUT} | aespipe -d -p 4)
 
     # check that the resulting file is all text and if it is then we consider
