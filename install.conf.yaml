@@ -84,4 +84,3 @@
     ~/.fonts: jetbrainsmono/fonts/ttf
     ~/.config/pycodestyle: config/pycodestyle
     ~/.gitconfig: git/gitconfig
-    ~/.oe: oe
