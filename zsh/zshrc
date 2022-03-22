@@ -45,6 +45,15 @@ antigen use oh-my-zsh
 # theme
 antigen theme romkatv/powerlevel10k
 
+# plugins
+antigen bundle python
+antigen bundle rust
+antigen bundle golang
+antigen bundle docker
+antigen bundle history
+antigen bundle sudo
+antigen bundle man
+
 # antigen is finished
 antigen apply
 
@@ -121,6 +130,9 @@ export LESS_TERMCAP_se=$'\e[0m'
 export LESS_TERMCAP_so=$'\e[01;33m'
 export LESS_TERMCAP_ue=$'\e[0m'
 export LESS_TERMCAP_us=$'\e[1;4;31m'
+
+# add alias for thefuck
+eval "$(thefuck --alias fuck)"
 
 # add fzf into the mix
 [[ ! -f ${DOTFILES}/zsh/fzf.zsh ]] || source ${DOTFILES}/zsh/fzf.zsh

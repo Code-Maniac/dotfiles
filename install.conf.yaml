@@ -40,7 +40,8 @@
     bmap-tools,
     fzf,
     bat,
-    aespipe]
+    aespipe,
+    thefuck]
 - omnipkg-upgrade: true
 
 - shell:
