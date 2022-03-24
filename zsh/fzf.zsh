@@ -62,16 +62,8 @@ function fzf-docker-run {
 # set stuff based on os
 if [[ ${OSTYPE} == 'darwin'* ]]; then
   FZF_COMMAND=fzf-tmux
-elif grep -q Microsoft /proc/version; then
-  FZF_COMMAND=fzf
 else
   FZF_COMMAND=fzf
-
-  # on ubuntu bat is called batcat
-  if hash batcat &> /dev/null
-  then
-    alias bat='batcat'
-  fi
 fi
 
 function fzf-cd {

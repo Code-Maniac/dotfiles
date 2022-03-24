@@ -39,7 +39,6 @@
     gnome-tweak-tool,
     bmap-tools,
     fzf,
-    bat,
     aespipe,
     thefuck]
 - omnipkg-upgrade: true
@@ -51,6 +50,7 @@
     - [sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)", Installing oh-my-zsh]
     - [./gen-ssh-keys, Generate ssh keys]
     - [curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y, Install Rust]
+    - [cargo install bat, Install bat]
     - [cat oe/site.conf.sed | sed 's@~@'"$HOME"'@g' > oe/site.conf, Replace ~ in yocto site.conf]
     - [rm -f vim/wakatime.cfg, Remove existing wakatime.cfg]
     -
@@ -84,3 +84,4 @@
     ~/.fonts: jetbrainsmono/fonts/ttf
     ~/.config/pycodestyle: config/pycodestyle
     ~/.gitconfig: git/gitconfig
+    ~/.config/bat: bat
