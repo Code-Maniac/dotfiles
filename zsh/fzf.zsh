@@ -79,7 +79,7 @@ function fzf-cd {
   then
     # if in a git directory then find from root to max depth
     local gitroot=$(realpath --relative-to=. $(git rev-parse --show-toplevel))
-    local directories=$(find ${gitroot} -type d -not -path */\.git/*)
+    local directories=$(find ${gitroot} -type d -not -path "*/\.git/*")
   else
     # if not in git directory then find from current directory to max 1 depth
     local directories=$(find -maxdepth 1 -type d)
