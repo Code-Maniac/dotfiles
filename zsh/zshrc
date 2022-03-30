@@ -47,7 +47,7 @@ antigen theme romkatv/powerlevel10k
 
 # plugins
 antigen bundle python
-antigen bundle rust
+# antigen bundle rust
 antigen bundle golang
 antigen bundle docker
 antigen bundle history

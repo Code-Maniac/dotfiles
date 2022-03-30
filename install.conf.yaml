@@ -40,7 +40,9 @@
     bmap-tools,
     fzf,
     aespipe,
-    thefuck]
+    thefuck,
+    akmod-nvidia,
+    xorg-x11-drv-nvidia-cuda]
 - omnipkg-upgrade: true
 
 - shell:
