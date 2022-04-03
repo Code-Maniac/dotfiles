@@ -1,5 +1,5 @@
 # export useful information
-export DOTFILES=/home/$USER/.dotfiles
+export DOTFILES=~/.dotfiles
 # vim path information
 export VIMRC=${DOTFILES}/vim/init.vim
 export VIMPLUGINS=${DOTFILES}/vim/plugins
@@ -13,6 +13,7 @@ export KITTYRC=${DOTFILES}/kitty/kitty.conf
 # get a path file based on the OSTYPE
 if [[ ${OSTYPE} == 'darwin'* ]]; then
   PATH_APPEND='darwin'
+  export LIBRARY_PATH="$LIBRARY_PATH:$(brew --prefix)/lib"
 elif grep -q Microsoft /proc/version; then
   PATH_APPEND='linux-wsl'
 else
