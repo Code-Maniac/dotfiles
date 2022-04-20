@@ -93,7 +93,7 @@
     ~/.vimrc: vim/vimrc
     ~/.config/nvim/init.vim: vim/init.vim
     ~/.config/nvim/plugins: vim/plugins
-    ~/.fonts: jetbrainsmono/fonts/ttf
+    ~/.fonts: fonts
     ~/.config/pycodestyle: config/pycodestyle
     ~/.gitconfig: git/gitconfig
     ~/.config/bat: bat
