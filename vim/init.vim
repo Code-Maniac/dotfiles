@@ -98,6 +98,7 @@ source ~/.config/nvim/plugins/vim-devicons.vim
 source ~/.config/nvim/plugins/vim-easymotion.vim
 source ~/.config/nvim/plugins/vim-tmux-navigator.vim
 source ~/.config/nvim/plugins/fzf.vim
+" source ~/.config/nvim/plugins/telescope.vim " NOTE: WIP
 source ~/.config/nvim/plugins/which-key.vim
 source ~/.config/nvim/plugins/zen-mode.vim
 source ~/.config/nvim/plugins/twilight.vim
