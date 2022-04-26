@@ -1,0 +1,12 @@
+#!/bin/bash
+
+EXIT_CODE=0
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+echo "Installing rust-analyzer"
+if ! ${SCRIPT_DIR}/install-rust-analyzer &> /dev/null
+then
+    EXIT_CODE=1
+fi
+
+exit ${EXIT_CODE}

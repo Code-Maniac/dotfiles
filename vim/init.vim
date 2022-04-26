@@ -94,6 +94,7 @@ call plug#begin(data_dir . '/plugins')
 source ~/.config/nvim/plugins/colorscheme.vim
 source ~/.config/nvim/plugins/vim-airline.vim
 source ~/.config/nvim/plugins/vim-devicons.vim
+source ~/.config/nvim/plugins/vim-specs.vim
 
 source ~/.config/nvim/plugins/vim-easymotion.vim
 source ~/.config/nvim/plugins/vim-tmux-navigator.vim
@@ -135,6 +136,7 @@ source ~/.config/nvim/plugins/markdown-preview.vim
 source ~/.config/nvim/plugins/wakatime.vim
 
 call plug#end()
+
 doautocmd User PlugLoaded
 
 " ------------------------------------------------------------------------------

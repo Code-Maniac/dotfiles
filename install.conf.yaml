@@ -81,6 +81,7 @@
 
 - sudo:
   - shell:
+    - [lsp/install-language-servers, Installing language servers]
     - [scripts/install_scripts, Installing scripts]
     - [curl https://commondatastorage.googleapis.com/git-repo-downloads/repo > /usr/local/bin/repo && chmod 755 /usr/local/bin/repo, Install Repo]
 

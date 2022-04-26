@@ -142,3 +142,6 @@ eval "$(thefuck --alias fuck)"
 
 # finally if we are not in tmux session then make a new one
 if [ "$TMUX" = "" ]; then tmux attach || tmux new; fi
+
+# add exit so if anything gets auto appended then it's ignored
+return
