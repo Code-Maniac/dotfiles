@@ -96,6 +96,12 @@ then
   alias ccat="vimcat"
 fi
 
+# add "copy" command if xclip is installed which copies to clipboard
+if hash xclip &> /dev/null
+then
+  alias copy="xclip -selection clipboard"
+fi
+
 # add additional functionality to the make command if cargo is installed
 # if in a rust project directory then resolve make as cargo build instead of
 # make. Otherwise just resolve as make
