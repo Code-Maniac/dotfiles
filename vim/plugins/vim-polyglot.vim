@@ -6,3 +6,4 @@ au BufNewFile,BufRead *.txt if expand("%:t") =~ ".*CMakeLists.*" | set syntax=cm
 
 " treat .qrc files as xml
 au BufNewFile,BufRead *.qrc :set filetype=xml
+
