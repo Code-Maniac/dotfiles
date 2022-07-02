@@ -5,7 +5,7 @@
 Use the following command to pull and install
 
 ```bash
-git clone https://gitlab.com/CodeGremlin/dotfiles.git ~/.dotfiles && cd ~/.dotfiles && ./install
+git clone https://github.com/code-maniac/dotfiles.git ~/.dotfiles && cd ~/.dotfiles && ./install
 ```
 
 ## License
