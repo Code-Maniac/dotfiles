@@ -1,6 +1,7 @@
 Plug 'rafi/awesome-vim-colorschemes'
 Plug 'dracula/vim', { 'as': 'dracula' }
 
+let g:dracula_colorterm = 0
 augroup DraculaOverrides
     autocmd!
     autocmd ColorScheme dracula highlight DraculaBoundary ctermbg=none guibg=none
