@@ -2,11 +2,20 @@
 
 ## Installation
 
+### Linux and MacOS
+
 Use the following command to pull and install
 
 ```bash
 git clone https://github.com/code-maniac/dotfiles.git ~/.dotfiles && cd ~/.dotfiles && ./install
 ```
+
+### Windows
+
+For use on windows:
+1. Run setup-windows.ps1 in powershell as administrator
+2. In windows terminal settings, set the font to a NerdFont for wsl
+3. Continue as for Linux and MacOS
 
 ## License
 

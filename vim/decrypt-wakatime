@@ -19,11 +19,11 @@ function destroy_fds {
     exec 4>&-
 }
 
-if hash ${MD5} &> /dev/null
+if !hash ${MD5} &> /dev/null
 then
     echo "${MD5} not found"
     exit 1
-else if hash aespipe &> /dev/null
+elif !hash aespipe &> /dev/null
 then
     echo "aespipe not found"
     exit 1
