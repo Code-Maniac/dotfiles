@@ -21,8 +21,9 @@
     - ~/.oe/downloads
     - ~/.oe/sstate-cache
 
-- omnipkg-update: true
-- omnipkg-install: [
+- omnipkg:
+  - update
+  - install: [
     # if on fedora then enable the rpmfusion free and non-free repos
     https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm,
     https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm,
@@ -53,7 +54,7 @@
     mesa-libGLU-devel,
     ffmpeg-libs,
     screen]
-- omnipkg-upgrade: true
+  - upgrade
 
 - shell:
     - [curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim, Installing vim-plug]
