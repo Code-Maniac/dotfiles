@@ -25,9 +25,9 @@
   - update
   - install: [
     # if on fedora then enable the rpmfusion free and non-free repos
-    https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm,
-    https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm,
-    g++,
+    { dnf: https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm },
+    { dnf: https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm },
+    { linux: g++ },
     [ python3, python ],
     [ python3-pip, python-pip ],
     kitty,
@@ -46,13 +46,13 @@
     fzf,
     aespipe,
     thefuck,
-    kernel-devel,
-    kernel-headers-$(uname -r),
-    akmod-nvidia,
-    xorg-x11-drv-nvidia-cuda,
-    mesa-libGL-devel,
-    mesa-libGLU-devel,
-    ffmpeg-libs,
+    { dnf: kernel-devel },
+    { dnf: kernel-headers-$(uname -r) },
+    { dnf: akmod-nvidia },
+    { dnf: xorg-x11-drv-nvidia-cuda },
+    { dnf: mesa-libGL-devel },
+    { dnf: mesa-libGLU-devel },
+    { dnf: ffmpeg-libs },
     screen]
   - upgrade
 
