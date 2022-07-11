@@ -79,6 +79,9 @@ then
     # set nvim to the default editor
     export EDITOR=${NVIM}
     export VISUAL=${NVIM}
+
+    # add alias nvimdiff to be consistent with vimdiff
+    alias nvimdiff="nvim -d"
 fi
 
 # add symlinks for working with python
