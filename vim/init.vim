@@ -132,6 +132,8 @@ source ~/.config/nvim/plugins/ultisnips.vim
 
 source ~/.config/nvim/plugins/markdown-preview.vim
 
+source ~/.config/nvim/plugins/vimspector.vim
+
 " add time tracking with wakatime
 source ~/.config/nvim/plugins/wakatime.vim
 
