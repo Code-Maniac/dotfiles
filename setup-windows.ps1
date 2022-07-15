@@ -10,4 +10,7 @@ choco install microsoft-windows-terminal
 echo "Install WSL Ubuntu (BIOS Hardware Virtualisation must be enabled)"
 wsl --install -d Ubuntu
 
+echo "Copy Window Terminal settings to AppData Local"
+cp ./winterm/settings.json %LOCALAPPDATA%/Packages/Microsoft.WindowTerminal_8wekyb3d8bbwe/LocalState/settings.json
+
 echo "All finished"
