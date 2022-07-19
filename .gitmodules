@@ -35,3 +35,6 @@
 [submodule "scripts/bar"]
 	path = scripts/bar
 	url = https://github.com/code-maniac/bar
+[submodule "scripts/svn-vimdiff"]
+	path = scripts/svn-vimdiff
+	url = https://github.com/code-maniac/svn-vimdiff
