@@ -82,6 +82,8 @@ then
 
     # add alias nvimdiff to be consistent with vimdiff
     alias nvimdiff="nvim -d"
+    # make diff go to nvimdiff
+    alias diff="nvimdiff"
 fi
 
 # add symlinks for working with python
