@@ -39,6 +39,11 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
+# enable autojump if debian based (otherwise enabled automatically)
+if [ -f "/etc/debian_version" ]; then
+  source /usr/share/autojump/autojump.sh
+fi
+
 # load plugin manager and oh-my-zsh
 source ~/.antigen/antigen.zsh
 antigen use oh-my-zsh
@@ -54,6 +59,9 @@ antigen bundle docker
 antigen bundle history
 antigen bundle sudo
 antigen bundle man
+
+# get zsh-syntax-highlighting plugin
+antigen bundle zsh-users/zsh-syntax-highlighting
 
 # antigen is finished
 antigen apply

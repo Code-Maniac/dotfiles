@@ -49,6 +49,7 @@
     fzf,
     aespipe,
     thefuck,
+    { dnf: autojump-zsh, else: autojump },
     { dnf: kernel-devel },
     { dnf: kernel-headers-$(uname -r) },
     { dnf: akmod-nvidia },
