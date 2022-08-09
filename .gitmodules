@@ -38,3 +38,6 @@
 [submodule "scripts/svn-vimdiff"]
 	path = scripts/svn-vimdiff
 	url = https://github.com/code-maniac/svn-vimdiff
+[submodule "scripts/findr"]
+	path = scripts/findr
+	url = https://github.com/code-maniac/findr
