@@ -41,3 +41,6 @@
 [submodule "scripts/findr"]
 	path = scripts/findr
 	url = https://github.com/code-maniac/findr
+[submodule "scripts/plate"]
+	path = scripts/plate
+	url = https://github.com/code-maniac/plate
