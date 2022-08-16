@@ -69,7 +69,6 @@
     - [curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y, Install Rust]
     - [cargo install bat, Install bat]
     - [cat oe/site.conf.sed | sed 's@~@'"$HOME"'@g' > oe/site.conf, Replace ~ in yocto site.conf]
-    - [rm -f vim/wakatime.cfg, Remove existing wakatime.cfg]
     -
       command: cd vim && ./decrypt-wakatime && ln -sf vim/wakatime.cfg ~/.wakatime.cfg
       description: Decrypt wakatime api-key

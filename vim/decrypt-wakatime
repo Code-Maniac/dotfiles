@@ -35,6 +35,17 @@ MAX_TRIES=3
 INPUT="wakatime.cfg.aes"
 OUTPUT="wakatime.cfg"
 
+if [ -f ${OUTPUT} ]; then
+    TYPE=$(file -0 ${OUTPUT} | cut -d $' ' -f2)
+
+    if [ "${TYPE}" = "ASCII" ]; then
+        # processed output already exists
+        exit 0
+    else
+        rm ${OUTPUT}
+    fi
+fi
+
 echo "Decrypting wakatime configuration"
 
 if [ ! -f ${INPUT} ]; then
