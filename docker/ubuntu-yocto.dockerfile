@@ -118,3 +118,5 @@ USER ${USER}
 RUN git clone https://github.com/code-maniac/dotfiles /home/${USER}/.dotfiles
 WORKDIR /home/${USER}/.dotfiles
 RUN ./install
+
+WORKDIR /home/${USER}

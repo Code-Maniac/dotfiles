@@ -57,7 +57,9 @@
     { dnf: mesa-libGL-devel },
     { dnf: mesa-libGLU-devel },
     { dnf: ffmpeg-libs },
-    screen]
+    screen,
+    { brew: docker },
+    { brew: colima }]
   - upgrade
 
 - shell:
