@@ -1,0 +1,9 @@
+#!/bin/bash
+
+ZSHDIR=~/.oh-my-zsh
+
+if [ -d ${ZSHDIR} ]; then
+    rm -rf ${ZSHDIR}
+fi
+
+sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
