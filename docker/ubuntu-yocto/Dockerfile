@@ -2,6 +2,7 @@ FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV LANG en_US.utf8
+ENV DOCKERIMAGE y
 ARG USER=nick
 ARG PUID=1000
 ARG PGID=1000
@@ -117,6 +118,8 @@ USER ${USER}
 # install user dotfiles
 RUN git clone https://github.com/code-maniac/dotfiles /home/${USER}/.dotfiles
 WORKDIR /home/${USER}/.dotfiles
-RUN ./install
+RUN ./install; exit 0
 
+# set default shell as it doesn't seem to be working above
+CMD [ "zsh" ]
 WORKDIR /home/${USER}

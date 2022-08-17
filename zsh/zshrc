@@ -161,7 +161,7 @@ eval "$(thefuck --alias fuck)"
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 # finally if we are not in tmux session then make a new one
-if [ "$TMUX" = "" ]; then tmux attach || tmux new; fi
+if [ "$DOCKERIMAGE" = "" ] && [ "$TMUX" = "" ]; then tmux attach || tmux new; fi
 
 # add exit so if anything gets auto appended then it's ignored
 return
