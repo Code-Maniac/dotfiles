@@ -78,6 +78,9 @@ imap ,, <Esc>A,<Esc>
 nnoremap + <C-a>
 nnoremap - <C-x>
 
+" add mapping for running bar script in vim
+nnoremap<silent><leader><space> :!bar<cr>
+
 " -----------------------------------------------------------------------------
 " Plugins
 " -----------------------------------------------------------------------------
