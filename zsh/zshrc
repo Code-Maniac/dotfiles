@@ -94,14 +94,10 @@ then
     alias diff="nvimdiff"
 fi
 
-# add symlinks for working with python
-if hash python &> /dev/null
-then
-  alias py="python"
-fi
+# if python3 is called via python3 then alias python to call python3
 if hash python3 &> /dev/null
 then
-  alias py3="python3"
+  alias python="python3"
 fi
 
 # if vimcat is installed then add ccat alias
