@@ -71,7 +71,7 @@
     - [./zsh/install-oh-my-zsh, Installing oh-my-zsh]
     - [./gen-ssh-keys, Generate ssh keys]
     - [./rust/install-rust, Install Rust]
-    - [cargo install bat, Install bat]
+    - [cargo install --locked --force bat, Install bat]
     - [cat oe/site.conf.sed | sed 's@~@'"$HOME"'@g' > oe/site.conf, Replace ~ in yocto site.conf]
     -
       command: cd vim && ./decrypt-wakatime && ln -sf vim/wakatime.cfg ~/.wakatime.cfg
