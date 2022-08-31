@@ -142,7 +142,7 @@ source ~/.config/nvim/plugins/wakatime.vim
 
 call plug#end()
 
-doautocmd User PlugLoaded
+doautocmd User PlugLoaded    
 
 " ------------------------------------------------------------------------------
 " Miscellaneous

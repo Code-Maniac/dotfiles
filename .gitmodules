@@ -44,3 +44,6 @@
 [submodule "scripts/plate"]
 	path = scripts/plate
 	url = https://github.com/code-maniac/plate
+[submodule "vim/astronvim"]
+	path = vim/astronvim
+	url = https://github.com/astronvim/astronvim
