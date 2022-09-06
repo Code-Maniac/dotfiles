@@ -26,8 +26,8 @@ local config = {
 	},
 
 	-- Set colorscheme to use
-	-- colorscheme = "default_theme",
-	colorscheme = "dracula",
+	colorscheme = "default_theme",
+	-- colorscheme = "dracula",
 
 	-- Override highlight groups in any theme
 	highlights = {
