@@ -79,6 +79,16 @@
       description: Install bat
       stdin: true
       stdout: true
+    - 
+      command: cargo install --locked --force evcxr_repl
+      description: Install EVCXR
+      stdin: true
+      stdout: true
+    - 
+      command: cargo install --locked --force bacon
+      description: Install bacon
+      stdin: true
+      stdout: true
     - [cat oe/site.conf.sed | sed 's@~@'"$HOME"'@g' > oe/site.conf, Replace ~ in yocto site.conf]
     -
       command: cd vim && ./decrypt-wakatime && ln -sf vim/wakatime.cfg ~/.wakatime.cfg
