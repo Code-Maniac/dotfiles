@@ -141,6 +141,12 @@ if grep -q microsoft /proc/version; then
   alias getcc="funcgetcc"
 fi
 
+# add p command
+# attempt to change directory within ~/projects
+function p() {
+  cd ~/projects/$1
+}
+
 # add bitbake, recipetool and devtool alias'
 alias bb="bitbake"
 alias bbl="bitbake-layers"

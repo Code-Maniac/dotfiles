@@ -19,6 +19,7 @@
     - ~/.oe
     - ~/.oe/downloads
     - ~/.oe/sstate-cache
+    - ~/.config/rustfmt
 
 - omnipkg:
   - update
@@ -126,3 +127,4 @@
     ~/.gitconfig: git/gitconfig
     ~/.subversion/config: svn/config
     ~/.config/bat: bat
+    ~/.config/rustfmt/rustfmt.toml: rust/rustfmt.toml
