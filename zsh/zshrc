@@ -14,7 +14,7 @@ export KITTYRC=${DOTFILES}/kitty/kitty.conf
 if [[ ${OSTYPE} == 'darwin'* ]]; then
   PATH_APPEND='darwin'
   export LIBRARY_PATH="$LIBRARY_PATH:$(brew --prefix)/lib"
-elif grep -q Microsoft /proc/version; then
+elif grep -q microsoft /proc/version; then
   PATH_APPEND='linux-wsl'
 else
   PATH_APPEND=${OSTYPE}
@@ -126,6 +126,19 @@ function cargomake() {
 if hash cargo &> /dev/null
 then
   alias make="cargomake"
+fi
+
+# if I'm on WSL then I'm probably at work so add script to get
+# the compile commands json from windows cmake projects and replace C:/ with
+# /mnt/c
+if grep -q microsoft /proc/version; then
+  # run within root of project to bring it in
+  function funcgetcc() {
+    file=$(find . -type f -name "compile_commands.json" -print -quit)
+    sed -i "s/C\:/\/mnt\/c/g" ${file} &> /dev/null
+    cp ${file} . &> /dev/null
+  }
+  alias getcc="funcgetcc"
 fi
 
 # add bitbake, recipetool and devtool alias'
