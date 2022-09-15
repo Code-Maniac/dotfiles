@@ -120,7 +120,6 @@
     ~/.zshrc: zsh/zshrc
     ~/.tmux.conf: tmux/tmux.conf
     ~/.tmux/plugins/tpm: tmux/tpm
-    ~/.vimrc: vim/vimrc
     ~/.config/nvim: vim/astronvim
     ~/.config/nvim/lua/user: vim/astronvim-user
     # ~/.config/nvim/init.vim: vim/init.vim
