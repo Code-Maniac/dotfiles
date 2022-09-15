@@ -45,6 +45,9 @@
     subversion,
     autoconf,
     cmake,
+    clang,
+    clang-format,
+    clang-tidy,
     { linux: valgrind },
     { apt: gnome-tweak-tool, dnf: gnome-tweak-tool, require_gui: true },
     bmap-tools,
@@ -128,3 +131,4 @@
     ~/.subversion/config: svn/config
     ~/.config/bat: bat
     ~/.config/rustfmt/rustfmt.toml: rust/rustfmt.toml
+    ~/.clang-format: clang/clang-format
