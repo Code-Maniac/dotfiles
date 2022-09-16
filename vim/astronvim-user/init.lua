@@ -183,6 +183,8 @@ local config = {
 			["<leader>bt"] = { "<cmd>BufferLineSortByTabs<cr>", desc = "Sort by tabs" },
 			-- quick save
 			-- ["<C-s>"] = { ":w!<cr>", desc = "Save File" },  -- change description but the same command
+			["<leader>Tt"] = { "<cmd>TodoTrouble<cr>", desc = "Todo Trouble" },
+			["<leader>Tl"] = { "<cmd>TodoTelescope<cr>", desc = "Todo Telescope" },
 		},
 		t = {
 			-- setting a mapping to false will disable it
@@ -309,6 +311,27 @@ local config = {
 					vim.cmd("nnoremap <silent>z :ZenMode<CR>")
 				end,
 			},
+			{
+				"folke/todo-comments.nvim",
+				config = function()
+					require("todo-comments").setup({
+						-- your configuration comes here
+						-- or leave it empty to use the default settings
+						-- refer to the configuration section below
+					})
+				end,
+			},
+			{
+				"folke/trouble.nvim",
+				requires = "kyazdani42/nvim-web-devicons",
+				config = function()
+					require("trouble").setup({
+						-- your configuration comes here
+						-- or leave it empty to use the default settings
+						-- refer to the configuration section below
+					})
+				end,
+			},
 		},
 		-- All other entries override the require("<key>").setup({...}) call for default plugins
 		["null-ls"] = function(config) -- overrides `require("null-ls").setup(config)`
@@ -349,6 +372,13 @@ local config = {
 		packer = { -- overrides `require("packer").setup(...)`
 			compile_path = vim.fn.stdpath("data") .. "/packer_compiled.lua",
 		},
+		-- ["which-key"] = {
+		-- 	T = {
+		-- 		name = "Todo",
+		-- 		t = { "<cmd>TodoTrouble<cr>", desc = "Trouble" },
+		-- 		l = { "<cmd>TodoTelescope<cr>", desc = "Telescope" },
+		-- 	},
+		-- },
 	},
 
 	-- LuaSnip Options
