@@ -258,6 +258,7 @@ local config = {
 					vim.cmd("nmap <silent><F7> :VimspectorReset<CR>")
 				end,
 			},
+			{ "nvim-telescope/telescope-vimspector.nvim" },
 			{ "wakatime/vim-wakatime" },
 			{
 				"folke/zen-mode.nvim",
@@ -332,6 +333,8 @@ local config = {
 					})
 				end,
 			},
+			-- add bitbake syntax highlighting
+			{ "kergoth/vim-bitbake" },
 		},
 		-- All other entries override the require("<key>").setup({...}) call for default plugins
 		["null-ls"] = function(config) -- overrides `require("null-ls").setup(config)`
