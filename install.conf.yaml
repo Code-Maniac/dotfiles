@@ -93,6 +93,11 @@
       description: Install bacon
       stdin: true
       stdout: true
+    - 
+      command: cargo install --locked --force cargo-expand
+      description: Install bacon
+      stdin: true
+      stdout: true
     - [cat oe/site.conf.sed | sed 's@~@'"$HOME"'@g' > oe/site.conf, Replace ~ in yocto site.conf]
     -
       command: cd vim && ./decrypt-wakatime && ln -sf vim/wakatime.cfg ~/.wakatime.cfg
