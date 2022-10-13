@@ -95,7 +95,7 @@
       stdout: true
     - 
       command: cargo install --locked --force cargo-expand
-      description: Install bacon
+      description: Install cargo-expand
       stdin: true
       stdout: true
     - [cat oe/site.conf.sed | sed 's@~@'"$HOME"'@g' > oe/site.conf, Replace ~ in yocto site.conf]
