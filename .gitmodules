@@ -47,3 +47,6 @@
 [submodule "vim/astronvim"]
 	path = vim/astronvim
 	url = https://github.com/astronvim/astronvim
+[submodule "scripts/qemu-scripts"]
+	path = scripts/qemu-scripts
+	url = https://github.com/Code-Maniac/qemu-scripts
