@@ -40,7 +40,6 @@
     neovim,
     curl,
     npm,
-    ripgrep,
     git,
     subversion,
     autoconf,
@@ -96,6 +95,16 @@
     - 
       command: cargo install --locked --force cargo-expand
       description: Install cargo-expand
+      stdin: true
+      stdout: true
+    - 
+      command: cargo install --locked --force ripgrep
+      description: Install ripgrep
+      stdin: true
+      stdout: true
+    - 
+      command: cargo install --locked --force bottom
+      description: Install bottom
       stdin: true
       stdout: true
     - [cat oe/site.conf.sed | sed 's@~@'"$HOME"'@g' > oe/site.conf, Replace ~ in yocto site.conf]
