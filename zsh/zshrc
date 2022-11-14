@@ -29,6 +29,7 @@ if [ -r "${PATHFILE}" ]; then
   # Ignores empty lines
   # I currently have plans to work this further into a common path file +
   # a system specific path file
+  PATH+=':'
   PATH+=$(cat ${PATHFILE} | sed -e 's/^[ \t]//' | sed -e 's/[ \t]*$//' | sed -e '/^$/d' | grep -v '^#' | tr '\n' ':')
 fi
 

@@ -1,1 +1,2 @@
 # wsl specific path items go in here
+/home/nick/.local/bin

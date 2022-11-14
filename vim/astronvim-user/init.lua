@@ -127,7 +127,8 @@ local config = {
 	lsp = {
 		-- enable servers that you already have installed without mason
 		servers = {
-			-- "pyright"
+			-- "pyright",
+			"pylsp",
 		},
 		-- easily add or disable built in mappings added during LSP attaching
 		mappings = {
@@ -160,10 +161,32 @@ local config = {
 			-- },
 			-- Example disabling formatting for a specific language server
 			-- gopls = { -- override table for require("lspconfig").gopls.setup({...})
-			--   on_attach = function(client, bufnr)
+			--   on_attach = function(client, bufnr
 			--     client.resolved_capabilities.document_formatting = false
 			--   end
 			-- }
+			--
+			-- pylsp = {
+			-- 	plugins = {
+			-- 		pycodestyle = {
+			-- 			ignore = {
+			-- 				"E501",
+			-- 				"E302",
+			-- 				"E303",
+			-- 				"E305",
+			-- 			},
+			-- 		},
+			-- 		jedi = {
+			-- 			auto_import_modules = { "numpy", "pygame" },
+			-- 		},
+			-- 		jedi_completion = {
+			-- 			enabled = true,
+			-- 			eager = true,
+			-- 			cache_for = { "numpy", "pygame" },
+			-- 			fuzzy = true,
+			-- 		},
+			-- 	},
+			-- },
 		},
 	},
 
