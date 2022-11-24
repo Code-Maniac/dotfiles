@@ -25,6 +25,7 @@ AlwaysBreakBeforeMultilineStrings: false
 AlwaysBreakTemplateDeclarations: MultiLine
 BinPackArguments: false
 BinPackParameters: false
+PackConstructorInitializers: Never
 
 BreakBeforeBraces: Custom
 BraceWrapping:
