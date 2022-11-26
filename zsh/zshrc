@@ -195,6 +195,14 @@ eval "$(thefuck --alias fuck)"
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
+# if we are in home then change to windows home
+if grep -q microsoft /proc/version &> /dev/null; then
+  if [[ $PWD = $HOME ]]; then
+    # change this to prompt
+    cd /mnt/c/Users/jayco
+  fi
+fi
+
 # finally if we are not in tmux session then make a new one
 if [ "$DOCKERIMAGE" = "" ] && [ "$TMUX" = "" ]; then tmux attach || tmux new; fi
 
