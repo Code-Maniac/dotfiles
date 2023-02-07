@@ -7,10 +7,19 @@ curl.exe -A "MS" https://webinstall.dev/nerdfont
 echo "Install Window Terminal"
 choco install microsoft-windows-terminal
 
+echo "Install oh-my-posh"
+winget install XP8K0HKJFRXGCK
+
+echo "Install additional folder/file icons"
+Install-Module -Name Terminal-Icons -Repository PSGallery
+
 echo "Install WSL Ubuntu (BIOS Hardware Virtualisation must be enabled)"
 wsl --install -d Ubuntu
 
 echo "Copy Window Terminal settings to AppData Local"
 cp ./winterm/settings.json $env:LOCALAPPDATA/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json
+
+echo "Copy powershell profile"
+cp ./powershell/Microsoft.PowerShell_profile.ps1 $PROFILE
 
 echo "All finished"

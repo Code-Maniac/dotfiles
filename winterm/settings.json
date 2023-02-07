@@ -4,6 +4,27 @@
     "actions": 
     [
         {
+            "command": "toggleFullscreen",
+            "keys": "shift+f11"
+        },
+        {
+            "command": 
+            {
+                "action": "splitPane",
+                "split": "auto",
+                "splitMode": "duplicate"
+            },
+            "keys": "alt+shift+d"
+        },
+        {
+            "command": "unbound",
+            "keys": "f11"
+        },
+        {
+            "command": "find",
+            "keys": "ctrl+shift+f"
+        },
+        {
             "command": "paste",
             "keys": "ctrl+v"
         },
@@ -14,24 +35,7 @@
                 "singleLine": false
             },
             "keys": "ctrl+c"
-        },
-        {
-            "command": "find",
-            "keys": "ctrl+shift+f"
-        },
-        {
-            "command": 
-            {
-                "action": "splitPane",
-                "split": "auto",
-                "splitMode": "duplicate"
-            },
-            "keys": "alt+shift+d"
         }
-    ],
-    "keybindings": [
-        { "command": "toggleFullscreen", "keys": "shift+f11" },
-        { "command": null, "keys": "f11" },
     ],
     "copyFormatting": "none",
     "copyOnSelect": false,
@@ -42,7 +46,12 @@
         "list": 
         [
             {
+                "colorScheme": "Dracula",
                 "commandline": "%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+                "font": 
+                {
+                    "face": "DroidSansMono NF"
+                },
                 "guid": "{61c54bbd-c2c6-5271-96e7-009a87ff44bf}",
                 "hidden": false,
                 "name": "Windows PowerShell"
@@ -67,14 +76,36 @@
             },
             {
                 "colorScheme": "Dracula",
+                "experimental.retroTerminalEffect": false,
                 "font": 
                 {
-                    "face": "DroidSansMono NF"
+                    "face": "DroidSansMono NF",
+                    "size": 10,
+                    "weight": "light"
                 },
                 "guid": "{2c4de342-38b7-51cf-b940-2309a097f518}",
                 "hidden": false,
                 "name": "Ubuntu",
+                "padding": "0",
                 "source": "Windows.Terminal.Wsl"
+            },
+            {
+                "guid": "{7546b761-ee8a-538f-83b2-f65054333c0f}",
+                "hidden": false,
+                "name": "Developer Command Prompt for VS 2017 (2)",
+                "source": "Windows.Terminal.VisualStudio"
+            },
+            {
+                "guid": "{c93cf103-ad64-5ed2-83af-000e70b51567}",
+                "hidden": false,
+                "name": "Developer Command Prompt for VS 2019",
+                "source": "Windows.Terminal.VisualStudio"
+            },
+            {
+                "guid": "{7518751c-fa26-553f-b8a1-27fac75838f9}",
+                "hidden": false,
+                "name": "Developer PowerShell for VS 2019",
+                "source": "Windows.Terminal.VisualStudio"
             }
         ]
     },
@@ -311,5 +342,6 @@
             "yellow": "#808000"
         }
     ],
-    "startOnUserLogin": true
+    "startOnUserLogin": true,
+    "theme": "dark"
 }
