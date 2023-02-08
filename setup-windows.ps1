@@ -4,8 +4,25 @@ Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManage
 echo "Install Nerd Fonts (Droid Sans Mono)"
 curl.exe -A "MS" https://webinstall.dev/nerdfont
 
-echo "Install Window Terminal"
-choco install microsoft-windows-terminal
+echo "Install Apps"
+$apps = 
+    "microsoft-windows-terminal",
+    "rust",
+    "python3",
+    "conan",
+    "cmake",
+    "git",
+    "git-lfs",
+    "gimp",
+    "jetbrainstoolbox",
+    "google-chrome",
+    "7zip",
+    "autoruns"
+
+foreach ($app in $apps) {
+    echo "Install $app"
+    choco install -y $app
+}
 
 echo "Install oh-my-posh"
 winget install XP8K0HKJFRXGCK
