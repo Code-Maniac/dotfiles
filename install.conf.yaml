@@ -136,6 +136,7 @@
     ~/.tmux/plugins/tpm: tmux/tpm
     ~/.config/nvim: vim/astronvim
     ~/.config/nvim/lua/user: vim/astronvim-user
+    ~/.ideavimrc: vim/ideavimrc
     # ~/.config/nvim/init.vim: vim/init.vim
     # ~/.config/nvim/plugins: vim/plugins
     ~/.fonts: fonts

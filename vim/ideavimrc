@@ -1,0 +1,9 @@
+" set the leader key to comma
+let mapleader = ","
+
+" enable emulation for vim-surround vim-commentary and vim-easymotion
+set surround
+set commentary
+set easymotion
+set argtextobj
+
