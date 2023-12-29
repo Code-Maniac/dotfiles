@@ -56,7 +56,6 @@
     { dnf: autojump-zsh, else: autojump },
     { dnf: kernel-devel },
     { dnf: kernel-headers-$(uname -r) },
-    { dnf: akmod-nvidia },
     { dnf: xorg-x11-drv-nvidia-cuda },
     { dnf: mesa-libGL-devel },
     { dnf: mesa-libGLU-devel },

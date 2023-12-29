@@ -146,6 +146,9 @@ if grep -q microsoft /proc/version &> /dev/null; then
   alias getcc="funcgetcc"
 fi
 
+# Add alias for kitty to make sure it starts maximized
+alias kitty="kitty --start-as maximized"
+
 # add p command
 # attempt to change directory within ~/projects
 function p() {

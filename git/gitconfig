@@ -24,7 +24,18 @@
 [user]
 	name = Nick Jaycock
 	email = jaycock.n@gmail.com
+	signingKey = ""
 [credential]
 	helper = store
 [color]
 	ui = auto
+[gpg]
+	format = openpgp
+	program = gpg
+[commit]
+	gpgSign = false
+[tag]
+	forceSignAnnotated = false
+[gpg "ssh"]
+	program = ssh-keygen
+	allowedSignersFile = ""
