@@ -53,6 +53,7 @@
     fzf,
     aespipe,
     thefuck,
+    { apt: libfuse2 },
     { dnf: autojump-zsh, else: autojump },
     { dnf: kernel-devel },
     { dnf: kernel-headers-$(uname -r) },
@@ -125,6 +126,8 @@
   - shell:
     - [lsp/install-language-servers, Installing language servers]
     - [scripts/install_scripts, Installing scripts]
+    - [install-scripts/install-docker.sh Install Docker]
+    - [install-scripts/install-spotify.sh Install Spotify]
     - [curl https://commondatastorage.googleapis.com/git-repo-downloads/repo > /usr/local/bin/repo && chmod 755 /usr/local/bin/repo, Install Repo]
 
 - link:
