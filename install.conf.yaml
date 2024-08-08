@@ -63,7 +63,8 @@
     { dnf: ffmpeg-libs },
     screen,
     { brew: docker },
-    { brew: colima }]
+    { brew: colima },
+    fvm]
   - upgrade
 
 - shell:

@@ -17,7 +17,8 @@ $apps =
     "jetbrainstoolbox",
     "google-chrome",
     "7zip",
-    "autoruns"
+    "autoruns",
+    "fvm"
 
 foreach ($app in $apps) {
     echo "Install $app"
