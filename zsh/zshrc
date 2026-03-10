@@ -1,4 +1,11 @@
-# export useful information
+# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
+# Initialization code that may require console input (password prompts, [y/n]
+# confirmations, etc.) must go above this block; everything else may go below.
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
+# export useful infomation
 export DOTFILES=~/.dotfiles
 # vim path information
 export VIMRC=${DOTFILES}/vim/init.vim
@@ -13,7 +20,6 @@ export KITTYRC=${DOTFILES}/kitty/kitty.conf
 # get a path file based on the OSTYPE
 if [[ ${OSTYPE} == 'darwin'* ]]; then
   PATH_APPEND='darwin'
-  export LIBRARY_PATH="$LIBRARY_PATH:$(brew --prefix)/lib"
 elif grep -q microsoft /proc/version &> /dev/null; then
   PATH_APPEND='linux-wsl'
 else
@@ -33,11 +39,10 @@ if [ -r "${PATHFILE}" ]; then
   PATH+=$(cat ${PATHFILE} | sed -e 's/^[ \t]//' | sed -e 's/[ \t]*$//' | sed -e '/^$/d' | grep -v '^#' | tr '\n' ':')
 fi
 
-# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
-# Initialization code that may require console input (password prompts, [y/n]
-# confirmations, etc.) must go above this block; everything else may go below.
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+# Add brew library path
+if [[ ${OSTYPE} == 'darwin'* ]]; then
+  PATH_APPEND='darwin'
+  export LIBRARY_PATH="$LIBRARY_PATH:$(brew --prefix)/lib"
 fi
 
 # enable autojump if debian based (otherwise enabled automatically)
@@ -56,7 +61,7 @@ antigen theme romkatv/powerlevel10k
 antigen bundle python
 # antigen bundle rust
 antigen bundle golang
-antigen bundle docker
+# antigen bundle docker
 antigen bundle history
 antigen bundle sudo
 antigen bundle man
@@ -128,10 +133,10 @@ function cargomake() {
     make $@
   fi
 }
-if hash cargo &> /dev/null
-then
-  alias make="cargomake"
-fi
+# if hash cargo &> /dev/null
+# then
+#   alias make="cargomake"
+# fi
 
 # if I'm on WSL then I'm probably at work so add script to get
 # the compile commands json from windows cmake projects and replace C:/ with
@@ -207,7 +212,9 @@ if grep -q microsoft /proc/version &> /dev/null; then
 fi
 
 # finally if we are not in tmux session then make a new one
-if [ "$DOCKERIMAGE" = "" ] && [ "$TMUX" = "" ]; then tmux attach || tmux new; fi
+# if [ "$DOCKERIMAGE" = "" ] && [ "$TMUX" = "" ]; then tmux attach || tmux new; fi
 
 # add exit so if anything gets auto appended then it's ignored
 return
+
+export STM32_PRG_PATH=/Applications/STMicroelectronics/STM32Cube/STM32CubeProgrammer/STM32CubeProgrammer.app/Contents/MacOs/bin

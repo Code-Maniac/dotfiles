@@ -2,6 +2,7 @@
 	defaultBranch = master
 [core]
 	editor = nvim
+	excludesfile = /Users/nick/.gitignore_global
 [merge]
 	tool = vim-conflicted
 	conflictstyle = diff3
@@ -34,8 +35,15 @@
 	program = gpg
 [commit]
 	gpgSign = false
+	template = /Users/nick/.stCommitMsg
 [tag]
 	forceSignAnnotated = false
 [gpg "ssh"]
 	program = ssh-keygen
 	allowedSignersFile = ""
+[difftool "sourcetree"]
+	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
+	path = 
+[mergetool "sourcetree"]
+	cmd = /Applications/Sourcetree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
+	trustExitCode = true
