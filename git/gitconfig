@@ -35,7 +35,6 @@
 	program = gpg
 [commit]
 	gpgSign = false
-	template = /Users/nick/.stCommitMsg
 [tag]
 	forceSignAnnotated = false
 [gpg "ssh"]
