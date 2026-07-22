@@ -1,0 +1,5 @@
+# Personal identity. Applied via [includeIf "gitdir:~/.dotfiles/"] so that
+# work on the dotfiles repo is always committed as personal, regardless of
+# any machine-local override in ~/.gitconfig.local.
+[user]
+	email = jaycock.n@gmail.com

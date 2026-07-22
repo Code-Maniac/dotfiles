@@ -83,6 +83,10 @@ then
     alias cp="rsync -avz"
 fi
 
+if which ripgrep -v > /dev/null 2>&1; then
+    alias ripgrep="rg"
+fi
+
 # if nvim is installed then use it instead of vim
 if hash nvim &> /dev/null
 then

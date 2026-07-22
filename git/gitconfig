@@ -2,12 +2,12 @@
 	defaultBranch = master
 [core]
 	editor = nvim
-	excludesfile = /Users/nick/.gitignore_global
+	excludesfile = ~/.gitignore_global
 [merge]
-	tool = vim-conflicted
+	tool = nvimdiff
 	conflictstyle = diff3
 [mergetool]
-	prompt = true
+	prompt = false
 [diff]
 	tool = nvimdiff
 [difftool]
@@ -24,6 +24,7 @@
 	cmd = nvim +Conflicted
 [user]
 	name = Nick Jaycock
+	# Default email; override per-machine in ~/.gitconfig.local (see [include] below)
 	email = jaycock.n@gmail.com
 	signingKey = ""
 [credential]
@@ -46,3 +47,13 @@
 [mergetool "sourcetree"]
 	cmd = /Applications/Sourcetree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
 	trustExitCode = true
+[mergetool "nvimdiff"]
+	cmd = nvim -d -c 'wincmd l' -c 'norm ]c' \"$LOCAL\" \"$MERGED\" \"$REMOTE\"
+# Machine-specific overrides (email, signingKey, etc.). Untracked; missing file is ignored.
+# Read last, so anything here wins over the defaults above.
+[include]
+	path = ~/.gitconfig.local
+# Always commit to the dotfiles repo as personal, whatever the machine default is.
+# Read after the machine-local include above, so it wins inside ~/.dotfiles.
+[includeIf "gitdir:~/.dotfiles/"]
+	path = ~/.dotfiles/git/gitconfig-personal
