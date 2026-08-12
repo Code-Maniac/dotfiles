@@ -215,6 +215,65 @@ if grep -q microsoft /proc/version &> /dev/null; then
   fi
 fi
 
+# add completions
+FPATH=$HOME/.docker/completions:$FPATH
+autoload -Uz compinit
+compinit
+
+# activate a venv from ~/.venvs by name, e.g. `venv west`
+venv() {
+  local root=$HOME/.venvs
+  local -a available
+  available=($root/*(/N:t))
+
+  if [[ -z $1 ]]; then
+    print -u2 "usage: venv <name>"
+    print -u2 "available: ${available[*]}"
+    return 1
+  fi
+
+  local activate=$root/$1/bin/activate
+  if [[ ! -f $activate ]]; then
+    print -u2 "venv: no venv named '$1' in $root"
+    print -u2 "available: ${available[*]}"
+    return 1
+  fi
+
+  # drop any active venv first so PATH doesn't stack
+  (( $+functions[deactivate] )) && deactivate
+
+  source $activate
+}
+
+_venv() { _values 'venv' $HOME/.venvs/*(/N:t) }
+compdef _venv venv
+
+# create a venv in ~/.venvs and activate it, e.g. `venv-new myproj [python3.13]`
+venv-new() {
+  local root=$HOME/.venvs
+
+  if [[ -z $1 ]]; then
+    print -u2 "usage: venv-new <name> [python]"
+    return 1
+  fi
+
+  local target=$root/$1
+  if [[ -e $target ]]; then
+    print -u2 "venv-new: '$1' already exists — activate it with: venv $1"
+    return 1
+  fi
+
+  local py=${2:-python3}
+  if ! (( $+commands[$py] )) && [[ ! -x $py ]]; then
+    print -u2 "venv-new: no such interpreter: $py"
+    return 1
+  fi
+
+  $py -m venv $target || return 1
+  print "created $target ($($target/bin/python --version))"
+  venv $1
+}
+
 # finally if we are not in tmux session then make a new one
 # if [ "$DOCKERIMAGE" = "" ] && [ "$TMUX" = "" ]; then tmux attach || tmux new; fi
 
