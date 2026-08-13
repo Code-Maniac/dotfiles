@@ -55,6 +55,8 @@ fi
 FPATH=$HOME/.docker/completions:$FPATH
 # drop `_<command>` files in here for anything else (e.g. _west)
 FPATH=$HOME/.zsh/completions:$FPATH
+# zsh-users/zsh-completions submodule
+FPATH=$DOTFILES/zsh/zsh-completions/src:$FPATH
 
 # load plugin manager and oh-my-zsh
 source ~/.antigen/antigen.zsh
@@ -77,6 +79,14 @@ antigen bundle zsh-users/zsh-syntax-highlighting
 
 # antigen is finished
 antigen apply
+
+# antigen zcompiles its compdump in a detached background job, so .zcompdump.zwc
+# can end up holding stale contents without being older than .zcompdump. zsh then
+# loads the stale compiled copy and newly added completions never show up until
+# you run compinit by hand. Bin the .zwc unless it's genuinely newer.
+if [[ -f ~/.antigen/.zcompdump.zwc && ! ~/.antigen/.zcompdump.zwc -nt ~/.antigen/.zcompdump ]]; then
+  rm -f ~/.antigen/.zcompdump.zwc
+fi
 
 # if on mac add an alias for nproc
 if [[ ${OSTYPE} == 'darwin'* ]]; then

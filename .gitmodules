@@ -50,3 +50,6 @@
 [submodule "scripts/qemu-scripts"]
 	path = scripts/qemu-scripts
 	url = https://github.com/Code-Maniac/qemu-scripts
+[submodule "zsh/zsh-completions"]
+	path = zsh/zsh-completions
+	url = https://github.com/zsh-users/zsh-completions
