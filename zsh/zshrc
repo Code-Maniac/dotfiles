@@ -50,6 +50,12 @@ if [ -f "/etc/debian_version" ]; then
   source /usr/share/autojump/autojump.sh
 fi
 
+# add completions
+# must come before antigen, which runs the only compinit (in `antigen apply`)
+FPATH=$HOME/.docker/completions:$FPATH
+# drop `_<command>` files in here for anything else (e.g. _west)
+FPATH=$HOME/.zsh/completions:$FPATH
+
 # load plugin manager and oh-my-zsh
 source ~/.antigen/antigen.zsh
 antigen use oh-my-zsh
@@ -214,11 +220,6 @@ if grep -q microsoft /proc/version &> /dev/null; then
     cd /mnt/c/Users/jayco
   fi
 fi
-
-# add completions
-FPATH=$HOME/.docker/completions:$FPATH
-autoload -Uz compinit
-compinit
 
 # activate a venv from ~/.venvs by name, e.g. `venv west`
 venv() {
