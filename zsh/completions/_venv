@@ -1,0 +1,7 @@
+#compdef venv
+
+# Completes the names of virtualenvs in ~/.venvs.
+# Lives here rather than as a `compdef` call in zshrc: antigen defers compinit
+# to a precmd hook, so a compdef in zshrc runs too early and is silently lost.
+
+_values 'venv' $HOME/.venvs/*(/N:t)

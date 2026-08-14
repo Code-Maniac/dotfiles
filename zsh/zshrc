@@ -7,9 +7,6 @@ fi
 
 # export useful infomation
 export DOTFILES=~/.dotfiles
-# vim path information
-export VIMRC=${DOTFILES}/vim/init.vim
-export VIMPLUGINS=${DOTFILES}/vim/plugins
 # zsh path information
 export ZSHRC=${DOTFILES}/zsh/zshrc
 # tmux path information
@@ -26,17 +23,20 @@ else
   PATH_APPEND=${OSTYPE}
 fi
 
+# Drop any empty element inherited from the parent environment. An empty PATH
+# entry means "current directory", and it propagates into every child process,
+# so a shell started before this was fixed can keep handing it down for days.
+path=(${path:#})
+
 export PATHFILE=${DOTFILES}/zsh/path-${PATH_APPEND}
 if [ -r "${PATHFILE}" ]; then
-  # if the path file exists
-  # export path based on what in the path file
-  # Removes leading and trailing white space
-  # Ignores any line beginning with #
-  # Ignores empty lines
-  # I currently have plans to work this further into a common path file +
-  # a system specific path file
-  PATH+=':'
-  PATH+=$(cat ${PATHFILE} | sed -e 's/^[ \t]//' | sed -e 's/[ \t]*$//' | sed -e '/^$/d' | grep -v '^#' | tr '\n' ':')
+  # Append each line of the path file to $path, skipping comments and blanks.
+  # ${(f)...} splits the file on newlines; the quotes matter, as they keep
+  # entries containing spaces intact and yield an empty array (not a single
+  # empty element) when the file has nothing in it. Appending to the $path
+  # array rather than the $PATH string is what avoids a stray ':' — an empty
+  # PATH element means "current directory", which is not something we want.
+  path+=(${(f)"$(grep -vE '^[[:space:]]*(#|$)' ${PATHFILE})"})
 fi
 
 # Add brew library path
@@ -93,13 +93,16 @@ if [[ ${OSTYPE} == 'darwin'* ]]; then
   alias nproc="sysctl -n hw.ncpu"
 fi
 
-# instead of using cp use rsync instead
+# rsync-backed copy. Deliberately NOT called `cp` — rsync differs on trailing
+# slashes and `-a` preserves timestamps, so shadowing cp makes pasted commands
+# behave differently to how they read.
 if hash rsync &> /dev/null
 then
-    alias cp="rsync -avz"
+    alias cpr="rsync -avz"
 fi
 
-if which ripgrep -v > /dev/null 2>&1; then
+if hash rg &> /dev/null
+then
     alias ripgrep="rg"
 fi
 
@@ -120,8 +123,9 @@ then
 
     # add alias nvimdiff to be consistent with vimdiff
     alias nvimdiff="nvim -d"
-    # make diff go to nvimdiff
-    alias diff="nvimdiff"
+    # short form. `diff` itself is left alone so it keeps behaving like the
+    # POSIX tool that scripts and pasted commands expect.
+    alias vdiff="nvimdiff"
 fi
 
 # if python3 is called via python3 then alias python to call python3
@@ -141,22 +145,6 @@ if hash xclip &> /dev/null
 then
   alias copy="xclip -selection clipboard"
 fi
-
-# add additional functionality to the make command if cargo is installed
-# if in a rust project directory then resolve make as cargo build instead of
-# make. Otherwise just resolve as make
-function cargomake() {
-  if cargo check &> /dev/null
-  then
-    cargo build $@
-  else
-    make $@
-  fi
-}
-# if hash cargo &> /dev/null
-# then
-#   alias make="cargomake"
-# fi
 
 # if I'm on WSL then I'm probably at work so add script to get
 # the compile commands json from windows cmake projects and replace C:/ with
@@ -214,11 +202,11 @@ export LESS_TERMCAP_so=$'\e[01;33m'
 export LESS_TERMCAP_ue=$'\e[0m'
 export LESS_TERMCAP_us=$'\e[1;4;31m'
 
-# add alias for thefuck
-# eval "$(thefuck --alias fuck)"
-
 # add fzf into the mix
 [[ ! -f ${DOTFILES}/zsh/fzf.zsh ]] || source ${DOTFILES}/zsh/fzf.zsh
+
+# venv / venv-new helpers for ~/.venvs (completion in zsh/completions/_venv)
+[[ ! -f ${DOTFILES}/zsh/venv.zsh ]] || source ${DOTFILES}/zsh/venv.zsh
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
@@ -231,64 +219,8 @@ if grep -q microsoft /proc/version &> /dev/null; then
   fi
 fi
 
-# activate a venv from ~/.venvs by name, e.g. `venv west`
-venv() {
-  local root=$HOME/.venvs
-  local -a available
-  available=($root/*(/N:t))
-
-  if [[ -z $1 ]]; then
-    print -u2 "usage: venv <name>"
-    print -u2 "available: ${available[*]}"
-    return 1
-  fi
-
-  local activate=$root/$1/bin/activate
-  if [[ ! -f $activate ]]; then
-    print -u2 "venv: no venv named '$1' in $root"
-    print -u2 "available: ${available[*]}"
-    return 1
-  fi
-
-  # drop any active venv first so PATH doesn't stack
-  (( $+functions[deactivate] )) && deactivate
-
-  source $activate
-}
-
-_venv() { _values 'venv' $HOME/.venvs/*(/N:t) }
-compdef _venv venv
-
-# create a venv in ~/.venvs and activate it, e.g. `venv-new myproj [python3.13]`
-venv-new() {
-  local root=$HOME/.venvs
-
-  if [[ -z $1 ]]; then
-    print -u2 "usage: venv-new <name> [python]"
-    return 1
-  fi
-
-  local target=$root/$1
-  if [[ -e $target ]]; then
-    print -u2 "venv-new: '$1' already exists — activate it with: venv $1"
-    return 1
-  fi
-
-  local py=${2:-python3}
-  if ! (( $+commands[$py] )) && [[ ! -x $py ]]; then
-    print -u2 "venv-new: no such interpreter: $py"
-    return 1
-  fi
-
-  $py -m venv $target || return 1
-  print "created $target ($($target/bin/python --version))"
-  venv $1
-}
-
 # finally if we are not in tmux session then make a new one
 # if [ "$DOCKERIMAGE" = "" ] && [ "$TMUX" = "" ]; then tmux attach || tmux new; fi
 
 # add exit so if anything gets auto appended then it's ignored
 return
-
-export STM32_PRG_PATH=/Applications/STMicroelectronics/STM32Cube/STM32CubeProgrammer/STM32CubeProgrammer.app/Contents/MacOs/bin

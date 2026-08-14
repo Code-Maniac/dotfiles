@@ -3,10 +3,10 @@
         relink: true
         force: true
 
-- clean: ['~']
+# ~ alone only sweeps the top level, so dead links under these never got removed
+- clean: ['~', '~/.config', '~/.zsh', '~/.tmux']
 
 - create:
-    - ~/Downloads
     - ~/Downloads
     - ~/projects
     - ~/.antigen
@@ -15,7 +15,6 @@
     - ~/.config/kitty
     - ~/.tmux
     - ~/.tmux/plugins
-    - ~/.vim/undo-history
     - ~/.local/share/nvim/backup//
     - ~/.oe
     - ~/.oe/downloads
@@ -33,11 +32,9 @@
     [ python3, python ],
     [ python3-pip, python-pip ],
     cython,
-    neofetch,
     kitty,
     tmux,
     zsh,
-    vim,
     neovim,
     curl,
     npm,
@@ -53,7 +50,6 @@
     bmap-tools,
     fzf,
     aespipe,
-    thefuck,
     { apt: libfuse2 },
     { dnf: autojump-zsh, else: autojump },
     { dnf: kernel-devel },
@@ -63,13 +59,10 @@
     { dnf: ffmpeg-libs },
     screen,
     { brew: docker },
-    { brew: colima },
-    fvm]
+    { brew: colima }]
   - upgrade
 
 - shell:
-    - [curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim, Installing vim-plug]
-    # - [sh -c 'curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim', Installing vim-plug for neovim]
     - [curl -L git.io/antigen > ~/.antigen/antigen.zsh, Installing antigen]
     - [./zsh/install-oh-my-zsh, Installing oh-my-zsh]
     - [./gen-ssh-keys, Generate ssh keys]
@@ -79,32 +72,32 @@
       stdin: true
       stdout: true
     - 
-      command: cargo install --locked --force bat
+      command: cargo install --locked bat
       description: Install bat
       stdin: true
       stdout: true
     - 
-      command: cargo install --locked --force evcxr_repl
+      command: cargo install --locked evcxr_repl
       description: Install EVCXR
       stdin: true
       stdout: true
     - 
-      command: cargo install --locked --force bacon
+      command: cargo install --locked bacon
       description: Install bacon
       stdin: true
       stdout: true
     - 
-      command: cargo install --locked --force cargo-expand
+      command: cargo install --locked cargo-expand
       description: Install cargo-expand
       stdin: true
       stdout: true
     - 
-      command: cargo install --locked --force ripgrep
+      command: cargo install --locked ripgrep
       description: Install ripgrep
       stdin: true
       stdout: true
     - 
-      command: cargo install --locked --force bottom
+      command: cargo install --locked bottom
       description: Install bottom
       stdin: true
       stdout: true
@@ -121,7 +114,7 @@
 
 # Now run PlugInstall on nvim
 - shell:
-  - [nvim --headless +PackerSync +qa, Get vim plugins]
+  - [nvim --headless "+Lazy! sync" +qa, Get vim plugins]
 
 - sudo:
   - shell:
@@ -139,10 +132,7 @@
     ~/.tmux.conf: tmux/tmux.conf
     ~/.tmux/plugins/tpm: tmux/tpm
     ~/.config/nvim: vim/astronvim
-    ~/.config/nvim/lua/user: vim/astronvim-user
     ~/.ideavimrc: vim/ideavimrc
-    # ~/.config/nvim/init.vim: vim/init.vim
-    # ~/.config/nvim/plugins: vim/plugins
     ~/.fonts: fonts
     ~/.config/pycodestyle: config/pycodestyle
     ~/.gitconfig: git/gitconfig

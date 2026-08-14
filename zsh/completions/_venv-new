@@ -1,0 +1,28 @@
+#compdef venv-new
+
+# Completion for the venv-new helper in zsh/venv.zsh:
+#   venv-new [-r requirements.txt] <name> [python]
+# The name is a venv that does not exist yet, so there is nothing to complete
+# for it — it gets a description only, to label the slot in the menu.
+
+_venv_new_interpreter() {
+  setopt localoptions extendedglob
+
+  local -a pythons
+  # python, python3, python3.14 and friends — the [0-9.]# tail keeps out
+  # python3-config, python-html2text and (thanks to antigen putting its bundle
+  # dirs on $PATH) python.plugin.zsh
+  pythons=(${(k)commands[(I)python[0-9.]#]})
+
+  # the {...} action form keeps the quoting on the glob qualifier intact —
+  # spelled inline as a plain string, the "*(-*)" is split and every file
+  # matches rather than just the executable ones
+  _alternative \
+    'interpreters:python interpreter:compadd -a pythons' \
+    'files:interpreter path:{_files -g "*(-*)"}'
+}
+
+_arguments -s \
+  '-r[install packages from a requirements file]:requirements file:_files' \
+  '1:new venv name: ' \
+  '2:python interpreter:_venv_new_interpreter'
