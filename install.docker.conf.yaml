@@ -1,0 +1,74 @@
+# Pared-down config for running inside the SDKZ docker image.
+#
+# ./install picks this up automatically when SDKZ_IMAGE_VERSION is set. Command
+# line tools and their config only. Deliberately left out of here, and why:
+#
+#   rust           - no toolchain, and nothing cargo-installed. bat and ripgrep
+#                    come from the package manager instead; note that on
+#                    debian/ubuntu bat's binary is called batcat.
+#   GUI            - kitty, fonts, gnome-tweak-tool, spotify: no display to use
+#                    them on beyond the simulator's own VNC session.
+#   host installs  - docker, repo, kernel headers/devel, yocto site.conf. The
+#                    container is not the machine these belong on.
+#   gen-ssh-keys   - the pipeline mounts keys in at /home/user/.ssh; generating a
+#                    throwaway pair in a container that gets deleted is pointless.
+#   ~/.clang-format - the image puts one at /home/user/C4.3_firmware for parent
+#                    discovery. A file in ~ would be found for anything under
+#                    /home/user without a closer one, so firmware formatting is
+#                    left to the image.
+#   wakatime       - decrypting the key is interactive.
+#   language servers, nvim plugin sync - not command line tools, and AstroNvim
+#                    bootstraps its plugins on first launch anyway.
+#
+# omnipkg's "upgrade" is skipped too: a dist-upgrade inside a container is churn
+# that the next docker run throws away.
+
+- defaults:
+    link:
+        relink: true
+        force: true
+
+- clean: ['~']
+
+- create:
+    - ~/.antigen
+    - ~/.zsh
+    - ~/.config
+    - ~/.tmux
+    - ~/.tmux/plugins
+    - ~/.vim/undo-history
+    - ~/.local/share/nvim/backup//
+
+- omnipkg:
+  - update
+  - install: [
+    zsh,
+    tmux,
+    vim,
+    neovim,
+    git,
+    curl,
+    fzf,
+    ripgrep,
+    bat,
+    # zshrc sources /usr/share/autojump/autojump.sh unconditionally on debian
+    # based systems, so this is needed or every shell starts with an error.
+    { dnf: autojump-zsh, else: autojump }]
+
+- shell:
+    # zshrc sources this directly - without it the shell is unusable.
+    - [curl -L git.io/antigen > ~/.antigen/antigen.zsh, Installing antigen]
+
+- sudo:
+  - shell:
+    - [scripts/install_scripts, Installing scripts]
+
+- link:
+    ~/.zshrc: zsh/zshrc
+    ~/.zsh/completions: zsh/completions
+    ~/.tmux.conf: tmux/tmux.conf
+    ~/.tmux/plugins/tpm: tmux/tpm
+    ~/.config/nvim: vim/astronvim
+    ~/.gitconfig: git/gitconfig
+    ~/.config/bat: bat
+    ~/.config/pycodestyle: config/pycodestyle

@@ -3,7 +3,16 @@
 set -e
 
 CONFIG="install.conf.yaml"
+DOCKER_CONFIG="install.docker.conf.yaml"
 DOTBOT_DIR="dotbot"
+
+# The SDKZ image bakes SDKZ_IMAGE_VERSION into its environment, so its presence
+# means this is running inside that container rather than on a host. There the
+# full config makes no sense - no GUI, no rust toolchain, no host-level installs -
+# so use the pared-down one. Set SDKZ_IMAGE_VERSION= to force the full config.
+if [ -n "${SDKZ_IMAGE_VERSION:-}" ]; then
+    CONFIG="${DOCKER_CONFIG}"
+fi
 
 DOTBOT_BIN="bin/dotbot"
 BASEDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -14,6 +23,8 @@ OMNIPKGPLUGIN="${BASEDIR}/dotbot-omnipkg/omnipkg.py"
 
 cd "${BASEDIR}"
 git submodule update --quiet --init --recursive
+
+echo "Installing with ${CONFIG}"
 
 "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" \
     -d "${BASEDIR}" \
