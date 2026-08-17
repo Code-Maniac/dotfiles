@@ -3,17 +3,29 @@
 [core]
 	editor = nvim
 	excludesfile = ~/.gitignore_global
+	pager = delta
 [merge]
 	tool = nvimdiff
-	conflictstyle = diff3
+	conflictstyle = zdiff3
 [mergetool]
 	prompt = false
 [diff]
 	tool = nvimdiff
+	# Needed for delta's moved-line highlighting; without it a moved block
+	# still reads as one deletion and one addition.
+	colorMoved = default
 [difftool]
 	prompt = true
 [difftool "nvimdiff"]
 	cmd = nvim -f -d -c \"wincmd l\" -c 'cd \"$GIT_PREFIX\"' \"$LOCAL\" \"$REMOTE\"
+# delta only pages "git diff"/"log"/"show". "git d" is still difftool above,
+# so side-by-side editing in nvim is unaffected.
+[delta]
+	navigate = true
+	line-numbers = true
+	syntax-theme = Dracula
+[interactive]
+	diffFilter = delta --color-only
 [alias]
 	d = difftool
 	whatadded = log --diff-filter=A --
@@ -24,8 +36,9 @@
 	cmd = nvim +Conflicted
 [user]
 	name = Nick Jaycock
-	# Default email; override per-machine in ~/.gitconfig.local (see [include] below)
-	email = jaycock.n@gmail.com
+	# Work address everywhere by default, on every machine. The dotfiles repo
+	# itself still commits as personal - see the includeIf at the bottom.
+	email = nick.jaycock@veethree.com
 	signingKey = ""
 [credential]
 	helper = store

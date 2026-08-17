@@ -14,6 +14,19 @@ export TMUXRC=${DOTFILES}/tmux/tmux.conf
 # kitty path information
 export KITTYRC=${DOTFILES}/kitty/kitty.conf
 
+# docker does not forward COLORTERM into a container, so nvim sees no truecolor
+# support, leaves termguicolors off, and a truecolor theme like astrodark gets
+# approximated onto the 256 colour cube. The terminal on the far end is still
+# the host's, which is truecolor, so say so.
+#
+# TERM is deliberately left alone. Nothing in here can tell whether the outer
+# terminal is tmux, and guessing xterm-256color when it is screen-256color makes
+# programs emit sequences tmux does not advertise. Forward it from the host
+# instead: docker exec -e TERM -e COLORTERM ...
+if [[ -n ${SDKZ_IMAGE_VERSION:-} ]]; then
+  export COLORTERM=${COLORTERM:-truecolor}
+fi
+
 # get a path file based on the OSTYPE
 if [[ ${OSTYPE} == 'darwin'* ]]; then
   PATH_APPEND='darwin'
@@ -207,6 +220,9 @@ export LESS_TERMCAP_us=$'\e[1;4;31m'
 
 # venv / venv-new helpers for ~/.venvs (completion in zsh/completions/_venv)
 [[ ! -f ${DOTFILES}/zsh/venv.zsh ]] || source ${DOTFILES}/zsh/venv.zsh
+
+# docker wrapper that forwards TERM/COLORTERM into containers
+[[ ! -f ${DOTFILES}/zsh/docker.zsh ]] || source ${DOTFILES}/zsh/docker.zsh
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
