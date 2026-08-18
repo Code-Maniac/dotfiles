@@ -227,6 +227,19 @@ export LESS_TERMCAP_us=$'\e[1;4;31m'
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
+# ~/.p10k.zsh is generated per machine and is not tracked in here, so container
+# specific prompt changes go in as overrides after it has been sourced.
+#
+# The os_icon slot shows ubuntu inside the SDKZ image and fedora outside it,
+# which is too subtle to notice at a glance. Swap it for a docker whale on red -
+# same slot, no layout change, and the only red block in an otherwise grey
+# prompt.
+if [[ -n ${SDKZ_IMAGE_VERSION:-} ]]; then
+  typeset -g POWERLEVEL9K_OS_ICON_CONTENT_EXPANSION=$''  # nf-linux-docker
+  typeset -g POWERLEVEL9K_OS_ICON_FOREGROUND=255
+  typeset -g POWERLEVEL9K_OS_ICON_BACKGROUND=1
+fi
+
 # if we are in home then change to windows home
 if grep -q microsoft /proc/version &> /dev/null; then
   if [[ $PWD = $HOME ]]; then
