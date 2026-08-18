@@ -34,6 +34,7 @@
     - ~/.antigen
     - ~/.zsh
     - ~/.config
+    - ~/.config/clangd
     - ~/.tmux
     - ~/.tmux/plugins
     - ~/.vim/undo-history
@@ -77,4 +78,5 @@
     ~/.config/nvim: vim/astronvim
     ~/.gitconfig: git/gitconfig
     ~/.config/bat: bat
+    ~/.config/clangd/config.yaml: clangd/config.yaml
     ~/.config/pycodestyle: config/pycodestyle

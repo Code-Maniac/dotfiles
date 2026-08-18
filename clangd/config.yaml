@@ -1,0 +1,13 @@
+# User level clangd config, applies to every project.
+#
+# Zephyr builds with arm-zephyr-eabi-gcc and passes a couple of GCC only flags.
+# clangd is a clang driver, so it reports them as unknown arguments on every
+# file it opens. It still parses the file - this only silences the noise.
+#
+# The list is what `clangd --check` actually rejected on a C4.3 build, not a
+# guess: everything else in that database, including the -mcpu/-mfpu/-mabi ARM
+# flags, clang accepts. If a new one shows up, `clangd --check=<file>` names it.
+CompileFlags:
+  Remove:
+    - -fno-reorder-functions
+    - -mfp16-format=*

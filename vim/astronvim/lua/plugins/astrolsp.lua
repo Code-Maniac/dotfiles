@@ -1,5 +1,3 @@
-if true then return {} end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
-
 -- AstroLSP allows you to customize the features in AstroNvim's LSP configuration engine
 -- Configuration documentation can be found with `:h astrolsp`
 -- NOTE: We highly recommend setting up the Lua Language Server (`:LspInstall lua_ls`)
@@ -39,12 +37,29 @@ return {
     },
     -- enable servers that you already have installed without mason
     servers = {
-      -- "pyright"
+      -- the SDKZ image ships clangd at /usr/bin/clangd, so it never goes
+      -- through mason and has to be enabled explicitly
+      "clangd",
     },
     -- customize language server configuration passed to `vim.lsp.config`
     -- client specific configuration can also go in `lsp/` in your configuration root (see `:h lsp-config`)
     config = {
       -- ["*"] = { capabilities = {} }, -- modify default LSP client settings such as capabilities
+      clangd = {
+        cmd = {
+          "clangd",
+          -- Zephyr builds with arm-zephyr-eabi-gcc, and clangd will not trust a
+          -- compiler it has not been told about. Without this it never learns
+          -- the cross toolchain's system include paths and every stdint.h style
+          -- include fails to resolve. /usr/bin/gcc is listed too for native_sim
+          -- builds, which compile with the host compiler.
+          "--query-driver=/opt/toolchains/zephyr-sdk-*/*/bin/*,/usr/bin/gcc,/usr/bin/g++",
+          "--background-index",
+          "--clang-tidy",
+          "--header-insertion=never",
+          "--completion-style=detailed",
+        },
+      },
     },
     -- customize how language servers are attached
     handlers = {

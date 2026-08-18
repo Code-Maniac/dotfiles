@@ -1,0 +1,31 @@
+#compdef vtbuild
+
+# Completion for the vtbuild helper in zsh/vt.zsh.
+# The positional argument is a directory under the workspace's apps folder, so
+# it completes app names rather than paths.
+
+_vtbuild_apps() {
+  local -a apps
+  local dir
+
+  # vt-apps-dir is defined alongside vtbuild, and only inside the container.
+  # Without it there is nothing sensible to offer, so fall back to directories.
+  if (( $+functions[vt-apps-dir] )) && dir=$(vt-apps-dir 2>/dev/null) && [[ -n $dir ]]; then
+    apps=(${dir}/*(/N:t))
+    _describe -t apps 'app' apps
+  else
+    _files -/
+  fi
+}
+
+_arguments -s \
+  '(--sim)--target[build for the board: vt_rt1160/mimxrt1166/cm7, shield c4p3]' \
+  '(--target)--sim[build for the simulator: veethree_sim, shield c4p3_sim]' \
+  '(--release)--debug[CMAKE_BUILD_TYPE=Debug (default)]' \
+  '(--debug)--release[CMAKE_BUILD_TYPE=Release]' \
+  '(-p --pristine)'{-p,--pristine}'[pristine build]' \
+  '--export[copy compile_commands.json to the west workspace root]' \
+  '(-d --build-dir)'{-d,--build-dir}'[build directory]:build dir:_files -/' \
+  '(-h --help)'{-h,--help}'[show usage]' \
+  '1:app:_vtbuild_apps' \
+  '*::cmake args:_default'

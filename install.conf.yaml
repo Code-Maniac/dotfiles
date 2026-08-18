@@ -20,6 +20,7 @@
     - ~/.oe/downloads
     - ~/.oe/sstate-cache
     - ~/.config/rustfmt
+    - ~/.config/clangd
 
 - omnipkg:
   - update
@@ -142,3 +143,4 @@
     ~/.config/bat: bat
     ~/.config/rustfmt/rustfmt.toml: rust/rustfmt.toml
     ~/.clang-format: clang/clang-format
+    ~/.config/clangd/config.yaml: clangd/config.yaml
