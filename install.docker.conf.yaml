@@ -54,6 +54,7 @@
     # git/gitconfig sets core.pager to it, and git fails outright rather than
     # falling back when the pager is missing.
     git-delta,
+    less,
     tree-sitter-cli,
     # zshrc sources /usr/share/autojump/autojump.sh unconditionally on debian
     # based systems, so this is needed or every shell starts with an error.
