@@ -34,6 +34,8 @@ vt-apps-dir() {
 #
 # The app is a directory under the workspace's apps folder. With none given the
 # current directory is built, so `vtbuild` on its own works from inside an app.
+# Either way the build lands in the app's own directory, at <app>/build, unless
+# -d says otherwise.
 #
 # --export copies the build's compile_commands.json to the root of the west
 # workspace, where clangd finds it by walking up from whatever file is open -
@@ -45,7 +47,7 @@ vtbuild() {
   local board="vt_rt1160/mimxrt1166/cm7" shield="c4p3"
   local build_type="Debug"
   local build_dir="build"
-  local app="" export_cc=0
+  local app="" export_cc=0 build_dir_given=0
   local -a west_args cmake_args
 
   while (( $# )); do
@@ -56,7 +58,7 @@ vtbuild() {
       --release)      build_type="Release" ;;
       -p|--pristine)  west_args+=(-p) ;;
       --export)       export_cc=1 ;;
-      -d|--build-dir) build_dir=$2; west_args+=($1 $2); shift ;;
+      -d|--build-dir) build_dir=$2; build_dir_given=1; west_args+=($1 $2); shift ;;
       -h|--help)
         print "usage: vtbuild [--target|--sim] [--debug|--release] [-p] [--export] [app] [-- cmake args]"
         print "  app        directory under the workspace apps folder, default is the cwd"
@@ -89,6 +91,15 @@ vtbuild() {
       print -u2 "vtbuild: no such app '$app'${apps:+ in $apps}"
       return 1
     fi
+  fi
+
+  # Build inside the app, so each app keeps its own build directory and its own
+  # compile_commands.json rather than every build landing in whichever directory
+  # vtbuild happened to be run from. With no app named the cwd is the app, and
+  # west's own default puts build/ there already.
+  if (( ! build_dir_given )) && [[ -n $source ]]; then
+    build_dir=$source/build
+    west_args+=(-d $build_dir)
   fi
 
   local -a cmd

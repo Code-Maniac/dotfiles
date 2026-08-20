@@ -1,0 +1,33 @@
+#!/bin/sh
+# Reopen the active pane's container in a new split or window, at the same
+# working directory inside that container.
+#
+# The pane publishes @pane_container and @pane_cwd from its shell (see
+# zsh/docker.zsh); tmux cannot work either out for itself, because all it sees
+# on a `docker exec` pane is the host side of it.
+#
+# usage: docker-split -h | -v | -w
+set -e
+
+mode=${1:?usage: docker-split -h|-v|-w}
+
+container=$(tmux display-message -p '#{@pane_container}')
+cwd=$(tmux display-message -p '#{@pane_cwd}')
+
+if [ -z "$container" ]; then
+    tmux display-message "docker-split: this pane has no container"
+    exit 0
+fi
+
+# TERM and COLORTERM keep the new pane rendering like the rest of the session,
+# TMUX and TMUX_PANE let nvim's tmux-navigator inside it drive this server.
+# They are read from the new pane's own environment, which tmux has already set
+# by the time this command runs in it.
+cmd="docker exec -it -e TERM -e COLORTERM -e TMUX -e TMUX_PANE -w '$cwd' '$container' zsh"
+
+case $mode in
+    -h) tmux split-window -h "$cmd" ;;
+    -v) tmux split-window -v "$cmd" ;;
+    -w) tmux new-window "$cmd" ;;
+    *)  tmux display-message "docker-split: unknown mode $mode"; exit 1 ;;
+esac

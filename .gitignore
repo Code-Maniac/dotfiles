@@ -13,3 +13,5 @@ vim/wakatime.cfg
 oe/site.conf
 
 fonts/.uuid
+
+docker/veethree-workspace/.env

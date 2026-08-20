@@ -21,6 +21,7 @@
     - ~/.oe/sstate-cache
     - ~/.config/rustfmt
     - ~/.config/clangd
+    - ~/.local/bin
 
 - omnipkg:
   - update
@@ -143,4 +144,5 @@
     ~/.config/bat: bat
     ~/.config/rustfmt/rustfmt.toml: rust/rustfmt.toml
     ~/.clang-format: clang/clang-format
+    ~/.local/bin/sdkz-workspace: docker/veethree-workspace/sdkz-workspace
     ~/.config/clangd/config.yaml: clangd/config.yaml

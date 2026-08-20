@@ -1,0 +1,53 @@
+# The SDKZ workspace container.
+#
+# Reconstructed from the running container, which was created by a `docker run`
+# that no longer exists anywhere on this machine. Everything here was verified
+# against `docker inspect`: user, working directory, entrypoint and command all
+# come from the image and are deliberately not overridden, and the original
+# passed no environment variables at all.
+#
+#   docker compose -f ~/.dotfiles/docker/veethree-workspace/compose.yaml up -d
+#   docker exec -it veethree-workspace zsh
+#
+# container_name is fixed so `docker exec -it veethree-workspace` keeps working,
+# along with the tmux split integration in tmux/docker-split.
+
+name: veethree
+
+services:
+  workspace:
+    # Set by the sdkz-workspace script, which records the choice in .env beside
+    # this file so a plain `docker compose up` keeps using the same image.
+    image: ${SDKZ_IMAGE:-vtsdk/veethree_sdkz:latest}
+    container_name: veethree-workspace
+
+    # -it. The entrypoint starts Xvfb, x11vnc and noVNC and then waits.
+    stdin_open: true
+    tty: true
+
+    # Loopback only, so the VNC session is not reachable from the network.
+    ports:
+      - "127.0.0.1:5900:5900"   # VNC
+      - "127.0.0.1:6080:6080"   # noVNC
+
+    volumes:
+      # --- as the original container had them ---
+      - ${SDKZ_MOUNTS:-${HOME}/sdkz_mounts}/sdkz_apps:/home/user/C4.3_firmware/C4.3_workspace/apps
+      - ${SDKZ_MOUNTS:-${HOME}/sdkz_mounts}/sdkz_ssh:/home/user/.ssh
+      - ${SDKZ_MOUNTS:-${HOME}/sdkz_mounts}/sdkz_logs/bash:/var/log/bash
+      - ${HOME}/.claude:/home/user/.claude
+      # a bind rather than a device, which is how it was originally made
+      - /dev/bus/usb:/dev/bus/usb
+
+      # --- added ---
+      # The dotfiles as one shared checkout, so host and container stop drifting
+      # and a recreated container comes up already configured. Run ./install
+      # inside it to relink and install the container's packages.
+      - ${HOME}/.dotfiles:/home/user/.dotfiles
+      # The tmux socket, so nvim inside the container can drive the tmux server
+      # out on the host: C-hjkl across the boundary, and splits that reopen in
+      # this container. $TMUX names an absolute path, so both sides must match.
+      # NOTE: if this directory does not exist docker creates it owned by root,
+      # and tmux will then fail to create its socket. Start tmux at least once
+      # before the first `up`, or remove the stray root-owned directory.
+      - ${TMUX_SOCKET_DIR:-/tmp/tmux-1000}:${TMUX_SOCKET_DIR:-/tmp/tmux-1000}

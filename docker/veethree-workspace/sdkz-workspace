@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+# Point veethree-workspace at a different SDKZ image.
+#
+# Pulls from sdkz-builder:5000/vtsdk unless given a reference that already has a
+# registry or namespace in it, records the choice in .env beside compose.yaml so
+# a later plain `docker compose up` keeps using it, and recreates the container.
+#
+# usage:
+#   sdkz-workspace <image[:tag]>    pull that image and recreate the container
+#   sdkz-workspace --list           images available in the registry
+#   sdkz-workspace --tags <image>   tags available for one image
+#   sdkz-workspace --current        what the container is running now
+#   -y                              skip the confirmation
+
+set -euo pipefail
+
+REGISTRY_HOST=sdkz-builder:5000
+NAMESPACE=vtsdk
+CONTAINER=veethree-workspace
+
+HERE=$(cd -- "$(dirname -- "$(readlink -f "$0")")" && pwd)
+COMPOSE=$HERE/compose.yaml
+ENVFILE=$HERE/.env
+
+die() { printf '%s\n' "$*" >&2; exit 1; }
+
+usage() { sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; }
+
+# A tag is a colon in the final path segment - the registry's port colon is not
+# one, which is why this looks at ${ref##*/} rather than the whole reference.
+resolve_ref() {
+    local name=$1 ref
+    if [[ $name == */* ]]; then ref=$name; else ref=$REGISTRY_HOST/$NAMESPACE/$name; fi
+    [[ ${ref##*/} == *:* ]] || ref=$ref:latest
+    printf '%s\n' "$ref"
+}
+
+registry_get() {
+    curl -sf --max-time 15 "https://$REGISTRY_HOST/v2/$1" ||
+        die "sdkz-workspace: could not reach https://$REGISTRY_HOST"
+}
+
+list_images() {
+    registry_get "_catalog" | python3 -c '
+import json, sys
+for repo in json.load(sys.stdin)["repositories"]:
+    if repo.startswith("'"$NAMESPACE"'/"):
+        print(" ", repo.split("/", 1)[1])
+'
+}
+
+list_tags() {
+    [[ $# -ge 1 ]] || die "sdkz-workspace: --tags needs an image name"
+    registry_get "$NAMESPACE/$1/tags/list" | python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+print(d["name"] + ":")
+print("  " + "  ".join(sorted(d.get("tags") or [])))
+'
+}
+
+current() {
+    docker inspect "$CONTAINER" --format 'running: {{.Config.Image}}   ({{.State.Status}})' 2>/dev/null ||
+        echo "no $CONTAINER container exists"
+}
+
+main() {
+    local assume_yes=0 image=""
+    while (( $# )); do
+        case $1 in
+            -y|--yes)   assume_yes=1 ;;
+            --list)     list_images; return 0 ;;
+            --tags)     shift; list_tags "$@"; return 0 ;;
+            --current)  current; return 0 ;;
+            -h|--help)  usage; return 0 ;;
+            -*)         die "sdkz-workspace: unknown option $1" ;;
+            *)          image=$1 ;;
+        esac
+        shift
+    done
+    [[ -n $image ]] || { usage; return 1; }
+
+    local ref
+    ref=$(resolve_ref "$image")
+
+    if (( ! assume_yes )); then
+        echo "This replaces the $CONTAINER container with one built from:"
+        echo "    $ref"
+        echo
+        echo "Anything in the container's own filesystem is discarded. These survive,"
+        echo "because they are mounted from the host:"
+        echo "    the apps folder, ~/.ssh, ~/.claude, ~/.dotfiles, the tmux socket"
+        echo
+        read -r -p "continue? [y/N] " reply
+        [[ $reply == [yY]* ]] || { echo "aborted"; return 1; }
+    fi
+
+    if ! docker pull "$ref"; then
+        echo >&2
+        echo "sdkz-workspace: pull failed. Tags available for that image:" >&2
+        list_tags "${image%%:*}" >&2 || true
+        return 1
+    fi
+
+    printf 'SDKZ_IMAGE=%s\n' "$ref" > "$ENVFILE"
+
+    # Compose will not adopt a container it did not create: with the name
+    # already taken it fails with a name conflict and leaves the old container
+    # running. The first run after switching to compose therefore has to remove
+    # the old one by hand. Once compose owns it, --force-recreate is enough.
+    if docker container inspect "$CONTAINER" >/dev/null 2>&1; then
+        local owner
+        owner=$(docker inspect "$CONTAINER" \
+            --format '{{index .Config.Labels "com.docker.compose.project"}}' 2>/dev/null || true)
+        if [[ $owner != "veethree" ]]; then
+            echo "removing the existing container, which compose does not manage"
+            docker rm -f "$CONTAINER" >/dev/null
+        fi
+    fi
+
+    docker compose -f "$COMPOSE" --env-file "$ENVFILE" up -d --force-recreate
+
+    echo
+    current
+    echo "run ./install inside it to relink the dotfiles and install its packages:"
+    echo "    docker exec -it $CONTAINER zsh -lc '~/.dotfiles/install'"
+}
+
+main "$@"
