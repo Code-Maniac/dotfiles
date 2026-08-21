@@ -7,5 +7,8 @@ return {
   "AstroNvim/astrocommunity",
   -- { import = "astrocommunity.pack.lua" }, -- uncomment for Lua LSP/formatting when editing this config
   { import = "astrocommunity.motion.hop-nvim" },
+  { import = "astrocommunity.pack.cmake" },
+  { import = "astrocommunity.pack.rust" },
+  { import = "astrocommunity.debugging.persistent-breakpoints-nvim" },
   -- import/override with your plugins folder
 }

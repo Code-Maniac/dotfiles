@@ -40,6 +40,9 @@ return {
       -- the SDKZ image ships clangd at /usr/bin/clangd, so it never goes
       -- through mason and has to be enabled explicitly
       "clangd",
+      -- enabled here rather than left to mason-lspconfig's automatic enabling,
+      -- so a CMakeLists.txt gets a server regardless of load order
+      "neocmake",
     },
     -- customize language server configuration passed to `vim.lsp.config`
     -- client specific configuration can also go in `lsp/` in your configuration root (see `:h lsp-config`)

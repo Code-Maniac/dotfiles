@@ -1,0 +1,88 @@
+#compdef sdkz-workspace
+
+# Completion for the sdkz-workspace launcher (docker/veethree-workspace).
+#
+# Image names and tags come from the registry, which is a network round trip, so
+# the image list goes through zsh's completion cache - oh-my-zsh already enables
+# use-cache - and is rebuilt when it is more than an hour old. If the registry
+# cannot be reached the locally pulled images are offered instead, so completion
+# still does something useful offline.
+
+typeset -g _sdkz_ws_registry='sdkz-builder:5000'
+typeset -g _sdkz_ws_namespace='vtsdk'
+typeset -ga _sdkz_ws_images
+
+_sdkz_ws_caching_policy() {
+  local -a stale
+  stale=( "$1"(Nmh+1) )   # older than an hour
+  (( $#stale ))
+}
+
+_sdkz_ws_fetch_images() {
+  curl -sf --max-time 5 "https://${_sdkz_ws_registry}/v2/_catalog" 2>/dev/null |
+    python3 -c 'import json, sys
+ns = sys.argv[1] + "/"
+try:
+    repos = json.load(sys.stdin)["repositories"]
+except Exception:
+    sys.exit(0)
+print("\n".join(r[len(ns):] for r in repos if r.startswith(ns)))' "${_sdkz_ws_namespace}"
+}
+
+_sdkz_ws_fetch_tags() {
+  curl -sf --max-time 5 \
+    "https://${_sdkz_ws_registry}/v2/${_sdkz_ws_namespace}/$1/tags/list" 2>/dev/null |
+    python3 -c 'import json, sys
+try:
+    d = json.load(sys.stdin)
+except Exception:
+    sys.exit(0)
+print("\n".join(sorted(d.get("tags") or [])))'
+}
+
+# whatever has already been pulled, as an offline fallback
+_sdkz_ws_local_images() {
+  docker images --format '{{.Repository}}:{{.Tag}}' 2>/dev/null |
+    sed -n "s|^${_sdkz_ws_registry}/${_sdkz_ws_namespace}/||p"
+}
+
+_sdkz_ws_image_names() {
+  local update_policy
+  zstyle -s ":completion:${curcontext}:" cache-policy update_policy
+  [[ -z $update_policy ]] &&
+    zstyle ":completion:${curcontext}:" cache-policy _sdkz_ws_caching_policy
+
+  if (( ! $#_sdkz_ws_images )) || _cache_invalid sdkz-ws-images; then
+    if ! _retrieve_cache sdkz-ws-images; then
+      _sdkz_ws_images=( ${(f)"$(_sdkz_ws_fetch_images)"} )
+      (( $#_sdkz_ws_images )) && _store_cache sdkz-ws-images _sdkz_ws_images
+    fi
+  fi
+
+  local -a names=( ${_sdkz_ws_images:#} )
+  (( $#names )) || names=( ${(f)"$(_sdkz_ws_local_images)"} )
+  _describe -t images 'image' names
+}
+
+# An image, optionally with a tag. Once a colon has been typed the tags for that
+# image are offered instead.
+_sdkz_ws_ref() {
+  if compset -P '*:'; then
+    local image=${${IPREFIX%:}##*/}
+    local -a tags=( ${(f)"$(_sdkz_ws_fetch_tags $image)"} )
+    tags=( ${tags:#} )
+    (( $#tags )) && { _describe -t tags 'tag' tags; return }
+    _message "no tags found for $image"
+    return 1
+  fi
+  _sdkz_ws_image_names
+}
+
+_arguments -s -S \
+  '(- *)--list[list the images available in the registry]' \
+  '(- *)--current[show what the container is running now]' \
+  '(- *)--restore[swap the previous container back in]' \
+  '(- *)--tags[list the tags available for one image]:image:_sdkz_ws_image_names' \
+  '(- *)'{-h,--help}'[show usage]' \
+  '(-y --yes)'{-y,--yes}'[skip the confirmation]' \
+  '1:image:_sdkz_ws_ref'

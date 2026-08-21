@@ -6,13 +6,52 @@
 # zsh/docker.zsh); tmux cannot work either out for itself, because all it sees
 # on a `docker exec` pane is the host side of it.
 #
-# usage: docker-split -h | -v | -w
+# The -H, -V and -W modes are the opposite: they stay on the host even from a
+# container pane. Rather than dropping you wherever the pane was before the
+# container was entered, they translate the container directory back through the
+# container's bind mounts, so a host shell starts at the equivalent path when
+# there is one.
+#
+# usage: docker-split -h | -v | -w      into the pane's container
+#        docker-split -H | -V | -W      on the host
 set -e
 
-mode=${1:?usage: docker-split -h|-v|-w}
+mode=${1:?usage: docker-split -h|-v|-w|-H|-V|-W}
 
-container=$(tmux display-message -p '#{@pane_container}')
-cwd=$(tmux display-message -p '#{@pane_cwd}')
+# Target the pane this was invoked from rather than whichever is active. Under a
+# key binding they are the same pane, but being explicit keeps it correct when
+# the active pane moves, and makes the script testable on its own.
+target_pane=${TMUX_PANE:+-t $TMUX_PANE}
+
+container=$(tmux display-message -p $target_pane '#{@pane_container}')
+cwd=$(tmux display-message -p $target_pane '#{@pane_cwd}')
+
+case $mode in
+    -H|-V|-W)
+        # Default to the pane's host path, then improve on it: if the container
+        # directory sits under one of the container's bind mounts, the host side
+        # of that mount is the same directory seen from out here.
+        target=$(tmux display-message -p $target_pane '#{pane_current_path}')
+        if [ -n "$container" ] && [ -n "$cwd" ]; then
+            mapped=$(docker inspect "$container" \
+                --format '{{range .Mounts}}{{.Destination}}	{{.Source}}
+{{end}}' 2>/dev/null |
+                awk -F'\t' -v cwd="$cwd" '
+                    $1 != "" && index(cwd, $1) == 1 && length($1) > best {
+                        best = length($1); src = $2; dest = $1
+                    }
+                    END { if (src != "") print src substr(cwd, length(dest) + 1) }
+                ')
+            [ -n "$mapped" ] && [ -d "$mapped" ] && target=$mapped
+        fi
+        case $mode in
+            -H) tmux split-window -h -c "$target" ;;
+            -V) tmux split-window -v -c "$target" ;;
+            -W) tmux new-window   -c "$target" ;;
+        esac
+        exit 0
+        ;;
+esac
 
 if [ -z "$container" ]; then
     tmux display-message "docker-split: this pane has no container"

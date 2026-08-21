@@ -10,6 +10,7 @@
 #   sdkz-workspace --list           images available in the registry
 #   sdkz-workspace --tags <image>   tags available for one image
 #   sdkz-workspace --current        what the container is running now
+#   sdkz-workspace --restore        swap the previous container back in
 #   -y                              skip the confirmation
 
 set -euo pipefail
@@ -17,6 +18,7 @@ set -euo pipefail
 REGISTRY_HOST=sdkz-builder:5000
 NAMESPACE=vtsdk
 CONTAINER=veethree-workspace
+BACKUP=veethree-workspace-previous
 
 HERE=$(cd -- "$(dirname -- "$(readlink -f "$0")")" && pwd)
 COMPOSE=$HERE/compose.yaml
@@ -24,7 +26,7 @@ ENVFILE=$HERE/.env
 
 die() { printf '%s\n' "$*" >&2; exit 1; }
 
-usage() { sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'; }
 
 # A tag is a colon in the final path segment - the registry's port colon is not
 # one, which is why this looks at ${ref##*/} rather than the whole reference.
@@ -64,20 +66,79 @@ current() {
         echo "no $CONTAINER container exists"
 }
 
+# The reverse of the swap main() does: the previous container is still whole, so
+# bringing it back is a rename and a start. Deliberately not "compose up", whose
+# --force-recreate would discard the filesystem being restored.
+restore() {
+    local assume_yes=$1 ref swap=$CONTAINER-swap
+
+    docker container inspect "$BACKUP" >/dev/null 2>&1 ||
+        die "sdkz-workspace: there is no $BACKUP container to restore"
+    if docker container inspect "$swap" >/dev/null 2>&1; then
+        die "sdkz-workspace: $swap is left over from an interrupted restore - remove or rename it first"
+    fi
+
+    ref=$(docker inspect "$BACKUP" --format '{{.Config.Image}}')
+
+    if (( ! assume_yes )); then
+        echo "This brings the previous $CONTAINER container back:"
+        echo "    $ref"
+        echo
+        echo "Whatever is running now is stopped and kept as $BACKUP in its place, so"
+        echo "this is reversible - run --restore again to swap back."
+        echo
+        read -r -p "continue? [y/N] " reply
+        [[ $reply == [yY]* ]] || { echo "aborted"; return 1; }
+    fi
+
+    # Both names are taken, so the swap needs somewhere to put the current one.
+    # Stopping is required either way: it holds ports 5900 and 6080.
+    if docker container inspect "$CONTAINER" >/dev/null 2>&1; then
+        echo "stopping $CONTAINER and keeping it as $BACKUP"
+        docker stop "$CONTAINER" >/dev/null
+        docker rename "$CONTAINER" "$swap"
+    fi
+    docker rename "$BACKUP" "$CONTAINER"
+    if docker container inspect "$swap" >/dev/null 2>&1; then
+        docker rename "$swap" "$BACKUP"
+    fi
+
+    # Without this a later plain `docker compose up` sees drift against the
+    # restored container and recreates it from the image it replaced.
+    printf 'SDKZ_IMAGE=%s\n' "$ref" > "$ENVFILE"
+
+    docker start "$CONTAINER" >/dev/null
+
+    echo
+    current
+    if docker container inspect "$BACKUP" >/dev/null 2>&1; then
+        echo "the container this replaced is kept as $BACKUP (stopped)"
+    fi
+    echo "the dotfiles are already installed in this one - no need to run ./install"
+}
+
 main() {
-    local assume_yes=0 image=""
+    local assume_yes=0 image="" do_restore=0
     while (( $# )); do
         case $1 in
             -y|--yes)   assume_yes=1 ;;
             --list)     list_images; return 0 ;;
             --tags)     shift; list_tags "$@"; return 0 ;;
             --current)  current; return 0 ;;
+            --restore)  do_restore=1 ;;
             -h|--help)  usage; return 0 ;;
             -*)         die "sdkz-workspace: unknown option $1" ;;
             *)          image=$1 ;;
         esac
         shift
     done
+
+    if (( do_restore )); then
+        [[ -z $image ]] || die "sdkz-workspace: --restore takes no image"
+        restore "$assume_yes"
+        return
+    fi
+
     [[ -n $image ]] || { usage; return 1; }
 
     local ref
@@ -87,9 +148,16 @@ main() {
         echo "This replaces the $CONTAINER container with one built from:"
         echo "    $ref"
         echo
-        echo "Anything in the container's own filesystem is discarded. These survive,"
-        echo "because they are mounted from the host:"
+        echo "The current container is stopped and kept as $BACKUP, so nothing in it"
+        echo "is lost - retrieve files from it later with:"
+        echo "    docker cp $BACKUP:<path> ."
+        echo
+        echo "These are mounted from the host and carry over regardless:"
         echo "    the apps folder, ~/.ssh, ~/.claude, ~/.dotfiles, the tmux socket"
+        if docker container inspect "$BACKUP" >/dev/null 2>&1; then
+            echo
+            echo "NOTE: an older $BACKUP already exists and will be removed."
+        fi
         echo
         read -r -p "continue? [y/N] " reply
         [[ $reply == [yY]* ]] || { echo "aborted"; return 1; }
@@ -104,25 +172,34 @@ main() {
 
     printf 'SDKZ_IMAGE=%s\n' "$ref" > "$ENVFILE"
 
-    # Compose will not adopt a container it did not create: with the name
-    # already taken it fails with a name conflict and leaves the old container
-    # running. The first run after switching to compose therefore has to remove
-    # the old one by hand. Once compose owns it, --force-recreate is enough.
+    # Compose will not adopt a container it did not create - with the name
+    # already taken it fails with a name conflict and changes nothing - so the
+    # old container has to move out of the way. It is kept rather than deleted:
+    # stopped and renamed, so anything left in its filesystem can still be
+    # recovered with docker cp. Stopping is not optional either way, since it
+    # holds ports 5900 and 6080 that the new container needs.
     if docker container inspect "$CONTAINER" >/dev/null 2>&1; then
-        local owner
-        owner=$(docker inspect "$CONTAINER" \
-            --format '{{index .Config.Labels "com.docker.compose.project"}}' 2>/dev/null || true)
-        if [[ $owner != "veethree" ]]; then
-            echo "removing the existing container, which compose does not manage"
-            docker rm -f "$CONTAINER" >/dev/null
+        if docker container inspect "$BACKUP" >/dev/null 2>&1; then
+            echo "removing the previous backup $BACKUP"
+            docker rm -f "$BACKUP" >/dev/null
         fi
+        echo "stopping $CONTAINER and keeping it as $BACKUP"
+        docker stop "$CONTAINER" >/dev/null
+        docker rename "$CONTAINER" "$BACKUP"
     fi
 
     docker compose -f "$COMPOSE" --env-file "$ENVFILE" up -d --force-recreate
 
     echo
     current
-    echo "run ./install inside it to relink the dotfiles and install its packages:"
+    if docker container inspect "$BACKUP" >/dev/null 2>&1; then
+        echo "previous container kept as $BACKUP (stopped)"
+        echo "    docker cp $BACKUP:<path> .     retrieve anything from it"
+        echo "    docker rm $BACKUP              reclaim its disk when done"
+        echo "    note: 'docker compose down' also removes it, as it still carries"
+        echo "          this project's labels once compose has owned it"
+    fi
+    echo "run ./install inside the new one to relink the dotfiles and install its packages:"
     echo "    docker exec -it $CONTAINER zsh -lc '~/.dotfiles/install'"
 }
 
