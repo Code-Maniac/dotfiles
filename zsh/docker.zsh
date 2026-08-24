@@ -27,13 +27,21 @@ docker() {
       [[ -n ${COLORTERM} ]] && envargs+=(-e "COLORTERM=${COLORTERM}")
 
       # $TMUX lets nvim's tmux-navigator inside the container drive the tmux
-      # server out here, so C-hjkl crosses the boundary. It names a socket
-      # path, so the socket directory has to be visible at the same path in
-      # the container - mounted below for `run`. A container started any other
-      # way needs the same mount adding, or tmux inside it has nothing to talk
-      # to. Host and container are both uid 1000, so the socket permissions
-      # line up.
-      if [[ -n ${TMUX} ]]; then
+      # server out here, so C-hjkl crosses the boundary. It names a socket path,
+      # which reaches the container one of two ways: bridged over TCP where a
+      # unix socket cannot be mounted (zsh/tmux-bridge.zsh, macOS), or bind
+      # mounted, which needs the same path on both sides and matching uids.
+      if (( $+functions[_tmux_bridge_wanted] )) && _tmux_bridge_wanted; then
+        _tmux_bridge_start
+        envargs+=(
+          -e "TMUX=${TMUX}" -e "TMUX_PANE=${TMUX_PANE}"
+          -e "DOCKER_TMUX_BRIDGE_PORT=${DOCKER_TMUX_BRIDGE_PORT}"
+        )
+        [[ -n ${DOCKER_TMUX_BRIDGE_HOST:-} ]] &&
+          envargs+=(-e "DOCKER_TMUX_BRIDGE_HOST=${DOCKER_TMUX_BRIDGE_HOST}")
+        # so the container can reach the bridge by name rather than by address
+        [[ ${sub} == run ]] && envargs+=(--add-host "host.docker.internal:host-gateway")
+      elif [[ -n ${TMUX} ]]; then
         envargs+=(-e "TMUX=${TMUX}" -e "TMUX_PANE=${TMUX_PANE}")
         if [[ ${sub} == run ]]; then
           local tmuxdir=${${TMUX%%,*}:h}
@@ -63,6 +71,12 @@ docker() {
 # the socket itself is not mounted, and without it every prompt would fork a
 # tmux that fails.
 if [[ -n ${TMUX} && -S ${TMUX%%,*} ]] && (( $+commands[tmux] )); then
+  # A sentinel, not empty: the cache below is per shell while the option lives on
+  # the pane, so a host shell starting in a pane a container shell wrote to must
+  # act on its first prompt. Starting these empty made that first comparison
+  # match, and the pane kept advertising a container it had already left.
+  typeset -g _docker_pane_container='<unset>' _docker_pane_cwd='<unset>'
+
   _docker_publish_pane() {
     local container="" cwd=""
     if [[ -n ${SDKZ_IMAGE_VERSION:-} ]]; then

@@ -61,6 +61,8 @@
     { dnf: mesa-libGLU-devel },
     { dnf: ffmpeg-libs },
     screen,
+    # bridges the tmux socket over TCP where it cannot be bind mounted
+    socat,
     { brew: docker },
     { brew: colima }]
   - upgrade

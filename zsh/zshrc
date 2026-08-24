@@ -221,6 +221,19 @@ export LESS_TERMCAP_us=$'\e[1;4;31m'
 # venv / venv-new helpers for ~/.venvs (completion in zsh/completions/_venv)
 [[ ! -f ${DOTFILES}/zsh/venv.zsh ]] || source ${DOTFILES}/zsh/venv.zsh
 
+# splitrun - run a command with its stderr in a tmux split
+[[ ! -f ${DOTFILES}/zsh/splitrun.zsh ]] || source ${DOTFILES}/zsh/splitrun.zsh
+
+# leaving a window lands on its neighbour rather than window 1
+[[ ! -f ${DOTFILES}/zsh/tmux-window.zsh ]] || source ${DOTFILES}/zsh/tmux-window.zsh
+
+# bridges the tmux socket over TCP where it cannot be bind mounted - macOS, or
+# the container side of one. Sourced before docker.zsh, which uses it when
+# present and falls back to a bind mount when not.
+if [[ ${OSTYPE} == darwin* || -f /.dockerenv || -n ${DOCKER_TMUX_BRIDGE:-} ]]; then
+  [[ ! -f ${DOTFILES}/zsh/tmux-bridge.zsh ]] || source ${DOTFILES}/zsh/tmux-bridge.zsh
+fi
+
 # docker wrapper that forwards TERM/COLORTERM into containers
 [[ ! -f ${DOTFILES}/zsh/docker.zsh ]] || source ${DOTFILES}/zsh/docker.zsh
 

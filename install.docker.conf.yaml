@@ -56,6 +56,8 @@
     # falling back when the pager is missing.
     git-delta,
     less,
+    # bridges the tmux socket over TCP where it cannot be bind mounted
+    socat,
     tree-sitter-cli,
     # zshrc sources /usr/share/autojump/autojump.sh unconditionally on debian
     # based systems, so this is needed or every shell starts with an error.
@@ -68,6 +70,12 @@
 - sudo:
   - shell:
     - [scripts/install_scripts, Installing scripts]
+    # The image leaves the account on /bin/sh. Anything that honours the login
+    # shell - su, a plain `docker exec` without a command - lands in sh without
+    # this. It does not persist: /etc/passwd lives in the container's own
+    # filesystem, so a recreated container needs the install run again.
+    # SUDO_USER because the command itself runs as root.
+    - ['u=${SUDO_USER:-$(id -un)}; [ "$(getent passwd "$u" | cut -d: -f7)" = "$(command -v zsh)" ] || chsh -s "$(command -v zsh)" "$u"', Set the login shell to zsh]
 
 - link:
     ~/.zshrc: zsh/zshrc
