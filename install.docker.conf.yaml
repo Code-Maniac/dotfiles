@@ -113,3 +113,28 @@
     ~/.config/bat: bat
     ~/.config/clangd/config.yaml: clangd/config.yaml
     ~/.config/pycodestyle: config/pycodestyle
+    # Claude Code keeps ~/.claude.json - the account record and onboarding state
+    # - *beside* its config directory rather than inside it. Only ~/.claude is
+    # bind mounted, so that file lands in the container's writable layer: the
+    # credentials are shared but the account record is not, and Claude runs
+    # onboarding and asks to log in again.
+    #
+    # zshrc exports CLAUDE_CONFIG_DIR to pull the whole config into the mount,
+    # but that only reaches shells started after it, so a pane that was already
+    # open still gets the login prompt. Linking the default path in as well
+    # fixes it for every shell, and for anything that does not go through zsh.
+    #
+    # Source is outside the dotfiles directory, hence the ../ - the file belongs
+    # to the host, this only points at it. Relative, like the statusline config
+    # in install.conf.yaml, so the link resolves under both /home/nick and
+    # /home/user.
+    #
+    # The /.dockerenv guard is what keeps this off the host. Reaching here at
+    # all means SDKZ_IMAGE_VERSION was set, but `force: true` in the defaults
+    # above would delete a real ~/.claude.json, and on the host that is the live
+    # account record rather than a throwaway stub - too costly to leave to one
+    # environment variable.
+    ~/.claude.json:
+      path: ../.claude/.claude.json
+      relative: true
+      if: '[ -f /.dockerenv ] && [ -e "$HOME/.claude/.claude.json" ]'
