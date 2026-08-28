@@ -79,10 +79,14 @@ _sdkz_ws_ref() {
 }
 
 _arguments -s -S \
+  '(--update --restore)--install[pull an image and recreate the container]:image:_sdkz_ws_ref' \
+  '(--install --restore)--update[re-pull the current image and recreate the container]' \
   '(- *)--list[list the images available in the registry]' \
   '(- *)--current[show what the container is running now]' \
+  '(- *)--start[start the container for the pulled image]' \
+  '(- *)--attach[open a shell in the running container]' \
   '(- *)--restore[swap the previous container back in]' \
+  "(- *)--vnc[open the container's VNC session]" \
   '(- *)--tags[list the tags available for one image]:image:_sdkz_ws_image_names' \
   '(- *)'{-h,--help}'[show usage]' \
-  '(-y --yes)'{-y,--yes}'[skip the confirmation]' \
-  '1:image:_sdkz_ws_ref'
+  '(-y --yes)'{-y,--yes}'[skip the confirmation]'

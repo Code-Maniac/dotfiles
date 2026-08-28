@@ -30,6 +30,24 @@ services:
       - "127.0.0.1:5900:5900"   # VNC
       - "127.0.0.1:6080:6080"   # noVNC
 
+    # The /dev/bus/usb bind below makes USB devices *visible* - lsusb lists them
+    # and hotplugged ones appear - but Docker's device cgroup still denies
+    # open(), so libusb tools like LinkServer see EPERM on every device and
+    # report no probe found. This grants access to major 189 (usb_device) only,
+    # which is what MCU-Link needs, rather than reaching for privileged: true.
+    device_cgroup_rules:
+      - 'c 189:* rmw'
+
+    # --- added ---
+    # Claude Code keeps ~/.claude.json - account, onboarding state, project
+    # history - beside ~/.claude rather than inside it, so the bind below does
+    # not cover it and every recreated container started onboarding from
+    # scratch and asked to log in again. This moves the whole config, that file
+    # included, into the shared .claude directory. The host's own
+    # ~/.claude.json is a different file and is left alone.
+    environment:
+      CLAUDE_CONFIG_DIR: /home/user/.claude
+
     volumes:
       # --- as the original container had them ---
       - ${SDKZ_MOUNTS:-${HOME}/sdkz_mounts}/sdkz_apps:/home/user/C4.3_firmware/C4.3_workspace/apps

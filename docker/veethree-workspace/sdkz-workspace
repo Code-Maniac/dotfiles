@@ -6,12 +6,16 @@
 # a later plain `docker compose up` keeps using it, and recreates the container.
 #
 # usage:
-#   sdkz-workspace <image[:tag]>    pull that image and recreate the container
-#   sdkz-workspace --list           images available in the registry
-#   sdkz-workspace --tags <image>   tags available for one image
-#   sdkz-workspace --current        what the container is running now
-#   sdkz-workspace --restore        swap the previous container back in
-#   -y                              skip the confirmation
+#   sdkz-workspace --install <image[:tag]>   pull it and recreate the container
+#   sdkz-workspace --update                  re-pull the current image, recreate
+#   sdkz-workspace --list                    images available in the registry
+#   sdkz-workspace --tags <image>            tags available for one image
+#   sdkz-workspace --current                 what the container is running now
+#   sdkz-workspace --start                   start the container as it is
+#   sdkz-workspace --attach                  open a shell in the container
+#   sdkz-workspace --restore                 swap the previous container back in
+#   sdkz-workspace --vnc                     open the container's VNC session
+#   -y                                       skip the confirmation
 
 set -euo pipefail
 
@@ -20,13 +24,20 @@ NAMESPACE=vtsdk
 CONTAINER=veethree-workspace
 BACKUP=veethree-workspace-previous
 
+# compose publishes both of these on loopback, so the viewer connects to the
+# host side rather than into the container.
+VNC_ADDR=127.0.0.1:5900
+NOVNC_URL=http://127.0.0.1:6080/vnc.html
+
 HERE=$(cd -- "$(dirname -- "$(readlink -f "$0")")" && pwd)
 COMPOSE=$HERE/compose.yaml
 ENVFILE=$HERE/.env
 
 die() { printf '%s\n' "$*" >&2; exit 1; }
 
-usage() { sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'; }
+# The header block, up to the first line that is not a comment - so adding a
+# command to it does not mean fixing a line range down here as well.
+usage() { sed -n '2,${ /^#/!q; s/^# \{0,1\}//; p; }' "$0"; }
 
 # A tag is a colon in the final path segment - the registry's port colon is not
 # one, which is why this looks at ${ref##*/} rather than the whole reference.
@@ -64,6 +75,71 @@ print("  " + "  ".join(sorted(d.get("tags") or [])))
 current() {
     docker inspect "$CONTAINER" --format 'running: {{.Config.Image}}   ({{.State.Status}})' 2>/dev/null ||
         echo "no $CONTAINER container exists"
+}
+
+# The image a previous run recorded in .env, which is the one compose will use.
+# Empty if .env is absent, in which case compose falls back to the default in
+# compose.yaml.
+env_ref() {
+    [[ -f $ENVFILE ]] || return 0
+    sed -n 's/^SDKZ_IMAGE=//p' "$ENVFILE" | tail -n1
+}
+
+# Bring the workspace up without pulling or replacing anything: the image choice
+# is whatever the last pull recorded, so this only has to get a container
+# running for it. An existing container is started in place rather than
+# recreated, which keeps its filesystem; a missing one is created by compose.
+# Deliberately no --force-recreate here - that is what the image swap in main()
+# is for.
+start() {
+    local status ref
+    ref=$(env_ref)
+
+    if status=$(docker inspect "$CONTAINER" --format '{{.State.Status}}' 2>/dev/null); then
+        if [[ $status == running ]]; then
+            echo "$CONTAINER is already running"
+            current
+            return 0
+        fi
+        echo "starting $CONTAINER"
+        docker start "$CONTAINER" >/dev/null
+    else
+        echo "no $CONTAINER container exists - creating one from:"
+        echo "    ${ref:-the default in compose.yaml}"
+        if [[ -f $ENVFILE ]]; then
+            docker compose -f "$COMPOSE" --env-file "$ENVFILE" up -d
+        else
+            docker compose -f "$COMPOSE" up -d
+        fi
+    fi
+
+    echo
+    current
+    echo "    sdkz-workspace --attach            open a shell in it"
+}
+
+# A shell in the running container. zsh is what the dotfiles install puts there,
+# but the image ships without it - the account is left on /bin/sh until ./install
+# has run - so a fresh container falls back to bash rather than failing.
+#
+# The -e flags are the same set tmux/docker-split passes: TERM and COLORTERM so
+# the shell renders like the rest of the session, TMUX and TMUX_PANE so nvim's
+# tmux-navigator inside the container can drive the tmux server on the host.
+# exec, so the shell replaces this script and its exit status is the shell's.
+attach() {
+    docker container inspect "$CONTAINER" >/dev/null 2>&1 ||
+        die "sdkz-workspace: there is no $CONTAINER container to attach to"
+    [[ $(docker inspect "$CONTAINER" --format '{{.State.Status}}') == running ]] ||
+        die "sdkz-workspace: $CONTAINER is not running - start it with 'sdkz-workspace --start'"
+
+    local s shell=""
+    for s in /bin/zsh /bin/bash /bin/sh; do
+        if docker exec "$CONTAINER" test -x "$s" 2>/dev/null; then shell=$s; break; fi
+    done
+    [[ -n $shell ]] || die "sdkz-workspace: no shell found in $CONTAINER"
+
+    exec docker exec -it -e TERM -e COLORTERM -e TMUX -e TMUX_PANE \
+        "$CONTAINER" "$shell"
 }
 
 # The reverse of the swap main() does: the previous container is still whole, so
@@ -117,35 +193,88 @@ restore() {
     echo "the dotfiles are already installed in this one - no need to run ./install"
 }
 
-main() {
-    local assume_yes=0 image="" do_restore=0
-    while (( $# )); do
-        case $1 in
-            -y|--yes)   assume_yes=1 ;;
-            --list)     list_images; return 0 ;;
-            --tags)     shift; list_tags "$@"; return 0 ;;
-            --current)  current; return 0 ;;
-            --restore)  do_restore=1 ;;
-            -h|--help)  usage; return 0 ;;
-            -*)         die "sdkz-workspace: unknown option $1" ;;
-            *)          image=$1 ;;
-        esac
-        shift
+# $BROWSER first so a deliberate choice wins, then the desktop's default, then
+# whatever is actually installed. Returns non-zero if nothing can open a URL.
+open_browser() {
+    local url=$1 b
+    for b in ${BROWSER:-} xdg-open gio firefox chromium chromium-browser \
+             google-chrome brave-browser epiphany falkon; do
+        command -v "$b" >/dev/null 2>&1 || continue
+        if [[ $b == gio ]]; then
+            setsid "$b" open "$url" >/dev/null 2>&1 &
+        else
+            setsid "$b" "$url" >/dev/null 2>&1 &
+        fi
+        printf '%s\n' "$b"
+        return 0
+    done
+    return 1
+}
+
+# The container's entrypoint already runs Xvfb, x11vnc and noVNC, so this only
+# has to attach viewers. Both routes reach the same x11vnc, and it runs without
+# -shared, so a second client disconnects the first - hence the warning when
+# both open. Everything is detached so the shell comes straight back.
+vnc() {
+    docker container inspect "$CONTAINER" >/dev/null 2>&1 ||
+        die "sdkz-workspace: there is no $CONTAINER container to connect to"
+    [[ $(docker inspect "$CONTAINER" --format '{{.State.Status}}') == running ]] ||
+        die "sdkz-workspace: $CONTAINER is not running - start it with 'docker start $CONTAINER'"
+
+    local viewer native="" browser=""
+
+    for viewer in vncviewer gvncviewer vinagre remmina; do
+        command -v "$viewer" >/dev/null 2>&1 || continue
+        native=$viewer
+        echo "opening $VNC_ADDR with $viewer"
+        if [[ $viewer == remmina ]]; then
+            setsid "$viewer" -c "vnc://$VNC_ADDR" >/dev/null 2>&1 &
+        else
+            setsid "$viewer" "$VNC_ADDR" >/dev/null 2>&1 &
+        fi
+        break
     done
 
-    if (( do_restore )); then
-        [[ -z $image ]] || die "sdkz-workspace: --restore takes no image"
-        restore "$assume_yes"
-        return
+    if browser=$(open_browser "$NOVNC_URL"); then
+        echo "opening $NOVNC_URL with $browser"
+    elif [[ -z $native ]]; then
+        die "sdkz-workspace: nothing available to open a VNC session.
+    install a viewer with 'sudo dnf install tigervnc', or browse to $NOVNC_URL"
+    else
+        echo "no web browser found - native viewer only"
     fi
 
-    [[ -n $image ]] || { usage; return 1; }
+    if [[ -n $native && -n $browser ]]; then
+        echo
+        echo "NOTE: x11vnc runs without -shared, so these two will disconnect each"
+        echo "      other. Use one and close the other, or add -shared to x11vnc in"
+        echo "      the image entrypoint to allow both at once."
+    fi
 
-    local ref
-    ref=$(resolve_ref "$image")
+    [[ -n $native ]] || echo "    for a native viewer:  sudo dnf install tigervnc"
+}
+
+# Pull an image and recreate the container from it. $3 only changes the wording:
+# --update comes through here too, with the reference the last install recorded,
+# so a re-pull and a switch of image follow exactly the same path.
+install() {
+    local assume_yes=$1 name=$2 is_update=${3:-0} ref bare
+
+    ref=$(resolve_ref "$name")
+
+    # The plain image name, for the tag hint if the pull fails. The registry and
+    # namespace come off first, so this is right for a full reference as well -
+    # ${name%%:*} on one of those would stop at the registry's port colon.
+    bare=${ref##*/}
+    bare=${bare%%:*}
 
     if (( ! assume_yes )); then
-        echo "This replaces the $CONTAINER container with one built from:"
+        if (( is_update )); then
+            echo "This re-pulls the image the $CONTAINER container is running and"
+            echo "recreates the container from the fresh copy:"
+        else
+            echo "This replaces the $CONTAINER container with one built from:"
+        fi
         echo "    $ref"
         echo
         echo "The current container is stopped and kept as $BACKUP, so nothing in it"
@@ -166,7 +295,7 @@ main() {
     if ! docker pull "$ref"; then
         echo >&2
         echo "sdkz-workspace: pull failed. Tags available for that image:" >&2
-        list_tags "${image%%:*}" >&2 || true
+        list_tags "$bare" >&2 || true
         return 1
     fi
 
@@ -201,6 +330,58 @@ main() {
     fi
     echo "run ./install inside the new one to relink the dotfiles and install its packages:"
     echo "    docker exec -it $CONTAINER zsh -lc '~/.dotfiles/install'"
+}
+
+main() {
+    local assume_yes=0 image="" do_restore=0 do_install=0 do_update=0
+    while (( $# )); do
+        case $1 in
+            -y|--yes)   assume_yes=1 ;;
+            --list)     list_images; return 0 ;;
+            --tags)     shift; list_tags "$@"; return 0 ;;
+            --current)  current; return 0 ;;
+            --start)    start; return 0 ;;
+            --attach)   attach; return 0 ;;  # execs, so this does not come back
+            --vnc)      vnc; return 0 ;;
+            --restore)  do_restore=1 ;;
+            --update)   do_update=1 ;;
+            --install)
+                do_install=1
+                [[ $# -ge 2 ]] || die "sdkz-workspace: --install needs an image name"
+                image=$2
+                shift
+                ;;
+            -h|--help)  usage; return 0 ;;
+            -*)         die "sdkz-workspace: unknown option $1" ;;
+            # An image used to be given on its own. Say where it went rather than
+            # quietly doing something with it.
+            *)          die "sdkz-workspace: an image goes with --install now:
+    sdkz-workspace --install $1" ;;
+        esac
+        shift
+    done
+
+    (( do_install + do_update + do_restore <= 1 )) ||
+        die "sdkz-workspace: --install, --update and --restore are one at a time"
+
+    if (( do_restore )); then
+        restore "$assume_yes"
+        return
+    fi
+
+    # --update is --install against the reference the last install recorded, so
+    # it re-pulls the same name:tag and picks up whatever the registry has now.
+    if (( do_update )); then
+        image=$(env_ref)
+        [[ -n $image ]] ||
+            die "sdkz-workspace: no image recorded in $ENVFILE - install one with
+    sdkz-workspace --install <image>"
+        install "$assume_yes" "$image" 1
+        return
+    fi
+
+    (( do_install )) || { usage; return 1; }
+    install "$assume_yes" "$image" 0
 }
 
 main "$@"

@@ -59,6 +59,26 @@
     # bridges the tmux socket over TCP where it cannot be bind mounted
     socat,
     tree-sitter-cli,
+    # ~/.claude is bind mounted in, so the statusline set in settings.json runs
+    # in here too, and it parses claude's json with jq. Without it the statusline
+    # fails on every render in the container while working fine on the host.
+    jq,
+    # nvim-dap talks DAP, and gdb only serves DAP when it was built with python -
+    # the `dap` interpreter is implemented in python, so a gdb configured
+    # --without-python reports "Interpreter `dap' unrecognized" no matter what
+    # else it can do. That rules out the Zephyr SDK's arm-zephyr-eabi-gdb, and
+    # its -py sibling will not start because it wants libpython3.12, which ubuntu
+    # 26.04 does not package at all.
+    #
+    # gdb-multiarch is the way out: python built in, knows armv7e-m, and is the
+    # exact command vim/astronvim/lua/plugins/dap.lua names for its gdb_remote
+    # adapter. Not in the sdkz image, so target debugging over LinkServer stops
+    # working on every container recreation without this.
+    gdb-multiarch,
+    # The image does ship this one, and dap.lua's plain `gdb` adapter needs it
+    # for native_sim and host binaries. Listed so the dependency is explicit
+    # rather than inherited by luck.
+    gdb,
     # zshrc sources /usr/share/autojump/autojump.sh unconditionally on debian
     # based systems, so this is needed or every shell starts with an error.
     { dnf: autojump-zsh, else: autojump }]
@@ -76,6 +96,11 @@
     # filesystem, so a recreated container needs the install run again.
     # SUDO_USER because the command itself runs as root.
     - ['u=${SUDO_USER:-$(id -un)}; [ "$(getent passwd "$u" | cut -d: -f7)" = "$(command -v zsh)" ] || chsh -s "$(command -v zsh)" "$u"', Set the login shell to zsh]
+    # The image carries the LinkServer installer but not an installed LinkServer,
+    # so nvim-dap's target debugging is dead in a fresh container until this runs.
+    # Auto-accepts NXP's licence - see the header for exactly what that covers.
+    # Idempotent, and a no-op anywhere the installer is absent.
+    - [install-scripts/install-linkserver.sh, Installing LinkServer]
 
 - link:
     ~/.zshrc: zsh/zshrc

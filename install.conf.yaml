@@ -120,6 +120,10 @@
 # Now run PlugInstall on nvim
 - shell:
   - [nvim --headless "+Lazy! sync" +qa, Get vim plugins]
+  # claude-code-statusline's mtime probe is BSD-only and breaks its cost tracking
+  # on GNU coreutils - see the script for the mechanism. Idempotent, and needs to
+  # re-run after every statusline upgrade because the installer replaces lib/.
+  - [install-scripts/patch-claude-statusline.sh, Patching claude statusline for GNU stat]
 
 - sudo:
   - shell:
@@ -148,3 +152,13 @@
     ~/.clang-format: clang/clang-format
     ~/.local/bin/sdkz-workspace: docker/veethree-workspace/sdkz-workspace
     ~/.config/clangd/config.yaml: clangd/config.yaml
+    # Relative, not absolute: ~/.claude is bind mounted into veethree-workspace,
+    # where $HOME is /home/user rather than /home/nick, so an absolute link would
+    # dangle in there. Both ~/.claude and ~/.dotfiles sit directly under $HOME in
+    # either place, so ../../.dotfiles/... resolves correctly on both sides. Only
+    # the config is tracked - statusline.sh and lib/ are upstream code installed
+    # by the project's own installer, and it preserves this file on upgrade.
+    ~/.claude/statusline/Config.toml:
+      path: claude/statusline/Config.toml
+      relative: true
+      create: true

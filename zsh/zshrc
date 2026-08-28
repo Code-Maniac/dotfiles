@@ -27,6 +27,22 @@ if [[ -n ${SDKZ_IMAGE_VERSION:-} ]]; then
   export COLORTERM=${COLORTERM:-truecolor}
 fi
 
+# Claude Code keeps ~/.claude.json - the account record, onboarding state and
+# project history - *beside* its config directory rather than inside it. Only
+# ~/.claude is bind mounted into the container, so that file lands in the
+# container's writable layer: the credentials are shared but the account record
+# is not, and Claude asks to log in again on every recreate.
+#
+# Pointing the whole config at ~/.claude pulls that file into the mount too.
+# Container only - on the host this is already the default layout, and setting
+# it there would move the host off its own ~/.claude.json onto the container's.
+#
+# compose.yaml sets the same variable, but only for containers created after it
+# was added; this covers the ones already running.
+if [[ -f /.dockerenv ]]; then
+  export CLAUDE_CONFIG_DIR=${CLAUDE_CONFIG_DIR:-${HOME}/.claude}
+fi
+
 # get a path file based on the OSTYPE
 if [[ ${OSTYPE} == 'darwin'* ]]; then
   PATH_APPEND='darwin'
