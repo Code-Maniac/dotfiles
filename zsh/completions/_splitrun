@@ -1,0 +1,22 @@
+#compdef splitrun
+
+# Completion for splitrun in zsh/splitrun.zsh:
+#
+#   splitrun [-v|-h] <command> [args...]
+#
+# The flag descriptions follow the function's own vim sense of the words, which
+# is deliberately the opposite way round to tmux's -h and -v.
+#
+# Deliberately no -s: that would offer the single-letter options stacked as
+# -vh, and the function's `while [[ $1 == -[vh] ]]` loop only matches them one
+# at a time, so a stacked form would be passed through as the command to run.
+#
+# '*::command:_normal' hands everything after the flags to zsh's ordinary
+# command completion, so the wrapped command completes under its own rules -
+# `splitrun west build -b <TAB>` reaches _west. The doubled colon gives those
+# words their own context, so the wrapped command sees its arguments numbered
+# from its own position rather than splitrun's.
+_arguments \
+  '(-v -h)-v[split side by side]' \
+  '(-v -h)-h[split top and bottom]' \
+  '*::command:_normal'

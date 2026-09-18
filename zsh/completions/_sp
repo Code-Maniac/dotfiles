@@ -1,0 +1,17 @@
+#compdef sp
+
+# Completion for the sp script (scripts/sp), which swaps two files.
+#
+# Regular files only: sp tests both arguments with -f and exits with "does not
+# exist" for anything else, so offering directories as candidates would only
+# produce arguments it rejects. The (-.) qualifier is "follow symlinks, regular
+# files", so a symlink to a file still completes - mv handles those fine.
+# Directories are still traversable for building a path, they just cannot be the
+# final answer.
+#
+# Exactly two positionals, because sp reads $1 and $2 and ignores anything
+# further.
+_arguments \
+  '(- *)-h[show usage]' \
+  '1:first file:_files -g "*(-.)"' \
+  '2:second file:_files -g "*(-.)"'

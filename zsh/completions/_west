@@ -36,7 +36,18 @@ _west_cmds() {
   'blobs[work with binary blobs]'
   )
 
-  local -a all_cmds=(${builtin_cmds} ${zephyr_ext_cmds})
+  # Extension commands from the SDKZ workspace's manifest repository, declared
+  # in scripts/west-commands.yml. Grouped with the zephyr ones rather than the
+  # builtins because, like those, they only exist inside a workspace - which is
+  # what the WEST_COMP_CHECK_WORKSPACE branch below distinguishes.
+  local -a sdkz_ext_cmds=(
+  'rootfs[build, flash and retrieve the target /data littlefs image]'
+  'install-linkserver[install LinkServer and the board definitions]'
+  'publish[publish the SDKZ workspace]'
+  'git-config[configure git for the SDKZ workspace]'
+  )
+
+  local -a all_cmds=(${builtin_cmds} ${zephyr_ext_cmds} ${sdkz_ext_cmds})
 
   if [[ -v WEST_COMP_CHECK_WORKSPACE ]]; then
     west topdir &>/dev/null
@@ -355,6 +366,104 @@ _west_blob_fetch () {
 
 _west_blob_clean () {
   _arguments -S "1:west proj:_get_west_projs"
+}
+
+# --------------------------------------------------------------------------- #
+# SDKZ workspace extension commands
+#
+# These come from scripts/west-commands.yml in the manifest repository rather
+# than from west or zephyr, so they are not in the upstream copy of this file.
+# Keep them below the upstream functions so a future refresh of the Nordic
+# completion is a replace-above-this-line operation.
+# --------------------------------------------------------------------------- #
+
+# Options shared by every rootfs subcommand that talks to the probe, matching
+# the parent parser the command itself uses.
+_west_rootfs_probe_opts=(
+'--probe[probe index or serial to use]:probe:'
+'--device[LinkServer device, NAME:BOARD pair or path to a device JSON]:device:'
+)
+
+_west_rootfs() {
+  local -a rootfs_cmds=(
+  'create[pack a directory into a littlefs image]'
+  'extract[unpack a littlefs image into a directory]'
+  'flash[write a directory or image to the board]'
+  'dump[read the board filesystem back]'
+  'erase[replace the board filesystem with an empty one]'
+  )
+
+  local line state
+
+  _arguments -S -C \
+          "1: :->cmds" \
+          "*::arg:->args" \
+
+  case "$state" in
+  cmds)
+    _values "west rootfs cmds" $rootfs_cmds
+    ;;
+
+  args)
+    _opt_args=( ${(@kv)opt_args} )
+    _call_function ret _west_rootfs_$line[1]
+    ;;
+  esac
+}
+
+# create takes a source directory and an output image, in that order - so the
+# first argument completes directories only and the second prefers *.lfs.
+_west_rootfs_create () {
+  _arguments -S \
+      "1:source directory:_directories" \
+      "2:output image:_files -g '*.lfs'"
+}
+
+# extract is create in reverse: an existing image in, a directory out. The
+# first argument can therefore narrow to *.lfs where create's could not.
+_west_rootfs_extract () {
+  _arguments -S \
+      "1:image:_files -g '*.lfs'" \
+      "2:output directory:_directories"
+}
+
+# flash accepts either an image or a directory to pack first, so this cannot
+# narrow to *.lfs the way create's output can.
+_west_rootfs_flash () {
+  local -a opts=(
+  ${_west_rootfs_probe_opts}
+  {-y,--yes}'[do not ask before overwriting the board filesystem]'
+  )
+
+  _arguments -S $opts \
+      "1:image or directory:_files"
+}
+
+# dump writes an image when the output ends in .lfs and extracts into a
+# directory otherwise, so both are offered.
+_west_rootfs_dump () {
+  _arguments -S ${_west_rootfs_probe_opts} \
+      "1:output image or directory:_files"
+}
+
+_west_rootfs_erase () {
+  local -a opts=(
+  ${_west_rootfs_probe_opts}
+  {-y,--yes}'[do not ask before overwriting the board filesystem]'
+  )
+
+  _arguments -S $opts
+}
+
+_west_install-linkserver () {
+  local -a opts=(
+  '--installer[LinkServer installer to run]:installer:_files -g "*.deb.bin"'
+  {-y,--yes}'[accept the NXP licence and install unattended]'
+  '--devices-only[only refresh the board definitions in an existing install]'
+  '--dry-run[print what would happen, without changing anything]'
+  )
+
+  _arguments -S $opts
 }
 
 # don't run the completion function when being source-ed or eval-ed

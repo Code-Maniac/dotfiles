@@ -197,6 +197,26 @@ function p() {
   cd ~/projects/$1
 }
 
+# add pvim command
+# the same as p, but starts nvim once it has changed directory.
+# Calls p rather than repeating the path, so there is one definition of where
+# projects live. && so a bad project name stops here instead of starting the
+# editor on wherever the shell happened to already be.
+#
+# nvim is given no argument on purpose. Passing `.` would make it open the
+# directory and land on the file explorer; with nothing to open it starts on the
+# dashboard instead, having inherited the project as its working directory from
+# the cd that p just did.
+#
+# Not a subshell, so the directory change outlives nvim - quitting the editor
+# leaves the shell in the project.
+#
+# NVIM is only set inside the `hash nvim` guard above, so it is defaulted here
+# rather than expanding to nothing on a machine without nvim installed.
+function pvim() {
+  p $1 && ${NVIM:-nvim}
+}
+
 # if clang-format is installed then add command clangfmt (similar to rustfmt)
 # clangfmt uses the ~/.config/clangfmt/clang-format file as config
 if hash clang-format &> /dev/null; then

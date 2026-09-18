@@ -1,0 +1,15 @@
+#compdef p pvim
+
+# Completion for the p and pvim helpers in zsh/zshrc. Both take the same
+# argument - pvim is p plus opening nvim - so they share one completion rather
+# than keeping two copies in step.
+#
+# -W makes ~/projects the base directory for the match, so the candidates are
+# the project names themselves rather than paths relative to wherever the shell
+# happens to be. Without it the default file completion offers the current
+# directory's contents, which is never what p takes.
+#
+# -/ restricts to directories, since cd has nothing to do with files, and
+# _path_files rather than _files so that nested paths still work: p accepts
+# `foo/bar` and this completes through it a component at a time.
+_path_files -/ -W ~/projects

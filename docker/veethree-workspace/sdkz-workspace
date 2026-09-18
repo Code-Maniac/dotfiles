@@ -13,7 +13,8 @@
 #   sdkz-workspace --current                 what the container is running now
 #   sdkz-workspace --start                   start the container as it is
 #   sdkz-workspace --attach                  open a shell in the container
-#   sdkz-workspace --restore                 swap the previous container back in
+#   sdkz-workspace --restore                 swap the previous container back in,
+#                                            filesystem and all
 #   sdkz-workspace --vnc                     open the container's VNC session
 #   -y                                       skip the confirmation
 
@@ -22,7 +23,18 @@ set -euo pipefail
 REGISTRY_HOST=sdkz-builder:5000
 NAMESPACE=vtsdk
 CONTAINER=veethree-workspace
-BACKUP=veethree-workspace-previous
+# The previous container is preserved as a committed image rather than as a kept
+# container. A renamed container still carries compose's project and service
+# labels, and compose matches containers on those labels rather than on their
+# name - so the `compose up --force-recreate` in install() deleted the very
+# backup install() had renamed one line earlier, every time. An image is outside
+# compose's view entirely. A commit also costs only the container's writable
+# layer, since it stacks on the layers the image already has.
+BACKUP_IMAGE=veethree-workspace-backup:previous
+
+# What the snapshotted container was built from. A commit's own tag says nothing
+# about its origin, so it is recorded here for --restore and --current to show.
+ORIGIN_LABEL=sdkz-workspace.origin
 
 # compose publishes both of these on loopback, so the viewer connects to the
 # host side rather than into the container.
@@ -74,7 +86,16 @@ print("  " + "  ".join(sorted(d.get("tags") or [])))
 
 current() {
     docker inspect "$CONTAINER" --format 'running: {{.Config.Image}}   ({{.State.Status}})' 2>/dev/null ||
-        echo "no $CONTAINER container exists"
+        { echo "no $CONTAINER container exists"; return; }
+
+    # A restored container was created from a commit, so .Config.Image above is a
+    # bare image ID. Image labels come through onto the container, so the origin
+    # recorded at snapshot time says what that ID actually is.
+    local origin
+    origin=$(docker inspect "$CONTAINER" \
+        --format "{{index .Config.Labels \"$ORIGIN_LABEL\"}}" 2>/dev/null) || return 0
+    [[ -n $origin ]] && echo "  restored snapshot of: $origin"
+    return 0
 }
 
 # The image a previous run recorded in .env, which is the one compose will use.
@@ -142,54 +163,75 @@ attach() {
         "$CONTAINER" "$shell"
 }
 
-# The reverse of the swap main() does: the previous container is still whole, so
-# bringing it back is a rename and a start. Deliberately not "compose up", whose
-# --force-recreate would discard the filesystem being restored.
+# Commit the current container's filesystem to $BACKUP_IMAGE so it survives the
+# recreate that follows. Everything written inside the container comes with it -
+# packages installed by hand, build trees, anything outside the host mounts.
+#
+# Stopping first is not optional in either caller: the container holds ports 5900
+# and 6080, which the replacement needs. It also means the commit is taken of a
+# quiescent filesystem rather than a running one.
+#
+# No container to snapshot is a success, not a failure - a first install has
+# nothing to preserve.
+snapshot() {
+    docker container inspect "$CONTAINER" >/dev/null 2>&1 || return 0
+
+    local origin
+    origin=$(docker inspect "$CONTAINER" --format '{{.Config.Image}}')
+
+    echo "stopping $CONTAINER"
+    docker stop "$CONTAINER" >/dev/null
+    echo "committing its filesystem to $BACKUP_IMAGE - this takes a moment"
+    docker commit --change "LABEL $ORIGIN_LABEL=\"$origin\"" \
+        "$CONTAINER" "$BACKUP_IMAGE" >/dev/null ||
+        die "sdkz-workspace: could not commit $CONTAINER - nothing has been changed"
+}
+
+# Bring back the snapshot taken when the container was last replaced. Because the
+# filesystem now lives in an image, this goes through compose like any other
+# image change - the old rename-and-start dance is gone, and so is the reason it
+# had to avoid --force-recreate.
+#
+# The swap stays reversible: whatever is running is committed over $BACKUP_IMAGE
+# on the way past, so --restore again returns to it.
 restore() {
-    local assume_yes=$1 ref swap=$CONTAINER-swap
+    local assume_yes=$1 target origin
 
-    docker container inspect "$BACKUP" >/dev/null 2>&1 ||
-        die "sdkz-workspace: there is no $BACKUP container to restore"
-    if docker container inspect "$swap" >/dev/null 2>&1; then
-        die "sdkz-workspace: $swap is left over from an interrupted restore - remove or rename it first"
-    fi
+    docker image inspect "$BACKUP_IMAGE" >/dev/null 2>&1 ||
+        die "sdkz-workspace: there is no $BACKUP_IMAGE snapshot to restore"
 
-    ref=$(docker inspect "$BACKUP" --format '{{.Config.Image}}')
+    # Pinned by ID before anything else, because snapshot() below is about to
+    # move that tag onto the container being replaced.
+    target=$(docker image inspect "$BACKUP_IMAGE" --format '{{.Id}}')
+    origin=$(docker image inspect "$BACKUP_IMAGE" \
+        --format "{{index .Config.Labels \"$ORIGIN_LABEL\"}}" 2>/dev/null) || origin=""
 
     if (( ! assume_yes )); then
-        echo "This brings the previous $CONTAINER container back:"
-        echo "    $ref"
+        echo "This replaces the $CONTAINER container with the snapshot taken when it"
+        echo "was last replaced, originally built from:"
+        echo "    ${origin:-unrecorded}"
         echo
-        echo "Whatever is running now is stopped and kept as $BACKUP in its place, so"
+        echo "That container's filesystem comes back with it, not just the image."
+        echo
+        echo "Whatever is running now is committed over $BACKUP_IMAGE in its place, so"
         echo "this is reversible - run --restore again to swap back."
         echo
         read -r -p "continue? [y/N] " reply
         [[ $reply == [yY]* ]] || { echo "aborted"; return 1; }
     fi
 
-    # Both names are taken, so the swap needs somewhere to put the current one.
-    # Stopping is required either way: it holds ports 5900 and 6080.
-    if docker container inspect "$CONTAINER" >/dev/null 2>&1; then
-        echo "stopping $CONTAINER and keeping it as $BACKUP"
-        docker stop "$CONTAINER" >/dev/null
-        docker rename "$CONTAINER" "$swap"
-    fi
-    docker rename "$BACKUP" "$CONTAINER"
-    if docker container inspect "$swap" >/dev/null 2>&1; then
-        docker rename "$swap" "$BACKUP"
-    fi
+    snapshot
 
-    # Without this a later plain `docker compose up` sees drift against the
-    # restored container and recreates it from the image it replaced.
-    printf 'SDKZ_IMAGE=%s\n' "$ref" > "$ENVFILE"
+    # The ID, not the tag: $BACKUP_IMAGE now points at the container that was
+    # just replaced, so recording the tag would leave a later plain
+    # `docker compose up` recreating this container from the wrong snapshot.
+    printf 'SDKZ_IMAGE=%s\n' "$target" > "$ENVFILE"
 
-    docker start "$CONTAINER" >/dev/null
+    docker compose -f "$COMPOSE" --env-file "$ENVFILE" up -d --force-recreate
 
     echo
     current
-    if docker container inspect "$BACKUP" >/dev/null 2>&1; then
-        echo "the container this replaced is kept as $BACKUP (stopped)"
-    fi
+    echo "the container this replaced is kept as $BACKUP_IMAGE"
     echo "the dotfiles are already installed in this one - no need to run ./install"
 }
 
@@ -277,15 +319,16 @@ install() {
         fi
         echo "    $ref"
         echo
-        echo "The current container is stopped and kept as $BACKUP, so nothing in it"
-        echo "is lost - retrieve files from it later with:"
-        echo "    docker cp $BACKUP:<path> ."
+        echo "The current container's filesystem is committed to $BACKUP_IMAGE first,"
+        echo "so nothing in it is lost - bring the whole thing back with:"
+        echo "    sdkz-workspace --restore"
         echo
         echo "These are mounted from the host and carry over regardless:"
         echo "    the apps folder, ~/.ssh, ~/.claude, ~/.dotfiles, the tmux socket"
-        if docker container inspect "$BACKUP" >/dev/null 2>&1; then
+        if docker image inspect "$BACKUP_IMAGE" >/dev/null 2>&1; then
             echo
-            echo "NOTE: an older $BACKUP already exists and will be removed."
+            echo "NOTE: only one snapshot is kept - the existing $BACKUP_IMAGE"
+            echo "      is replaced, and whatever it holds is no longer restorable."
         fi
         echo
         read -r -p "continue? [y/N] " reply
@@ -299,34 +342,29 @@ install() {
         return 1
     fi
 
-    printf 'SDKZ_IMAGE=%s\n' "$ref" > "$ENVFILE"
+    # Snapshot before .env is touched, so a failed commit leaves the recorded
+    # image still matching the container that is actually there.
+    #
+    # The old container is not kept alongside the new one. Compose will not adopt
+    # a container it did not create, and renaming the old one out of the way does
+    # not help: the rename leaves compose's project and service labels on it,
+    # compose matches on those rather than on the name, and the --force-recreate
+    # below then deletes it. Committing puts the filesystem somewhere compose
+    # cannot reach, and compose removes the container itself.
+    snapshot
 
-    # Compose will not adopt a container it did not create - with the name
-    # already taken it fails with a name conflict and changes nothing - so the
-    # old container has to move out of the way. It is kept rather than deleted:
-    # stopped and renamed, so anything left in its filesystem can still be
-    # recovered with docker cp. Stopping is not optional either way, since it
-    # holds ports 5900 and 6080 that the new container needs.
-    if docker container inspect "$CONTAINER" >/dev/null 2>&1; then
-        if docker container inspect "$BACKUP" >/dev/null 2>&1; then
-            echo "removing the previous backup $BACKUP"
-            docker rm -f "$BACKUP" >/dev/null
-        fi
-        echo "stopping $CONTAINER and keeping it as $BACKUP"
-        docker stop "$CONTAINER" >/dev/null
-        docker rename "$CONTAINER" "$BACKUP"
-    fi
+    printf 'SDKZ_IMAGE=%s\n' "$ref" > "$ENVFILE"
 
     docker compose -f "$COMPOSE" --env-file "$ENVFILE" up -d --force-recreate
 
     echo
     current
-    if docker container inspect "$BACKUP" >/dev/null 2>&1; then
-        echo "previous container kept as $BACKUP (stopped)"
-        echo "    docker cp $BACKUP:<path> .     retrieve anything from it"
-        echo "    docker rm $BACKUP              reclaim its disk when done"
-        echo "    note: 'docker compose down' also removes it, as it still carries"
-        echo "          this project's labels once compose has owned it"
+    if docker image inspect "$BACKUP_IMAGE" >/dev/null 2>&1; then
+        echo "previous container kept as the image $BACKUP_IMAGE"
+        echo "    sdkz-workspace --restore       bring it back, filesystem and all"
+        echo "    docker cp is not needed        --restore recreates the whole thing"
+        echo "    docker rmi $BACKUP_IMAGE"
+        echo "                                   reclaim its disk when done"
     fi
     echo "run ./install inside the new one to relink the dotfiles and install its packages:"
     echo "    docker exec -it $CONTAINER zsh -lc '~/.dotfiles/install'"
