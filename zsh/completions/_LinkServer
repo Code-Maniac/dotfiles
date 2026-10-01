@@ -1,0 +1,260 @@
+#compdef LinkServer
+
+# Completion for NXP's LinkServer CLI.
+#
+# Ensure this works also when being source-ed
+compdef _LinkServer LinkServer
+
+# DEVICE is either a <DEVICE_NAME>:<BOARD> pair or the path to a device JSON.
+# The pair is built from `devices --id`, whose columns are family, id, board,
+# cores - the id and board are what go either side of the colon.
+_get_linkserver_devices() {
+  local -a pairs
+  pairs=(${(f)"$(LinkServer devices --id 2>/dev/null | awk 'NF>=3 && $1 !~ /^-+$/ && $1 != "Family" {print $2 ":" $3}')"})
+  _describe -t devices 'device' pairs
+  _files -g '*.json'
+}
+
+# `probes` lists the index in column 1 and the serial in column 3. Both are
+# valid for --probe, the index needing a leading #.
+_get_linkserver_probes() {
+  local -a ids
+  ids=(${(f)"$(LinkServer probes 2>/dev/null | awk 'NF>=3 && $1 ~ /^[0-9]+$/ {print "#" $1; print $NF}')"})
+  _describe -t probes 'probe' ids
+}
+
+_linkserver_boot_opts=(
+'--bootconfig[drive ISP_CTRL pins during resets]:data:'
+'(-B --no-boot)'{-B,--no-boot}'[do not boot probes]'
+'(-I --boot-image)'{-I,--boot-image}'[probe boot image]:image:(bridged non-bridged vcom-serial)'
+)
+
+_linkserver_probe_opts=(
+'(-p --probe)'{-p,--probe}'[probe serial or index]:probe:_get_linkserver_probes'
+'(-u --update-mode)'{-u,--update-mode}'[MCU-Link firmware update mode]:mode:(none check auto forced)'
+'(-t --update-timeout)'{-t,--update-timeout}'[firmware update timeout, seconds]:seconds:'
+'(-o --override)'{-o,--override}'[override device JSON, <POINTER>=<VALUE>]:override:'
+)
+
+_LinkServer_cmds() {
+  local -a cmds=(
+  'config[export the JSON configuration for a device]'
+  'devices[list supported devices]'
+  'flash[flash operations]'
+  'gdbserver[start gdbserver connected to a device]'
+  'gui[GUI mode]'
+  'help[show help for a subcommand]'
+  'maint[maintenance commands]'
+  'probe[probe commands for a probe id]'
+  'probes[list connected probes]'
+  'run[load, run and monitor an application]'
+  )
+  _values "LinkServer command" $cmds
+}
+
+_LinkServer() {
+  local -a global_opts=(
+  '(: * -)'{-h,--help}'[show help]'
+  '(: * -)'{-v,--version}'[print version and exit]'
+  '(: * -)--api-version[print API version and exit]'
+  '(-l --log-level)'{-l,--log-level}'[logging level 0-5]:level:(0 1 2 3 4 5)'
+  )
+
+  local curcontext="$curcontext" state line
+  typeset -A opt_args
+
+  _arguments -S -C \
+    $global_opts \
+    "1: :->cmds" \
+    "*::arg:->args"
+
+  case "$state" in
+  cmds)
+    _LinkServer_cmds
+    ;;
+  args)
+    _call_function ret _LinkServer_$line[1]
+    ;;
+  esac
+}
+
+_LinkServer_devices() {
+  _arguments -S \
+    '(-f --filter)'{-f,--filter}'[filter by <DEVICE_NAME>:<BOARD>]:filter:_get_linkserver_devices' \
+    '--id[show device IDs instead of names]'
+}
+
+_LinkServer_probes() {
+  _arguments -S ${_linkserver_boot_opts}
+}
+
+_LinkServer_config() {
+  _arguments -S \
+    '(-o --output)'{-o,--output}'[output file]:file:_files -g "*.json"' \
+    "1:device:_get_linkserver_devices"
+}
+
+_LinkServer_gui() {
+  _arguments -S
+}
+
+_LinkServer_help() {
+  _arguments -S "1:command:_LinkServer_cmds"
+}
+
+# flash takes its own options, then DEVICE, then a subcommand with more.
+_LinkServer_flash() {
+  local -a flash_cmds=(
+  'blank[check a flash region is blank]'
+  'dump[dump a flash region to a file]'
+  'erase[erase all flash]'
+  'load[program flash with the given files]'
+  'regions[list the flash regions for the device]'
+  'resurrect[attempt to unlock the device]'
+  'verify[verify flash contents against files]'
+  )
+
+  local curcontext="$curcontext" state line
+  typeset -A opt_args
+
+  _arguments -S -C \
+    ${_linkserver_probe_opts} ${_linkserver_boot_opts} \
+    "1:device:_get_linkserver_devices" \
+    "2: :->cmds" \
+    "*::arg:->args"
+
+  case "$state" in
+  cmds)
+    _values "flash command" $flash_cmds
+    ;;
+  args)
+    _call_function ret _LinkServer_flash_$line[2]
+    ;;
+  esac
+}
+
+# FILE may carry its own address as FILE:ADDRESS, so --addr is only usable with
+# a single file - not something the completion can enforce, but worth knowing.
+_LinkServer_flash_load() {
+  _arguments -S \
+    '(-e --erase-all)'{-e,--erase-all}'[erase all flash before programming]' \
+    '(-R --no-reset)'{-R,--no-reset}'[do not reset and run after programming]' \
+    '(-a --addr)'{-a,--addr}'[load address, binary files only]:address:' \
+    "*:file:_files"
+}
+
+# dump takes ADDR SIZE FILE positionally, in that order.
+_LinkServer_flash_dump() {
+  _arguments -S \
+    "1:address:" \
+    "2:size:" \
+    "3:output file:_files"
+}
+
+_LinkServer_flash_erase() {
+  _arguments -S '(-s --sector)'{-s,--sector}'[sector erase instead of chip erase]'
+}
+
+_LinkServer_flash_blank() {
+  _arguments -S \
+    '(-f --file)'{-f,--file}'[check the area this file would occupy]:file:_files' \
+    '(-a --addr)'{-a,--addr}'[start of the region]:address:' \
+    '(-s --size)'{-s,--size}'[size of the region]:size:'
+}
+
+_LinkServer_flash_verify() {
+  _arguments -S \
+    '(-a --addr)'{-a,--addr}'[address, binary files only]:address:' \
+    "*:file:_files"
+}
+
+_LinkServer_flash_regions()   { _arguments -S }
+_LinkServer_flash_resurrect() { _arguments -S }
+
+_LinkServer_gdbserver() {
+  _arguments -S \
+    ${_linkserver_probe_opts} ${_linkserver_boot_opts} \
+    '(-c --core)'{-c,--core}'[core to connect to]:core:' \
+    '--gdb-port[GDB server port]:port:' \
+    '--semihost-port[semihost port, -1 to disable]:port:' \
+    '--redlink-telnet-port[additional redlinkserv port]:port:' \
+    '--allow-remote[allow remote TCP/IP connections]' \
+    '--keep-alive[restart the server when it closes]' \
+    '(-a --attach)'{-a,--attach}'[attach without resetting]' \
+    "1:device:_get_linkserver_devices"
+}
+
+_LinkServer_run() {
+  _arguments -S \
+    ${_linkserver_probe_opts} ${_linkserver_boot_opts} \
+    '--mode[I/O mode]:mode:(semihost)' \
+    '--send[input to send to the application]:text:' \
+    '--args-mark[marker to wait for before sending input]:text:' \
+    '--exit-mark[marker signalling termination]:text:' \
+    '--pass-mark[pass string]:text:' \
+    '--fail-mark[fail string]:text:' \
+    '--pause[pause for a key press on exit]' \
+    '(-a --addr)'{-a,--addr}'[load address, binary files only]:address:' \
+    "1:device:_get_linkserver_devices" \
+    "2:file:_files"
+}
+
+# PROBE_ID first, then the subcommand. '#0' is accepted where the command does
+# not need a particular probe.
+_LinkServer_probe() {
+  local -a probe_cmds=(
+  'dapinfo[show CMSIS-DAP information for the probe]'
+  'runscript[load and run a LinkServer scp script]'
+  'update[MCU-Link firmware update]'
+  'wirebootconfig[drive the ISP_CTRL pins during resets]'
+  'wiretimedreset[assert reset for a number of milliseconds]'
+  )
+
+  local curcontext="$curcontext" state line
+  typeset -A opt_args
+
+  _arguments -S -C \
+    "1:probe:_get_linkserver_probes" \
+    "2: :->cmds" \
+    "*::arg:->args"
+
+  case "$state" in
+  cmds)
+    _values "probe command" $probe_cmds
+    ;;
+  args)
+    _call_function ret _LinkServer_probe_$line[2]
+    ;;
+  esac
+}
+
+_LinkServer_probe_runscript() {
+  _arguments -S "1:script:_files -g '*.scp'"
+}
+
+_LinkServer_probe_update() {
+  _arguments -S "1:mode:(none check auto forced)"
+}
+
+_LinkServer_probe_wiretimedreset() {
+  _arguments -S "1:milliseconds:"
+}
+
+_LinkServer_probe_wirebootconfig() {
+  _arguments -S "1:ISP_CTRL\[3:0\] as four of 0/1/x:(xxxx 0000 1111)"
+}
+
+_LinkServer_probe_dapinfo() { _arguments -S }
+
+_LinkServer_maint() {
+  local -a maint_cmds=('ide[MCUXpresso IDE integration commands]')
+  _arguments -S -C "1: :->cmds" "*::arg:->args"
+  case "$state" in
+  cmds) _values "maint command" $maint_cmds ;;
+  esac
+}
+
+# don't run the completion function when being source-ed or eval-ed
+if [ "$funcstack[1]" = "_LinkServer" ]; then
+    _LinkServer
+fi

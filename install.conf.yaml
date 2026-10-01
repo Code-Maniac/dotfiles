@@ -124,6 +124,9 @@
   # on GNU coreutils - see the script for the mechanism. Idempotent, and needs to
   # re-run after every statusline upgrade because the installer replaces lib/.
   - [install-scripts/patch-claude-statusline.sh, Patching claude statusline for GNU stat]
+  # ~/.claude is mounted into veethree-workspace but the program lives in
+  # ~/.local, which every container recreate wipes. A no-op once installed.
+  - [install-scripts/install-claude.sh, Installing Claude Code]
 
 - sudo:
   - shell:

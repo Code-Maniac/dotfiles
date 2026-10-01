@@ -27,6 +27,29 @@ if [[ -n ${SDKZ_IMAGE_VERSION:-} ]]; then
   export COLORTERM=${COLORTERM:-truecolor}
 fi
 
+# The newest Zephyr SDK under /opt/toolchains, so launch.json files and scripts
+# can say ${env:ZEPHYR_SDK_INSTALL_DIR}/... rather than naming a version that
+# stops existing on the next image bump. The image sets this too, to whichever
+# SDK it was built with; this takes the highest installed instead. (n) sorts the
+# version numbers numerically, so 1.0.1 beats 0.16.8 and 0.17 beats 0.16, and (N/)
+# keeps it to directories and makes no match leave the image's value alone.
+#
+# ZEPHYR_SDK_INSTALL_DIR stays the SDK root - Zephyr's CMake finds the SDK, its
+# host tools and the toolchain from there. The arm GCC binaries get their own
+# variable, for launch.json's armToolchainPath: ${env:ZEPHYR_SDK_ARM_BIN}. They
+# are under gnu/ since SDK 1.0, and directly under the root before that.
+if [[ -n ${SDKZ_IMAGE_VERSION:-} ]]; then
+  () {
+    local sdks=(/opt/toolchains/zephyr-sdk-*(N/n))
+    (( ${#sdks} )) && export ZEPHYR_SDK_INSTALL_DIR=${sdks[-1]}
+  }
+  if [[ -d ${ZEPHYR_SDK_INSTALL_DIR}/gnu/arm-zephyr-eabi/bin ]]; then
+    export ZEPHYR_SDK_ARM_BIN=${ZEPHYR_SDK_INSTALL_DIR}/gnu/arm-zephyr-eabi/bin
+  elif [[ -d ${ZEPHYR_SDK_INSTALL_DIR}/arm-zephyr-eabi/bin ]]; then
+    export ZEPHYR_SDK_ARM_BIN=${ZEPHYR_SDK_INSTALL_DIR}/arm-zephyr-eabi/bin
+  fi
+fi
+
 # Claude Code keeps ~/.claude.json - the account record, onboarding state and
 # project history - *beside* its config directory rather than inside it. Only
 # ~/.claude is bind mounted into the container, so that file lands in the
@@ -65,7 +88,12 @@ if [ -r "${PATHFILE}" ]; then
   # empty element) when the file has nothing in it. Appending to the $path
   # array rather than the $PATH string is what avoids a stray ':' — an empty
   # PATH element means "current directory", which is not something we want.
-  path+=(${(f)"$(grep -vE '^[[:space:]]*(#|$)' ${PATHFILE})"})
+  #
+  # A literal $HOME in an entry is replaced with the home directory, so one file
+  # serves both the host (/home/nick) and the container (/home/user).
+  typeset -a path_entries=(${(f)"$(grep -vE '^[[:space:]]*(#|$)' ${PATHFILE})"})
+  path+=(${path_entries//\$HOME/$HOME})
+  unset path_entries
 fi
 
 # Add brew library path

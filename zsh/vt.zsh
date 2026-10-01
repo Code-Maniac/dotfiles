@@ -18,6 +18,37 @@ vt-apps-dir() {
   return 1
 }
 
+# The workspace's modules directory, which sits beside apps.
+vt-modules-dir() {
+  local apps
+  apps=$(vt-apps-dir) || return 1
+  [[ -d ${apps:h}/modules ]] || return 1
+  print -r -- ${apps:h}/modules
+}
+
+_vt-cd-under() {
+  local cmd=$1 root=$2 name=$3
+  if [[ -z $root ]]; then
+    print -u2 "$cmd: not inside an sdkz west workspace"
+    return 1
+  fi
+  if [[ -n $name && ! -d $root/$name ]]; then
+    print -u2 "$cmd: no such directory '$name' in $root"
+    return 1
+  fi
+  cd -- $root${name:+/$name}
+}
+
+# mod [name] / app [name] - cd into a workspace module or app, or into the
+# modules / apps folder itself when no name is given.
+mod() { _vt-cd-under mod "$(vt-modules-dir)" $1 }
+app() { _vt-cd-under app "$(vt-apps-dir)" $1 }
+
+# td - cd to the west topdir. ws - cd to the manifest repo (sdkz_workspace_priv),
+# found by its role rather than its folder name.
+td() { _vt-cd-under td "$(west topdir 2>/dev/null)" }
+ws() { _vt-cd-under ws "$(west list -f '{abspath}' manifest 2>/dev/null)" }
+
 # vtbuild - wrapper around `west build` for the C4.3 workspace.
 #
 #   vtbuild [--target|--sim] [--debug|--release] [-p] [--export] [app] [-- cmake args]

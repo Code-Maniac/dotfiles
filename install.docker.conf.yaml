@@ -66,19 +66,23 @@
     # nvim-dap talks DAP, and gdb only serves DAP when it was built with python -
     # the `dap` interpreter is implemented in python, so a gdb configured
     # --without-python reports "Interpreter `dap' unrecognized" no matter what
-    # else it can do. That rules out the Zephyr SDK's arm-zephyr-eabi-gdb, and
-    # its -py sibling will not start because it wants libpython3.12, which ubuntu
-    # 26.04 does not package at all.
+    # else it can do. That rules out the Zephyr SDK's arm-zephyr-eabi-gdb. Its -py
+    # sibling wants libpython3.12, which ubuntu 26.04 does not package -
+    # install-scripts/install-libpython312.sh in the sudo section supplies it.
     #
-    # gdb-multiarch is the way out: python built in, knows armv7e-m, and is the
-    # exact command vim/astronvim/lua/plugins/dap.lua names for its gdb_remote
-    # adapter. Not in the sdkz image, so target debugging over LinkServer stops
-    # working on every container recreation without this.
+    # vim/astronvim/lua/plugins/dap.lua's gdb_remote adapter prefers that SDK
+    # gdb-py, and falls back to gdb-multiarch: python built in, knows armv7e-m.
+    # Not in the sdkz image, so without this target debugging over LinkServer
+    # has nothing to fall back to whenever the SDK gdb cannot run.
     gdb-multiarch,
     # The image does ship this one, and dap.lua's plain `gdb` adapter needs it
     # for native_sim and host binaries. Listed so the dependency is explicit
     # rather than inherited by luck.
     gdb,
+    # nvim-dap-cortex-debug runs cortex-debug's debug adapter under node, which is
+    # what makes a project's .vscode/launch.json cortex-debug entries work in nvim.
+    # The adapter itself comes from mason (Open VSX), installed on first launch.
+    nodejs,
     # zshrc sources /usr/share/autojump/autojump.sh unconditionally on debian
     # based systems, so this is needed or every shell starts with an error.
     { dnf: autojump-zsh, else: autojump }]
@@ -86,6 +90,10 @@
 - shell:
     # zshrc sources this directly - without it the shell is unusable.
     - [curl -L git.io/antigen > ~/.antigen/antigen.zsh, Installing antigen]
+    # The pyOCD debug configurations target mimxrt1166cvm5a, which comes from NXP's
+    # CMSIS pack rather than being built into pyOCD. The pack cache is per user, so
+    # this runs here rather than under sudo. Idempotent.
+    - [install-scripts/install-pyocd-rt1166-pack.sh, Installing the pyOCD RT1166 pack]
 
 - sudo:
   - shell:
@@ -101,6 +109,10 @@
     # Auto-accepts NXP's licence - see the header for exactly what that covers.
     # Idempotent, and a no-op anywhere the installer is absent.
     - [install-scripts/install-linkserver.sh, Installing LinkServer]
+    # The Zephyr SDK's arm-zephyr-eabi-gdb-py needs libpython3.12 to start, and
+    # dap.lua prefers it over gdb-multiarch for target debugging. From the
+    # deadsnakes PPA, alongside the system python. Idempotent.
+    - [install-scripts/install-libpython312.sh, Installing libpython3.12]
 
 - link:
     ~/.zshrc: zsh/zshrc

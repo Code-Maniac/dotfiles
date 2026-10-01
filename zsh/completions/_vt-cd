@@ -1,0 +1,15 @@
+#compdef mod app
+
+# Completion for the mod and app helpers in zsh/vt.zsh.
+
+local dir
+case $service in
+  mod) (( $+functions[vt-modules-dir] )) && dir=$(vt-modules-dir 2>/dev/null) ;;
+  app) (( $+functions[vt-apps-dir] )) && dir=$(vt-apps-dir 2>/dev/null) ;;
+esac
+
+[[ -n $dir ]] || return 1
+
+local -a names
+names=(${dir}/*(/N:t))
+_describe -t $service $service names

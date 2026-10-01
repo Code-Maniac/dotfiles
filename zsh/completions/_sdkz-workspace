@@ -86,6 +86,7 @@ _arguments -s -S \
   '(- *)--start[start the container for the pulled image]' \
   '(- *)--attach[open a shell in the running container]' \
   '(- *)--restore[swap the previous container back in]' \
+  '(--restore)--no-backup[with --install/--update, do not snapshot the old container]' \
   "(- *)--vnc[open the container's VNC session]" \
   '(- *)--tags[list the tags available for one image]:image:_sdkz_ws_image_names' \
   '(- *)'{-h,--help}'[show usage]' \

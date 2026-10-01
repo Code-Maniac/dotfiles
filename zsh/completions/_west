@@ -42,7 +42,6 @@ _west_cmds() {
   # what the WEST_COMP_CHECK_WORKSPACE branch below distinguishes.
   local -a sdkz_ext_cmds=(
   'rootfs[build, flash and retrieve the target /data littlefs image]'
-  'install-linkserver[install LinkServer and the board definitions]'
   'publish[publish the SDKZ workspace]'
   'git-config[configure git for the SDKZ workspace]'
   )
@@ -386,6 +385,7 @@ _west_rootfs_probe_opts=(
 
 _west_rootfs() {
   local -a rootfs_cmds=(
+  'check[report whether a directory fits in the dataflash]'
   'create[pack a directory into a littlefs image]'
   'extract[unpack a littlefs image into a directory]'
   'flash[write a directory or image to the board]'
@@ -409,6 +409,12 @@ _west_rootfs() {
     _call_function ret _west_rootfs_$line[1]
     ;;
   esac
+}
+
+# check measures a directory and writes nothing, so it takes one argument and
+# that argument is always a directory.
+_west_rootfs_check () {
+  _arguments -S "1:directory to measure:_directories"
 }
 
 # create takes a source directory and an output image, in that order - so the
@@ -450,17 +456,6 @@ _west_rootfs_erase () {
   local -a opts=(
   ${_west_rootfs_probe_opts}
   {-y,--yes}'[do not ask before overwriting the board filesystem]'
-  )
-
-  _arguments -S $opts
-}
-
-_west_install-linkserver () {
-  local -a opts=(
-  '--installer[LinkServer installer to run]:installer:_files -g "*.deb.bin"'
-  {-y,--yes}'[accept the NXP licence and install unattended]'
-  '--devices-only[only refresh the board definitions in an existing install]'
-  '--dry-run[print what would happen, without changing anything]'
   )
 
   _arguments -S $opts

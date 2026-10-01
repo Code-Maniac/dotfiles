@@ -16,6 +16,9 @@
 #   sdkz-workspace --restore                 swap the previous container back in,
 #                                            filesystem and all
 #   sdkz-workspace --vnc                     open the container's VNC session
+#   --no-backup                              with --install/--update: do not
+#                                            commit the old container first, so
+#                                            --restore cannot bring it back
 #   -y                                       skip the confirmation
 
 set -euo pipefail
@@ -106,6 +109,16 @@ env_ref() {
     sed -n 's/^SDKZ_IMAGE=//p' "$ENVFILE" | tail -n1
 }
 
+# The tmux socket directory has to exist, owned by us, before the container
+# starts. Otherwise docker creates it as root, tmux later replaces it, and the
+# container's mount is left pinned to the deleted original - so nothing inside
+# can reach the tmux server until the container is restarted.
+ensure_tmux_dir() {
+    local dir=${TMUX_SOCKET_DIR:-/tmp/tmux-$(id -u)}
+    mkdir -p -m 700 "$dir" || die "sdkz-workspace: could not create $dir"
+    [[ -O $dir ]] || die "sdkz-workspace: $dir is not owned by you - remove it and start tmux first"
+}
+
 # Bring the workspace up without pulling or replacing anything: the image choice
 # is whatever the last pull recorded, so this only has to get a container
 # running for it. An existing container is started in place rather than
@@ -122,11 +135,13 @@ start() {
             current
             return 0
         fi
+        ensure_tmux_dir
         echo "starting $CONTAINER"
         docker start "$CONTAINER" >/dev/null
     else
         echo "no $CONTAINER container exists - creating one from:"
         echo "    ${ref:-the default in compose.yaml}"
+        ensure_tmux_dir
         if [[ -f $ENVFILE ]]; then
             docker compose -f "$COMPOSE" --env-file "$ENVFILE" up -d
         else
@@ -227,6 +242,7 @@ restore() {
     # `docker compose up` recreating this container from the wrong snapshot.
     printf 'SDKZ_IMAGE=%s\n' "$target" > "$ENVFILE"
 
+    ensure_tmux_dir
     docker compose -f "$COMPOSE" --env-file "$ENVFILE" up -d --force-recreate
 
     echo
@@ -300,7 +316,7 @@ vnc() {
 # --update comes through here too, with the reference the last install recorded,
 # so a re-pull and a switch of image follow exactly the same path.
 install() {
-    local assume_yes=$1 name=$2 is_update=${3:-0} ref bare
+    local assume_yes=$1 name=$2 is_update=${3:-0} backup=${4:-1} ref bare
 
     ref=$(resolve_ref "$name")
 
@@ -319,13 +335,18 @@ install() {
         fi
         echo "    $ref"
         echo
-        echo "The current container's filesystem is committed to $BACKUP_IMAGE first,"
-        echo "so nothing in it is lost - bring the whole thing back with:"
-        echo "    sdkz-workspace --restore"
+        if (( backup )); then
+            echo "The current container's filesystem is committed to $BACKUP_IMAGE first,"
+            echo "so nothing in it is lost - bring the whole thing back with:"
+            echo "    sdkz-workspace --restore"
+        else
+            echo "--no-backup: the current container is discarded without a snapshot."
+            echo "Anything written inside it outside the host mounts is lost."
+        fi
         echo
         echo "These are mounted from the host and carry over regardless:"
         echo "    the apps folder, ~/.ssh, ~/.claude, ~/.dotfiles, the tmux socket"
-        if docker image inspect "$BACKUP_IMAGE" >/dev/null 2>&1; then
+        if (( backup )) && docker image inspect "$BACKUP_IMAGE" >/dev/null 2>&1; then
             echo
             echo "NOTE: only one snapshot is kept - the existing $BACKUP_IMAGE"
             echo "      is replaced, and whatever it holds is no longer restorable."
@@ -351,15 +372,21 @@ install() {
     # compose matches on those rather than on the name, and the --force-recreate
     # below then deletes it. Committing puts the filesystem somewhere compose
     # cannot reach, and compose removes the container itself.
-    snapshot
+    #
+    # With --no-backup there is nothing to do here: --force-recreate stops and
+    # removes the old container itself before the new one takes its ports.
+    (( backup )) && snapshot
 
     printf 'SDKZ_IMAGE=%s\n' "$ref" > "$ENVFILE"
 
+    ensure_tmux_dir
     docker compose -f "$COMPOSE" --env-file "$ENVFILE" up -d --force-recreate
 
     echo
     current
-    if docker image inspect "$BACKUP_IMAGE" >/dev/null 2>&1; then
+    if (( ! backup )); then
+        echo "previous container discarded (--no-backup)"
+    elif docker image inspect "$BACKUP_IMAGE" >/dev/null 2>&1; then
         echo "previous container kept as the image $BACKUP_IMAGE"
         echo "    sdkz-workspace --restore       bring it back, filesystem and all"
         echo "    docker cp is not needed        --restore recreates the whole thing"
@@ -371,10 +398,11 @@ install() {
 }
 
 main() {
-    local assume_yes=0 image="" do_restore=0 do_install=0 do_update=0
+    local assume_yes=0 image="" do_restore=0 do_install=0 do_update=0 backup=1
     while (( $# )); do
         case $1 in
             -y|--yes)   assume_yes=1 ;;
+            --no-backup) backup=0 ;;
             --list)     list_images; return 0 ;;
             --tags)     shift; list_tags "$@"; return 0 ;;
             --current)  current; return 0 ;;
@@ -402,6 +430,11 @@ main() {
     (( do_install + do_update + do_restore <= 1 )) ||
         die "sdkz-workspace: --install, --update and --restore are one at a time"
 
+    # --restore relies on committing what it replaces to stay reversible, so it
+    # does not take --no-backup.
+    (( do_restore && ! backup )) &&
+        die "sdkz-workspace: --no-backup goes with --install or --update, not --restore"
+
     if (( do_restore )); then
         restore "$assume_yes"
         return
@@ -414,12 +447,12 @@ main() {
         [[ -n $image ]] ||
             die "sdkz-workspace: no image recorded in $ENVFILE - install one with
     sdkz-workspace --install <image>"
-        install "$assume_yes" "$image" 1
+        install "$assume_yes" "$image" 1 "$backup"
         return
     fi
 
     (( do_install )) || { usage; return 1; }
-    install "$assume_yes" "$image" 0
+    install "$assume_yes" "$image" 0 "$backup"
 }
 
 main "$@"

@@ -2,8 +2,12 @@
 --
 -- gdb 14+ implements DAP itself, so there is no adapter to download - with the
 -- caveat that it is implemented in Python, and a gdb built without Python
--- silently lacks it. The system gdb has it; the Zephyr SDK's arm-zephyr-eabi-gdb
--- does not, which is why the remote configuration uses gdb-multiarch.
+-- silently lacks it. The system gdb has it; the Zephyr SDK's plain
+-- arm-zephyr-eabi-gdb does not. The SDK also ships arm-zephyr-eabi-gdb-py, which
+-- does, but links against libpython3.12 - not the system Python on Ubuntu 26.04,
+-- so it needs libpython3.12 from the deadsnakes PPA. The remote configuration
+-- uses that gdb when it is there, so the debugger matches the SDK's toolchain,
+-- and falls back to gdb-multiarch otherwise.
 --
 -- On ordering: mason-nvim-dap registers codelldb for c, cpp and rust, and it
 -- does so after nvim-dap's load hooks - so anything registered from a load hook
@@ -517,9 +521,13 @@ end
 -- The board's runners.yaml sets `debug-runner: jlink` while flash-runner is
 -- linkserver, so the build system's own `debugserver` target would start the
 -- wrong server entirely. The runner is named explicitly here.
-local function start_server(build_dir)
+--
+-- `cmd` and `label` replace that default command, for a debugserver that comes
+-- from a project's own tasks.json instead (see run_vscode_task).
+local function start_server(build_dir, cmd, label)
   local co = coroutine.running()
-  local label = "west debugserver --runner linkserver"
+  label = label or "west debugserver --runner linkserver"
+  cmd = cmd or { "west", "debugserver", "--runner", "linkserver", "--build-dir", build_dir }
   local append, close = output_window(label)
   local settled = false
 
@@ -550,16 +558,14 @@ local function start_server(build_dir)
   -- fill in when the process ends: see the note on buffering above. `stdbuf -oL`
   -- was tried and changes nothing, so LinkServer is not buffering through libc
   -- stdio and LD_PRELOAD cannot reach it - do not re-add it.
-  server.job = vim.fn.jobstart({
-    "west", "debugserver", "--runner", "linkserver", "--build-dir", build_dir,
-  }, {
+  server.job = vim.fn.jobstart(cmd, {
     on_stdout = on_stdout,
     on_stderr = on_stderr,
     on_exit = function(_, code)
       flush_stdout()
       flush_stderr()
       server.job = nil
-      settle(false, "west debugserver exited with " .. code)
+      settle(false, label .. " exited with " .. code)
     end,
   })
 
@@ -627,6 +633,85 @@ local function target_session()
 end
 
 --------------------------------------------------------------------------------
+-- a launch.json configuration's preLaunchTask, from .vscode/tasks.json
+--------------------------------------------------------------------------------
+
+-- VS Code runs a configuration's preLaunchTask before the session, and projects
+-- rely on it for "build, start the debugserver, then debug". overseer can run
+-- tasks.json too, but not this shape: it only counts a dependsOn sequence done
+-- once every task in it has finished, and a background debugserver never
+-- finishes by design - VS Code counts it done once its endsPattern matches - so
+-- the session never started. It also ran everything out of sight. So the task is
+-- run here instead, with the same windows as the preset sessions: ordinary tasks in
+-- the build window, and a background task as the stub, ready once the gdb port
+-- is listening rather than on its endsPattern, which LinkServer's output buffering
+-- makes unreliable through a pipe anyway (see start_server).
+--
+-- What is understood is what these projects use: shell and process tasks,
+-- command plus args, dependsOn as a string or a list (run in order either way),
+-- and ${workspaceFolder}, ${cwd} and ${env:NAME}. A background task is assumed to
+-- be the gdb server for GDB_PORT, and reused if something already listens there.
+
+local function vscode_tasks()
+  local path = vim.fn.getcwd() .. "/.vscode/tasks.json"
+  if vim.fn.filereadable(path) == 0 then error("preLaunchTask given but there is no " .. path) end
+  local text = table.concat(vim.fn.readfile(path), "\n")
+  -- tasks.json is JSON with comments; overseer's decoder takes both kinds, and
+  -- vim.json.decode's skip_comments does not take //
+  local ok, json = pcall(require, "overseer.json")
+  local decoded, data = pcall(ok and json.decode or vim.json.decode, text, { skip_comments = true })
+  if not decoded then error("could not read " .. path .. ": " .. tostring(data)) end
+  local by_label = {}
+  for _, task in ipairs(data.tasks or {}) do
+    if task.label then by_label[task.label] = task end
+  end
+  return by_label
+end
+
+local function expand(value)
+  value = value:gsub("%${workspaceFolder}", vim.fn.getcwd()):gsub("%${cwd}", vim.fn.getcwd())
+  return (value:gsub("%${env:([%w_]+)}", function(name) return vim.env[name] or "" end))
+end
+
+-- The command line for one task, as jobstart wants it. A shell task goes through
+-- the shell as one quoted string, which is what VS Code does with it.
+local function task_command(task)
+  local args = {}
+  for _, arg in ipairs(task.args or {}) do
+    args[#args + 1] = expand(type(arg) == "table" and arg.value or arg)
+  end
+  local command = expand(task.command)
+  if task.type == "process" then return vim.list_extend({ command }, args) end
+  local line = { command }
+  for _, arg in ipairs(args) do line[#line + 1] = vim.fn.shellescape(arg) end
+  return { vim.o.shell, "-c", table.concat(line, " ") }
+end
+
+local function run_vscode_task(name, tasks, seen)
+  tasks = tasks or vscode_tasks()
+  seen = seen or {}
+  local task = tasks[name]
+  if not task then error("preLaunchTask '" .. name .. "' is not in .vscode/tasks.json") end
+  if seen[name] then error("tasks.json dependsOn loops back to '" .. name .. "'") end
+  seen[name] = true
+
+  local deps = task.dependsOn
+  if type(deps) == "string" then deps = { deps } end
+  for _, dep in ipairs(deps or {}) do
+    run_vscode_task(dep, tasks, seen)
+  end
+
+  if not task.command then return end
+  local cmd = task_command(task)
+  if task.isBackground then
+    if not server_listening() then start_server(nil, cmd, name) end
+    return
+  end
+  local ok, out = run_windowed(cmd, name)
+  if not ok then error(build_failed(name, out)) end
+end
+
+--------------------------------------------------------------------------------
 -- rust
 --------------------------------------------------------------------------------
 
@@ -660,6 +745,64 @@ local function cargo_built(args, label)
 end
 
 --------------------------------------------------------------------------------
+-- what can run from here
+--------------------------------------------------------------------------------
+
+-- The menu is rebuilt from these every time it opens, against the cwd as it is
+-- then, so a configuration that could only fail is not offered at all: presets
+-- where there are none, a west stub outside a west workspace. They are cheap
+-- file and PATH checks on purpose - nothing here runs cmake or west, because the
+-- menu should open instantly.
+
+local function has(exe) return vim.fn.executable(exe) == 1 end
+
+-- The gdb for on-target sessions: the SDK's Python-enabled gdb when one is
+-- installed, found through ZEPHYR_SDK_INSTALL_DIR or the SDK's usual location,
+-- and gdb-multiarch when not. nil when neither is usable.
+local function remote_gdb()
+  local sdks = {}
+  if vim.env.ZEPHYR_SDK_INSTALL_DIR then sdks[1] = vim.env.ZEPHYR_SDK_INSTALL_DIR end
+  vim.list_extend(sdks, vim.fn.glob("/opt/toolchains/zephyr-sdk-*", false, true))
+  for _, sdk in ipairs(sdks) do
+    local gdb = sdk .. "/gnu/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb-py"
+    if has(gdb) then return gdb end
+  end
+  if has "gdb-multiarch" then return "gdb-multiarch" end
+  return nil
+end
+local function has_remote_gdb() return remote_gdb() ~= nil end
+
+local function has_cmake_presets()
+  for _, name in ipairs { "CMakePresets.json", "CMakeUserPresets.json" } do
+    if vim.fn.filereadable(vim.fn.getcwd() .. "/" .. name) == 1 then return true end
+  end
+  return false
+end
+
+-- west locates its workspace by walking up to a .west directory, so the same
+-- walk answers whether a west command would work from here
+local function found_upward(name, kind)
+  return #vim.fs.find(name, { path = vim.fn.getcwd(), upward = true, type = kind, limit = 1 }) > 0
+end
+local function in_west_workspace() return found_upward(".west", "directory") end
+local function in_cargo_project() return found_upward("Cargo.toml", "file") end
+
+-- `available` is ours, not nvim-dap's, so it is taken off before the adapter
+-- sees the configuration. A copy, not the original: the list is rebuilt per
+-- menu anyway, and nothing handed to nvim-dap should be mutated after the fact.
+local function offered(list)
+  local out = {}
+  for _, entry in ipairs(list) do
+    if not entry.available or entry.available() then
+      local config = vim.tbl_extend("force", {}, entry)
+      config.available = nil
+      out[#out + 1] = config
+    end
+  end
+  return out
+end
+
+--------------------------------------------------------------------------------
 -- registration
 --------------------------------------------------------------------------------
 
@@ -672,6 +815,7 @@ local function c_configurations()
       cwd = "${workspaceFolder}",
       program = pick(is_program, "executable to debug"),
       stopAtBeginningOfMainSubprogram = false,
+      available = function() return has "gdb" end,
     },
     {
       name = "Build and debug a CMake preset",
@@ -679,6 +823,7 @@ local function c_configurations()
       request = "launch",
       cwd = "${workspaceFolder}",
       program = cmake_preset_program,
+      available = function() return has "gdb" and has_cmake_presets() end,
     },
     {
       name = "Launch zephyr.exe (native_sim)",
@@ -686,6 +831,8 @@ local function c_configurations()
       request = "launch",
       cwd = "${workspaceFolder}",
       program = pick(is_native_sim, "native_sim binary"),
+      -- only once one has been built: there is nothing to type a path to otherwise
+      available = function() return has "gdb" and #candidates(is_native_sim) > 0 end,
     },
     {
       -- The whole cycle, unattended: pick a preset, build it, flash the part,
@@ -697,6 +844,10 @@ local function c_configurations()
       request = "attach",
       target = "localhost:" .. GDB_PORT,
       program = target_session,
+      -- presets for the build and flash, west for the debugserver it starts
+      available = function()
+        return has_remote_gdb() and has "west" and has_cmake_presets() and in_west_workspace()
+      end,
     },
     {
       -- Build for the board, then attach to whatever is serving it. Start the
@@ -709,6 +860,7 @@ local function c_configurations()
       request = "attach",
       target = "localhost:3333",
       program = cmake_preset_elf,
+      available = function() return has_remote_gdb() and has_cmake_presets() end,
     },
     {
       -- pair with a gdbserver: `pyocd gdbserver`, JLinkGDBServer, or
@@ -718,6 +870,7 @@ local function c_configurations()
       request = "attach",
       target = "localhost:3333",
       program = pick(is_elf, "elf with the symbols"),
+      available = function() return has_remote_gdb() end,
     },
   }
 end
@@ -730,6 +883,7 @@ local function rust_configurations()
       request = "launch",
       cwd = "${workspaceFolder}",
       program = cargo_built({}, "cargo build"),
+      available = in_cargo_project,
     },
     {
       name = "cargo build --tests, then debug",
@@ -737,8 +891,54 @@ local function rust_configurations()
       request = "launch",
       cwd = "${workspaceFolder}",
       program = cargo_built({ "--tests" }, "cargo build --tests"),
+      available = in_cargo_project,
     },
   }
+end
+
+-- nvim-dap's own launch.json provider, kept so it is wrapped once however many
+-- times setup runs.
+local launch_json_unfiltered
+
+-- VS Code's Cortex-Debug still accepts its old option names, quietly mapping them
+-- to the new ones; nvim-dap-cortex-debug refuses them outright ("armToolchainPath"
+-- is not supported, use "toolchainPath") and the launch fails before it starts.
+-- The project launch.json files are written for VS Code and use the old names, so
+-- they are renamed here as they are read, rather than editing every project. A
+-- copy, so the entry VS Code-style files produce is never mutated.
+local CORTEX_DEBUG_RENAMES = {
+  armToolchainPath = "toolchainPath",
+  debugger_args = "debuggerArgs",
+  jlinkpath = "serverpath",
+  openOCDPath = "serverpath",
+  jlinkInterface = "interface",
+}
+
+local function modernise_cortex_debug(config)
+  if config.type ~= "cortex-debug" then return config end
+  local out = vim.tbl_extend("force", {}, config)
+  for old, new in pairs(CORTEX_DEBUG_RENAMES) do
+    if out[old] ~= nil then
+      if out[new] == nil then out[new] = out[old] end
+      out[old] = nil
+    end
+  end
+  -- the one that is not a plain rename: a boolean became the name of a function
+  if out.runToMain ~= nil then
+    if out.runToMain and out.runToEntryPoint == nil then out.runToEntryPoint = "main" end
+    out.runToMain = nil
+  end
+  return out
+end
+
+-- preLaunchTask is moved to a key of ours, so the pre_launch_task hook in setup
+-- runs it (see run_vscode_task) and overseer's own dap hook, which would stall on
+-- a background task, never sees it.
+local function take_pre_launch_task(config)
+  if not config.preLaunchTask then return config end
+  local out = vim.tbl_extend("force", {}, config)
+  out.dap_lua_pre_launch_task, out.preLaunchTask = config.preLaunchTask, nil
+  return out
 end
 
 -- Idempotent, because this runs from two places and whichever goes last wins.
@@ -788,6 +988,16 @@ local function setup()
       -- reports "32MB = 256*128K at 0x30000000", and the target-supplied map calls
       -- the same range flash once connected.
       "--eval-command", "mem 0x30000000 0x32000000 ro",
+      -- Read code from the elf rather than the part. By default gdb reads target
+      -- memory even for sections the elf already holds, and here that memory is
+      -- the XIP flash: every stack unwind and prologue scan becomes a FlexSPI AHB
+      -- read. Halting while the application has a program or erase in flight -
+      -- likely right after boot, when an attach follows straight on from a flash - puts
+      -- those reads on the controller mid-operation, and the application then
+      -- stops in FLEXSPI_CheckAndClearError on an error it did not cause. Code in
+      -- flash is exactly what the elf describes, so nothing is lost; RAM and
+      -- registers are still read from the part.
+      "--eval-command", "set trust-readonly-sections on",
     },
   }
   -- The same adapter against a gdb that knows non-host architectures, but as a
@@ -813,7 +1023,7 @@ local function setup()
       -- `file` takes the rest of the line as the filename, so no quoting.
       vim.list_extend(args, { "--eval-command", "file " .. config.program })
     end
-    callback { type = "executable", command = "gdb-multiarch", args = args }
+    callback { type = "executable", command = remote_gdb() or "gdb-multiarch", args = args }
   end
 
   -- gdb's DAP has no postLaunchCommands, so anything that has to happen after the
@@ -868,15 +1078,51 @@ local function setup()
     callback = stop_server,
   })
 
-  local function prepend(filetype, mine)
-    local existing = dap.configurations[filetype] or {}
-    if existing[1] and existing[1].name == mine[1].name then return end
-    dap.configurations[filetype] = vim.list_extend(mine, existing)
+  -- Offered through a provider rather than dap.configurations, because a
+  -- provider is called each time the menu opens and so can look at the cwd as
+  -- it is then. nvim-dap merges providers in sorted key order, and "dap.available"
+  -- sorts before "dap.global" (dap.configurations, where mason's codelldb entries
+  -- live), which keeps these above those. The project's own launch.json entries
+  -- go above both - see the provider below.
+  dap.providers.configs["dap.available"] = function(bufnr)
+    local filetype = vim.b["dap-srcft"] or vim.bo[bufnr].filetype
+    if filetype == "c" or filetype == "cpp" then return offered(c_configurations()) end
+    if filetype == "rust" then return offered(rust_configurations()) end
+    return {}
+  end
+  dap.configurations.cpp = dap.configurations.c
+
+  -- nvim-dap reads .vscode/launch.json on its own, and a project set up for VS
+  -- Code brings entries with no adapter here - cortex-debug, most often, which
+  -- only fail with "missing adapter" once chosen. Only those with an adapter
+  -- registered are shown.
+  --
+  -- Re-registered under "dap.0-launch.json" in place of nvim-dap's own key: the
+  -- menu is built in sorted key order, and "dap.0" sorts ahead of every other
+  -- "dap." provider, so a project's own configurations come first.
+  launch_json_unfiltered = launch_json_unfiltered or dap.providers.configs["dap.launch.json"]
+  if launch_json_unfiltered then
+    dap.providers.configs["dap.launch.json"] = nil
+    dap.providers.configs["dap.0-launch.json"] = function(bufnr)
+      local usable = vim.tbl_filter(
+        function(config) return dap.adapters[config.type] ~= nil end,
+        launch_json_unfiltered(bufnr)
+      )
+      return vim.tbl_map(function(config) return take_pre_launch_task(modernise_cortex_debug(config)) end, usable)
+    end
   end
 
-  prepend("c", c_configurations())
-  dap.configurations.cpp = dap.configurations.c
-  prepend("rust", rust_configurations())
+  -- nvim-dap runs on_config hooks inside its coroutine, so the task's build and
+  -- server windows can yield here the way the preset sessions' do.
+  dap.listeners.on_config["dap.lua.pre_launch_task"] = function(config)
+    local name = config.dap_lua_pre_launch_task
+    if not name then return config end
+    vim.cmd "wall"
+    run_vscode_task(name)
+    local out = vim.tbl_extend("force", {}, config)
+    out.dap_lua_pre_launch_task = nil
+    return out
+  end
 end
 
 ---@type LazySpec
@@ -919,6 +1165,50 @@ return {
         require("mason-nvim-dap").default_setup(config)
         setup()
       end
+    end,
+  },
+  -- cortex-debug, the adapter behind VS Code's Cortex-Debug extension, run under
+  -- node. With it the cortex-debug configurations in a project's
+  -- .vscode/launch.json work here unchanged - including their preLaunchCommands
+  -- `monitor reset` and runToEntryPoint, the start-from-reset flow that works in
+  -- VS Code. Without it those entries have no adapter, and the launch.json filter
+  -- in setup hides them.
+  --
+  -- The extension comes from mason (Open VSX, not VS Code), which puts it where
+  -- the plugin looks by default. It drives gdb over MI rather than DAP, so the
+  -- gdb it uses is whatever the launch configuration names
+  -- (armToolchainPath/toolchainPrefix), python or not.
+  {
+    "jedrzejboczar/nvim-dap-cortex-debug",
+    dependencies = { "mfussenegger/nvim-dap" },
+    -- loaded with nvim-dap rather than on its own, so the adapter is registered
+    -- by the time the first menu is built
+    lazy = true,
+    init = function()
+      require("astrocore").on_load("nvim-dap", function() require("lazy").load { plugins = { "nvim-dap-cortex-debug" } } end)
+    end,
+    opts = {},
+    config = function(_, opts) require("dap-cortex-debug").setup(opts) end,
+  },
+  -- overseer (from astrocommunity, see community.lua) runs a launch.json
+  -- configuration's preLaunchTask and postDebugTask from the project's
+  -- .vscode/tasks.json, dependsOn sequences and background problem matchers
+  -- included - so a VS Code "build, start debugserver, then debug" entry is one
+  -- keypress here too. It does that from nvim-dap's on_config hook, which it only
+  -- installs in its own setup, and the pack only loads it on an :Overseer command.
+  -- Loaded with nvim-dap instead, so the hook is in place before the first session.
+  {
+    "stevearc/overseer.nvim",
+    optional = true,
+    init = function()
+      require("astrocore").on_load("nvim-dap", function() require("lazy").load { plugins = { "overseer.nvim" } } end)
+    end,
+  },
+  {
+    "WhoIsSethDaniel/mason-tool-installer.nvim",
+    optional = true,
+    opts = function(_, opts)
+      opts.ensure_installed = require("astrocore").list_insert_unique(opts.ensure_installed, { "cortex-debug" })
     end,
   },
 }
