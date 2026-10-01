@@ -94,6 +94,13 @@
     # CMSIS pack rather than being built into pyOCD. The pack cache is per user, so
     # this runs here rather than under sudo. Idempotent.
     - [install-scripts/install-pyocd-rt1166-pack.sh, Installing the pyOCD RT1166 pack]
+    # nvim-dap's python debugging needs debugpy, and mason cannot install it here:
+    # it builds debugpy a venv of its own, and the image's python has no ensurepip.
+    # So it goes into the python3 on PATH instead - /opt/venv, owned by the user
+    # and the one west runs under - and dap.lua runs `python3 -m debugpy.adapter`.
+    # It is in the container's own filesystem, so a recreated container needs
+    # this again. Idempotent.
+    - [python3 -m pip install --quiet debugpy, Installing debugpy]
 
 - sudo:
   - shell:

@@ -1,0 +1,35 @@
+#compdef op
+
+# Completion for the op helper in zsh/op.zsh.
+#
+# The candidates follow where op will look: ~/projects on the host, the
+# workspace's apps and modules inside the container, and every west project name
+# once --west is on the line. Without the container helpers from vt.zsh there is
+# nothing to offer for the container case, so it offers nothing rather than
+# guessing at paths.
+
+_op_projects() {
+  if [[ -z ${SDKZ_IMAGE_VERSION:-} ]]; then
+    _path_files -/ -W ~/projects
+    return
+  fi
+
+  local -a names
+  if (( ${words[(I)--west]} )); then
+    names=(${(f)"$(west list --all -f '{name}' 2>/dev/null)"})
+    _describe -t west-projects 'west project' names
+    return
+  fi
+
+  local dir
+  for dir in "$(vt-apps-dir 2>/dev/null)" "$(vt-modules-dir 2>/dev/null)"; do
+    [[ -n $dir ]] && names+=(${dir}/*(/N:t))
+  done
+  _describe -t projects 'app or module' names
+}
+
+_arguments \
+  '--west[look the name up in the full west manifest]' \
+  '--splits[also split the window | and then -]' \
+  '(- *)'{-h,--help}'[show usage]' \
+  '1:project:_op_projects'

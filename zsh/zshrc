@@ -288,6 +288,9 @@ export LESS_TERMCAP_us=$'\e[1;4;31m'
 # splitrun - run a command with its stderr in a tmux split
 [[ ! -f ${DOTFILES}/zsh/splitrun.zsh ]] || source ${DOTFILES}/zsh/splitrun.zsh
 
+# op - open a project in a new tmux window (completion in zsh/completions/_op)
+[[ ! -f ${DOTFILES}/zsh/op.zsh ]] || source ${DOTFILES}/zsh/op.zsh
+
 # leaving a window lands on its neighbour rather than window 1
 [[ ! -f ${DOTFILES}/zsh/tmux-window.zsh ]] || source ${DOTFILES}/zsh/tmux-window.zsh
 

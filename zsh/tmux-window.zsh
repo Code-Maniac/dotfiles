@@ -16,6 +16,15 @@ _tmux_select_neighbour_on_exit() {
   # a window with other panes in it is not closing
   [[ $(tmux list-panes -t "${TMUX_PANE}" 2>/dev/null | wc -l) -eq 1 ]] || return
 
+  # Inside a container, exiting only closes the pane when `docker exec` is what
+  # the pane was started with - op, docker-split. A pane with no start command
+  # began as a host shell and entered the container from there (sdkz-workspace,
+  # a docker exec typed by hand), so leaving the container lands back in that
+  # shell and the window stays open.
+  if [[ -f /.dockerenv ]]; then
+    [[ -n $(tmux display-message -p -t "${TMUX_PANE}" '#{pane_start_command}' 2>/dev/null) ]] || return
+  fi
+
   local index
   index=$(tmux display-message -p -t "${TMUX_PANE}" '#{window_index}' 2>/dev/null) || return
   [[ -n ${index} ]] || return

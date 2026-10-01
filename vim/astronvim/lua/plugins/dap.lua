@@ -787,6 +787,13 @@ end
 local function in_west_workspace() return found_upward(".west", "directory") end
 local function in_cargo_project() return found_upward("Cargo.toml", "file") end
 
+-- pytest's own default discovery pattern, test_*.py and *_test.py, read from the
+-- buffer the menu was opened from
+local function is_python_test(bufnr)
+  local name = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(bufnr), ":t")
+  return name:match "^test_.*%.py$" ~= nil or name:match "_test%.py$" ~= nil
+end
+
 -- `available` is ours, not nvim-dap's, so it is taken off before the adapter
 -- sees the configuration. A copy, not the original: the list is rebuilt per
 -- menu anyway, and nothing handed to nvim-dap should be mutated after the fact.
@@ -801,6 +808,85 @@ local function offered(list)
   end
   return out
 end
+
+--------------------------------------------------------------------------------
+-- python
+--------------------------------------------------------------------------------
+
+-- There is nothing to build, so where rust asks cargo for the executable, python
+-- asks which interpreter the script belongs to: an activated venv first, then
+-- the nearest .venv or venv walking up from the cwd - where uv and poetry put
+-- theirs - then whatever python3 is on PATH, which in the SDKZ container is
+-- /opt/venv, the one west runs under. The adapter injects its own debugpy into
+-- the debuggee, so the interpreter does not need debugpy installed. Only an
+-- attach does.
+local function python_interpreter()
+  local venv = vim.env.VIRTUAL_ENV or vim.env.CONDA_PREFIX
+  if venv and has(venv .. "/bin/python") then return venv .. "/bin/python" end
+  for _, name in ipairs { ".venv", "venv" } do
+    local dir = vim.fs.find(name, { path = vim.fn.getcwd(), upward = true, type = "directory", limit = 1 })[1]
+    if dir and has(dir .. "/bin/python") then return dir .. "/bin/python" end
+  end
+  return vim.fn.exepath "python3"
+end
+
+-- Split an argument line the way a shell would split quotes, without handing it
+-- to a shell: debugpy takes args as a list and runs no shell of its own.
+local function shell_words(line)
+  local words, word, quote = {}, nil, nil
+  for ch in line:gmatch "." do
+    if quote then
+      if ch == quote then quote = nil else word = word .. ch end
+    elseif ch == "'" or ch == '"' then
+      quote, word = ch, word or ""
+    elseif ch:match "%s" then
+      if word then words[#words + 1], word = word, nil end
+    else
+      word = (word or "") .. ch
+    end
+  end
+  if word then words[#words + 1] = word end
+  return words
+end
+
+-- Remembered per script for the session, so a rerun is <CR> on the prompt.
+local last_args = {}
+local function python_args()
+  local file = vim.fn.expand "%:p"
+  local line = vim.fn.input("arguments: ", last_args[file] or "")
+  last_args[file] = line
+  return shell_words(line)
+end
+
+-- Only a yes is remembered: a no is asked again on the next menu, so installing
+-- debugpy does not need nvim restarting to be noticed. This is the one check
+-- behind the menu that has to run something, hence remembering at all.
+local imports_debugpy = {}
+local function has_debugpy_module(python)
+  if not python or python == "" then return false end
+  if not imports_debugpy[python] then
+    imports_debugpy[python] = vim.system({ python, "-c", "import debugpy" }):wait(5000).code == 0
+  end
+  return imports_debugpy[python]
+end
+
+-- A debugpy-adapter on PATH first: mason's on the host, or the one pip puts
+-- beside any python it installs debugpy into. Mason cannot install it in the
+-- SDKZ container - it builds debugpy a venv of its own, and the image's python
+-- has no ensurepip to build one with - so there it is the interpreter's own,
+-- which install.docker.conf.yaml puts into /opt/venv. Failing both, any python
+-- that imports debugpy can run the adapter as a module.
+local function debugpy_adapter(python)
+  if has "debugpy-adapter" then return { type = "executable", command = "debugpy-adapter" } end
+  for _, candidate in ipairs { python or python_interpreter(), vim.fn.exepath "python3" } do
+    if has_debugpy_module(candidate) then
+      return { type = "executable", command = candidate, args = { "-m", "debugpy.adapter" } }
+    end
+  end
+  return nil
+end
+
+local function has_debugpy() return debugpy_adapter() ~= nil end
 
 --------------------------------------------------------------------------------
 -- registration
@@ -892,6 +978,53 @@ local function rust_configurations()
       cwd = "${workspaceFolder}",
       program = cargo_built({ "--tests" }, "cargo build --tests"),
       available = in_cargo_project,
+    },
+  }
+end
+
+-- In a terminal rather than the repl, so a script reading stdin can be typed at.
+local function python_configurations(bufnr)
+  return {
+    {
+      name = "Debug this file",
+      type = "debugpy",
+      request = "launch",
+      cwd = "${workspaceFolder}",
+      program = "${file}",
+      python = python_interpreter,
+      console = "integratedTerminal",
+      available = has_debugpy,
+    },
+    {
+      name = "Debug this file with arguments",
+      type = "debugpy",
+      request = "launch",
+      cwd = "${workspaceFolder}",
+      program = "${file}",
+      args = python_args,
+      python = python_interpreter,
+      console = "integratedTerminal",
+      available = has_debugpy,
+    },
+    {
+      name = "pytest this file, then debug",
+      type = "debugpy",
+      request = "launch",
+      cwd = "${workspaceFolder}",
+      module = "pytest",
+      args = { "${file}" },
+      python = python_interpreter,
+      console = "integratedTerminal",
+      available = function() return has_debugpy() and is_python_test(bufnr) end,
+    },
+    {
+      -- pair with `python -m debugpy --listen 5678 --wait-for-client script.py`,
+      -- which needs debugpy in that interpreter
+      name = "Attach to debugpy (localhost:5678)",
+      type = "debugpy",
+      request = "attach",
+      connect = { host = "127.0.0.1", port = 5678 },
+      available = has_debugpy,
     },
   }
 end
@@ -1026,6 +1159,21 @@ local function setup()
     callback { type = "executable", command = remote_gdb() or "gdb-multiarch", args = args }
   end
 
+  -- Under "debugpy" rather than mason's "python", so mason registering its own
+  -- afterwards cannot overwrite it - and "debugpy" is the type VS Code's
+  -- launch.json entries use, so those work here as they are. A function, so the
+  -- adapter is chosen against the interpreter the configuration resolved to.
+  dap.adapters.debugpy = function(callback, config)
+    local adapter = debugpy_adapter(config.python)
+    if not adapter then
+      return vim.notify(
+        "no debugpy: mason's debugpy-adapter is missing and no python here imports debugpy",
+        vim.log.levels.ERROR
+      )
+    end
+    callback(adapter)
+  end
+
   -- gdb's DAP has no postLaunchCommands, so anything that has to happen after the
   -- connection goes through an evaluate request in the repl context - which gdb
   -- treats as a gdb command line.
@@ -1088,6 +1236,7 @@ local function setup()
     local filetype = vim.b["dap-srcft"] or vim.bo[bufnr].filetype
     if filetype == "c" or filetype == "cpp" then return offered(c_configurations()) end
     if filetype == "rust" then return offered(rust_configurations()) end
+    if filetype == "python" then return offered(python_configurations(bufnr)) end
     return {}
   end
   dap.configurations.cpp = dap.configurations.c
@@ -1165,6 +1314,13 @@ return {
         require("mason-nvim-dap").default_setup(config)
         setup()
       end
+      -- The adapter is kept, for launch.json entries still using the old
+      -- "python" type. Its "Python: Launch file" is dropped: it fixes the venv
+      -- when nvim starts, and "Debug this file" above already does the same job.
+      opts.handlers.python = function(config)
+        config.configurations = nil
+        require("mason-nvim-dap").default_setup(config)
+      end
     end,
   },
   -- cortex-debug, the adapter behind VS Code's Cortex-Debug extension, run under
@@ -1209,6 +1365,11 @@ return {
     optional = true,
     opts = function(_, opts)
       opts.ensure_installed = require("astrocore").list_insert_unique(opts.ensure_installed, { "cortex-debug" })
+      -- not in the SDKZ container, where mason's install of it can only fail -
+      -- see debugpy_adapter
+      if not vim.env.SDKZ_IMAGE_VERSION then
+        opts.ensure_installed = require("astrocore").list_insert_unique(opts.ensure_installed, { "debugpy" })
+      end
     end,
   },
 }
