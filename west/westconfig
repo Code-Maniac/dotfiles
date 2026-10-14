@@ -1,0 +1,7 @@
+# west's global config, linked to ~/.westconfig on the host and in the container.
+# `west config --global` writes here through the link.
+
+[build]
+# Zephyr already runs compiles through ccache when it is installed
+# (cmake/modules/ccache.cmake); this covers anything built outside that.
+cmake-args = -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache

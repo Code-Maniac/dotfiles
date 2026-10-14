@@ -16,7 +16,6 @@
 #                    discovery. A file in ~ would be found for anything under
 #                    /home/user without a closer one, so firmware formatting is
 #                    left to the image.
-#   wakatime       - decrypting the key is interactive.
 #   language servers, nvim plugin sync - not command line tools, and AstroNvim
 #                    bootstraps its plugins on first launch anyway.
 #
@@ -101,6 +100,9 @@
     # It is in the container's own filesystem, so a recreated container needs
     # this again. Idempotent.
     - [python3 -m pip install --quiet debugpy, Installing debugpy]
+    # ~/.claude is mounted in, but the program lives in ~/.local, which every
+    # container recreate wipes. A no-op once installed.
+    - [install-scripts/install-claude.sh, Installing Claude Code]
 
 - sudo:
   - shell:
@@ -120,6 +122,9 @@
     # dap.lua prefers it over gdb-multiarch for target debugging. From the
     # deadsnakes PPA, alongside the system python. Idempotent.
     - [install-scripts/install-libpython312.sh, Installing libpython3.12]
+    # zsh has ~/.local/bin on PATH via path-linux-gnu, but bash (a plain
+    # `docker exec ... bash`, VS Code's default terminal) does not.
+    - ['h=$(getent passwd "${SUDO_USER:-$(id -un)}" | cut -d: -f6); [ ! -x "$h/.local/bin/claude" ] || ln -sfn "$h/.local/bin/claude" /usr/local/bin/claude', Linking claude onto PATH]
 
 - link:
     ~/.zshrc: zsh/zshrc
@@ -129,6 +134,7 @@
     ~/.tmux/plugins/tpm: tmux/tpm
     ~/.config/nvim: vim/astronvim
     ~/.gitconfig: git/gitconfig
+    ~/.westconfig: west/westconfig
     ~/.config/bat: bat
     ~/.config/clangd/config.yaml: clangd/config.yaml
     ~/.config/pycodestyle: config/pycodestyle

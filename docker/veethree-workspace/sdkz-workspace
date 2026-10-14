@@ -8,6 +8,17 @@
 # usage:
 #   sdkz-workspace --install <image[:tag]>   pull it and recreate the container
 #   sdkz-workspace --update                  re-pull the current image, recreate
+#   sdkz-workspace --build <dir> [options]   build the image from the sdkz_docker
+#                                            checkout at <dir> instead of pulling,
+#                                            and recreate the container
+#     --branch <name>                        BRANCH_NAME to west init (master)
+#     --sdk-version <x.y.z>                  SDK_VERSION (versionNumber.sh's, -local)
+#     --public-release                       PUBLIC_RELEASE=true (default false)
+#     --base-image <ref>                     BASE_IMAGE (the Dockerfile's default)
+#     --ssh-key <path>                       private key for bitbucket, its .pub
+#                                            goes too if present (~/.ssh/id_rsa)
+#     --tag <image:tag>                      what to tag the result
+#                                            (local/veethree_sdkz:<sdk-version>)
 #   sdkz-workspace --list                    images available in the registry
 #   sdkz-workspace --tags <image>            tags available for one image
 #   sdkz-workspace --current                 what the container is running now
@@ -16,9 +27,10 @@
 #   sdkz-workspace --restore                 swap the previous container back in,
 #                                            filesystem and all
 #   sdkz-workspace --vnc                     open the container's VNC session
-#   --no-backup                              with --install/--update: do not
-#                                            commit the old container first, so
-#                                            --restore cannot bring it back
+#   --backup                                 with --install/--update/--build: commit
+#                                            the old container first, so --restore
+#                                            can bring it back. Without it the old
+#                                            container is discarded
 #   -y                                       skip the confirmation
 
 set -euo pipefail
@@ -43,6 +55,10 @@ ORIGIN_LABEL=sdkz-workspace.origin
 # host side rather than into the container.
 VNC_ADDR=127.0.0.1:5900
 NOVNC_URL=http://127.0.0.1:6080/vnc.html
+
+# Images from --build are tagged under this, which has a slash so resolve_ref
+# leaves them alone, and which --update recognises as not pullable.
+LOCAL_NAMESPACE=local
 
 HERE=$(cd -- "$(dirname -- "$(readlink -f "$0")")" && pwd)
 COMPOSE=$HERE/compose.yaml
@@ -312,11 +328,63 @@ vnc() {
     [[ -n $native ]] || echo "    for a native viewer:  sudo dnf install tigervnc"
 }
 
-# Pull an image and recreate the container from it. $3 only changes the wording:
-# --update comes through here too, with the reference the last install recorded,
-# so a re-pull and a switch of image follow exactly the same path.
+# Set from the --build options in main(), with the defaults filled in there so
+# the confirmation can show what is actually going to be built.
+BUILD_CONTEXT=""
+BUILD_BRANCH=""
+BUILD_SDK_VERSION=""
+BUILD_PUBLIC_RELEASE=""
+BUILD_BASE_IMAGE=""
+BUILD_SSH_KEY=""
+
+# The keys go to the build as a BuildKit secret, which the Dockerfile mounts at
+# /tmp/ssh_keys.tar.gz for the west step alone and shreds afterwards. The
+# tarball on this side is removed on any exit, a failed or interrupted build
+# included.
+SSH_TARBALL=""
+cleanup_ssh_tarball() { [[ -n $SSH_TARBALL ]] && rm -f -- "$SSH_TARBALL"; return 0; }
+
+build_image() {
+    local ref=$1 key_dir key_name
+    local -a key_files args
+
+    key_dir=$(dirname -- "$BUILD_SSH_KEY")
+    key_name=$(basename -- "$BUILD_SSH_KEY")
+    key_files=("$key_name")
+    [[ -f $BUILD_SSH_KEY.pub ]] && key_files+=("$key_name.pub")
+
+    trap cleanup_ssh_tarball EXIT
+    trap 'exit 130' INT TERM
+    SSH_TARBALL=$(mktemp --suffix=.tar.gz /tmp/sdkz-ssh-keys.XXXXXX)
+    tar czf "$SSH_TARBALL" -C "$key_dir" "${key_files[@]}" ||
+        die "sdkz-workspace: could not archive $BUILD_SSH_KEY"
+
+    args=(
+        --secret "id=ssh_keys,src=$SSH_TARBALL"
+        --build-arg "BRANCH_NAME=$BUILD_BRANCH"
+        --build-arg "SDK_VERSION=$BUILD_SDK_VERSION"
+        --build-arg "PUBLIC_RELEASE=$BUILD_PUBLIC_RELEASE"
+        # A new value every time, so west init/update always re-runs rather than
+        # coming back from the cache with whatever the branch held last time.
+        --build-arg "CACHEBUST=$(date +%s)"
+        -f "$BUILD_CONTEXT/Dockerfile"
+        -t "$ref"
+    )
+    [[ -n $BUILD_BASE_IMAGE ]] && args+=(--build-arg "BASE_IMAGE=$BUILD_BASE_IMAGE")
+
+    local status=0
+    DOCKER_BUILDKIT=1 docker build "${args[@]}" "$BUILD_CONTEXT" || status=$?
+    cleanup_ssh_tarball
+    SSH_TARBALL=""
+    return "$status"
+}
+
+# Get an image and recreate the container from it. $3 is how: install and update
+# pull, and differ only in wording - --update comes through here with the
+# reference the last install recorded, so a re-pull and a switch of image follow
+# exactly the same path. build builds $2 from the sdkz_docker checkout instead.
 install() {
-    local assume_yes=$1 name=$2 is_update=${3:-0} backup=${4:-1} ref bare
+    local assume_yes=$1 name=$2 mode=${3:-install} backup=${4:-0} ref bare
 
     ref=$(resolve_ref "$name")
 
@@ -327,21 +395,35 @@ install() {
     bare=${bare%%:*}
 
     if (( ! assume_yes )); then
-        if (( is_update )); then
-            echo "This re-pulls the image the $CONTAINER container is running and"
-            echo "recreates the container from the fresh copy:"
-        else
-            echo "This replaces the $CONTAINER container with one built from:"
-        fi
-        echo "    $ref"
+        case $mode in
+            update)
+                echo "This re-pulls the image the $CONTAINER container is running and"
+                echo "recreates the container from the fresh copy:"
+                echo "    $ref"
+                ;;
+            build)
+                echo "This builds an image from $BUILD_CONTEXT and replaces the"
+                echo "$CONTAINER container with one built from it:"
+                echo "    $ref"
+                echo "        BRANCH_NAME=$BUILD_BRANCH"
+                echo "        SDK_VERSION=$BUILD_SDK_VERSION"
+                echo "        PUBLIC_RELEASE=$BUILD_PUBLIC_RELEASE"
+                echo "        BASE_IMAGE=${BUILD_BASE_IMAGE:-"the Dockerfile's default"}"
+                echo "        ssh key: $BUILD_SSH_KEY"
+                ;;
+            *)
+                echo "This replaces the $CONTAINER container with one built from:"
+                echo "    $ref"
+                ;;
+        esac
         echo
         if (( backup )); then
             echo "The current container's filesystem is committed to $BACKUP_IMAGE first,"
             echo "so nothing in it is lost - bring the whole thing back with:"
             echo "    sdkz-workspace --restore"
         else
-            echo "--no-backup: the current container is discarded without a snapshot."
-            echo "Anything written inside it outside the host mounts is lost."
+            echo "The current container is discarded without a snapshot - anything"
+            echo "written inside it outside the host mounts is lost. Add --backup to keep it."
         fi
         echo
         echo "These are mounted from the host and carry over regardless:"
@@ -356,7 +438,9 @@ install() {
         [[ $reply == [yY]* ]] || { echo "aborted"; return 1; }
     fi
 
-    if ! docker pull "$ref"; then
+    if [[ $mode == build ]]; then
+        build_image "$ref" || die "sdkz-workspace: build failed - nothing has been changed"
+    elif ! docker pull "$ref"; then
         echo >&2
         echo "sdkz-workspace: pull failed. Tags available for that image:" >&2
         list_tags "$bare" >&2 || true
@@ -373,7 +457,7 @@ install() {
     # below then deletes it. Committing puts the filesystem somewhere compose
     # cannot reach, and compose removes the container itself.
     #
-    # With --no-backup there is nothing to do here: --force-recreate stops and
+    # Without --backup there is nothing to do here: --force-recreate stops and
     # removes the old container itself before the new one takes its ports.
     (( backup )) && snapshot
 
@@ -385,7 +469,7 @@ install() {
     echo
     current
     if (( ! backup )); then
-        echo "previous container discarded (--no-backup)"
+        echo "previous container discarded (no --backup)"
     elif docker image inspect "$BACKUP_IMAGE" >/dev/null 2>&1; then
         echo "previous container kept as the image $BACKUP_IMAGE"
         echo "    sdkz-workspace --restore       bring it back, filesystem and all"
@@ -398,11 +482,12 @@ install() {
 }
 
 main() {
-    local assume_yes=0 image="" do_restore=0 do_install=0 do_update=0 backup=1
+    local assume_yes=0 image="" do_restore=0 do_install=0 do_update=0 do_build=0 backup=0
+    local build_opts=0 tag=""
     while (( $# )); do
         case $1 in
             -y|--yes)   assume_yes=1 ;;
-            --no-backup) backup=0 ;;
+            --backup)   backup=1 ;;
             --list)     list_images; return 0 ;;
             --tags)     shift; list_tags "$@"; return 0 ;;
             --current)  current; return 0 ;;
@@ -411,12 +496,32 @@ main() {
             --vnc)      vnc; return 0 ;;
             --restore)  do_restore=1 ;;
             --update)   do_update=1 ;;
+            --build)
+                do_build=1
+                [[ $# -ge 2 && $2 != -* ]] ||
+                    die "sdkz-workspace: --build needs the path to the sdkz_docker checkout"
+                BUILD_CONTEXT=$2
+                shift
+                ;;
             --install)
                 do_install=1
                 [[ $# -ge 2 ]] || die "sdkz-workspace: --install needs an image name"
                 image=$2
                 shift
                 ;;
+            --branch|--sdk-version|--base-image|--ssh-key|--tag)
+                [[ $# -ge 2 ]] || die "sdkz-workspace: $1 needs a value"
+                case $1 in
+                    --branch)      BUILD_BRANCH=$2 ;;
+                    --sdk-version) BUILD_SDK_VERSION=$2 ;;
+                    --base-image)  BUILD_BASE_IMAGE=$2 ;;
+                    --ssh-key)     BUILD_SSH_KEY=$2 ;;
+                    --tag)         tag=$2 ;;
+                esac
+                build_opts=1
+                shift
+                ;;
+            --public-release) BUILD_PUBLIC_RELEASE=true; build_opts=1 ;;
             -h|--help)  usage; return 0 ;;
             -*)         die "sdkz-workspace: unknown option $1" ;;
             # An image used to be given on its own. Say where it went rather than
@@ -427,13 +532,17 @@ main() {
         shift
     done
 
-    (( do_install + do_update + do_restore <= 1 )) ||
-        die "sdkz-workspace: --install, --update and --restore are one at a time"
+    (( do_install + do_update + do_restore + do_build <= 1 )) ||
+        die "sdkz-workspace: --install, --update, --build and --restore are one at a time"
 
-    # --restore relies on committing what it replaces to stay reversible, so it
-    # does not take --no-backup.
-    (( do_restore && ! backup )) &&
-        die "sdkz-workspace: --no-backup goes with --install or --update, not --restore"
+    (( build_opts && ! do_build )) &&
+        die "sdkz-workspace: --branch, --sdk-version, --public-release,
+    --base-image, --ssh-key and --tag go with --build"
+
+    # --restore always commits what it replaces, to stay reversible, so --backup
+    # has nothing to switch on there.
+    (( do_restore && backup )) &&
+        die "sdkz-workspace: --backup goes with --install, --update or --build - --restore always keeps one"
 
     if (( do_restore )); then
         restore "$assume_yes"
@@ -447,12 +556,44 @@ main() {
         [[ -n $image ]] ||
             die "sdkz-workspace: no image recorded in $ENVFILE - install one with
     sdkz-workspace --install <image>"
-        install "$assume_yes" "$image" 1 "$backup"
+        [[ $image == "$LOCAL_NAMESPACE"/* ]] &&
+            die "sdkz-workspace: $image was built here, not pulled - rebuild it with
+    sdkz-workspace --build"
+        install "$assume_yes" "$image" update "$backup"
+        return
+    fi
+
+    if (( do_build )); then
+        [[ -d $BUILD_CONTEXT ]] || die "sdkz-workspace: no such directory $BUILD_CONTEXT"
+        BUILD_CONTEXT=$(cd -- "$BUILD_CONTEXT" && pwd)
+        [[ -f $BUILD_CONTEXT/Dockerfile ]] ||
+            die "sdkz-workspace: no Dockerfile in $BUILD_CONTEXT - is it the sdkz_docker checkout?"
+        BUILD_BRANCH=${BUILD_BRANCH:-master}
+        BUILD_PUBLIC_RELEASE=${BUILD_PUBLIC_RELEASE:-false}
+        if [[ -z $BUILD_SDK_VERSION ]]; then
+            BUILD_SDK_VERSION=$(source "$BUILD_CONTEXT/versionNumber.sh" && printf '%s' "$SDKZ_VERSION") &&
+                [[ -n $BUILD_SDK_VERSION ]] ||
+                die "sdkz-workspace: could not read SDKZ_VERSION from $BUILD_CONTEXT/versionNumber.sh
+    - give one with --sdk-version"
+            BUILD_SDK_VERSION+=-local
+        fi
+
+        BUILD_SSH_KEY=${BUILD_SSH_KEY:-$HOME/.ssh/id_rsa}
+        [[ -r $BUILD_SSH_KEY ]] || die "sdkz-workspace: cannot read $BUILD_SSH_KEY"
+        # Nothing in the build tells ssh which key to use, so it only tries the
+        # default identity names - any other name is carried in and never offered.
+        case $(basename -- "$BUILD_SSH_KEY") in
+            id_rsa|id_ecdsa|id_ecdsa_sk|id_ed25519|id_ed25519_sk|id_xmss|id_dsa) ;;
+            *) die "sdkz-workspace: ssh in the build only tries the default key names
+    (id_rsa, id_ed25519, ...) - $BUILD_SSH_KEY would never be offered" ;;
+        esac
+
+        install "$assume_yes" "${tag:-$LOCAL_NAMESPACE/veethree_sdkz:$BUILD_SDK_VERSION}" build "$backup"
         return
     fi
 
     (( do_install )) || { usage; return 1; }
-    install "$assume_yes" "$image" 0 "$backup"
+    install "$assume_yes" "$image" install "$backup"
 }
 
 main "$@"

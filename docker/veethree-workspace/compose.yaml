@@ -37,6 +37,8 @@ services:
     # which is what MCU-Link needs, rather than reaching for privileged: true.
     device_cgroup_rules:
       - 'c 189:* rmw'
+      # ttyACM, for the MCU-Links' serial ports under /dev/mculink (below)
+      - 'c 166:* rmw'
 
     # --- added ---
     # Claude Code keeps ~/.claude.json - account, onboarding state, project
@@ -69,3 +71,9 @@ services:
       # and tmux will then fail to create its socket. Start tmux at least once
       # before the first `up`, or remove the stray root-owned directory.
       - ${TMUX_SOCKET_DIR:-/tmp/tmux-1000}:${TMUX_SOCKET_DIR:-/tmp/tmux-1000}
+      # Each MCU-Link's serial port as /dev/mculink/<USB serial>, whatever ttyACM
+      # number the host gave it. The host's udev rule (install-scripts/
+      # install-mculink-udev.sh) recreates the node there on every plug; the
+      # directory is bound rather than the nodes, so a recreated node shows up here
+      # without recreating the container.
+      - /dev/mculink:/dev/mculink

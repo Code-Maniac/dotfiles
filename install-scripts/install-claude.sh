@@ -34,8 +34,8 @@ if [ ! -x "$CLAUDE_BIN" ]; then
     exit 1
 fi
 
-# zsh/path-linux-gnu names /home/nick/.local/bin literally, and the container's
-# home is /home/user, so there it is not on PATH by default.
+# zsh gets ~/.local/bin from path-linux-gnu; in the container, install.docker.conf.yaml
+# also links claude into /usr/local/bin for shells that are not zsh.
 case ":$PATH:" in
     *":$HOME/.local/bin:"*) ;;
     *) echo "NOTE: $HOME/.local/bin is not on PATH - add it to run claude by name" ;;

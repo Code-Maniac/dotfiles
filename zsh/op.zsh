@@ -1,6 +1,6 @@
 # op - Open Project: a new tmux window named after the project, started in it.
 #
-#   op [--west] [--splits] <name>
+#   op [--west | --sample] [--splits] <name>
 #
 # On the host the project is ~/projects/<name>, the same place p looks.
 #
@@ -8,6 +8,13 @@
 # then its modules folder, the first that has one winning. --west instead looks
 # the name up amongst every project in the resolved west manifest - zephyr, hal
 # modules and the rest, not just the workspace's own apps and modules.
+#
+# --sample looks for a sample within the workspace root (its modules, not zephyr
+# or the other west projects beside it): a directory under a samples/ folder with
+# a CMakeLists.txt and a prj.conf or sample.yaml. The name matches the
+# end of its path, so `blinky` or `basic/blinky`, and one whose whole path below
+# samples/ is the name wins. An ambiguous name lists the matches so a longer one
+# can be given.
 #
 # The window is named with -n, which also turns automatic-rename off for it, so
 # the name stays the project rather than becoming whatever runs in it. Host
@@ -23,16 +30,18 @@
 # runs `docker exec` back into this container at the project directory, as
 # tmux/docker-split -w does. The hostname is the container id, as in docker.zsh.
 op() {
-  local west=0 splits=0 name=""
+  local west=0 sample=0 splits=0 name=""
   while (( $# )); do
     case $1 in
       --west)   west=1 ;;
+      --sample) sample=1 ;;
       --splits) splits=1 ;;
       -h|--help)
-        print "usage: op [--west] [--splits] <name>"
+        print "usage: op [--west | --sample] [--splits] <name>"
         print "  host       open ~/projects/<name>"
         print "  container  open apps/<name>, else modules/<name>"
         print "  --west     container only: any project in the west manifest"
+        print "  --sample   container only: a sample within the workspace, e.g. hello-nafe"
         print "  --splits   also split the window | and then -"
         return 0
         ;;
@@ -43,7 +52,11 @@ op() {
   done
 
   if [[ -z $name ]]; then
-    print -u2 "usage: op [--west] [--splits] <name>"
+    print -u2 "usage: op [--west | --sample] [--splits] <name>"
+    return 1
+  fi
+  if (( west && sample )); then
+    print -u2 "op: --west and --sample do not go together"
     return 1
   fi
   if [[ -z ${TMUX} ]]; then
@@ -56,8 +69,8 @@ op() {
   local dir="" label="🏠 $name"
   local -a start
   if [[ -z ${SDKZ_IMAGE_VERSION:-} ]]; then
-    if (( west )); then
-      print -u2 "op: --west only applies inside the sdkz container"
+    if (( west || sample )); then
+      print -u2 "op: --west and --sample only apply inside the sdkz container"
       return 1
     fi
     dir=~/projects/$name
@@ -82,6 +95,22 @@ op() {
         print -u2 "op: west project '$name' is not cloned at $dir"
         return 1
       fi
+    elif (( sample )); then
+      local -a matches=(${(M)${(f)"$(_op-samples)"}:#*/$name})
+      local -a exact=(${(M)matches:#*/samples/$name})
+      (( ${#exact} == 1 )) && matches=($exact)
+      if (( ${#matches} == 0 )); then
+        print -u2 "op: no sample matching '$name'"
+        return 1
+      fi
+      if (( ${#matches} > 1 )); then
+        local top=$(_op-workspace)
+        print -u2 "op: '$name' matches ${#matches} samples, give more of the path:"
+        print -u2 -l -- "  "${^matches#$top/}
+        return 1
+      fi
+      dir=$matches[1]
+      name=${dir:t}
     else
       local root
       for root in "$(vt-apps-dir 2>/dev/null)" "$(vt-modules-dir 2>/dev/null)"; do
@@ -107,4 +136,19 @@ op() {
   right=$(tmux split-window -h -P -F '#{pane_id}' -t "$main" $start) || return
   tmux split-window -v -t "$right" $start || return
   tmux select-pane -t "$main"
+}
+
+# The workspace root: the manifest project, which holds apps/ and modules/.
+_op-workspace() { west list -f '{abspath}' manifest 2>/dev/null }
+
+# Every sample directory under the workspace root, one absolute path per line.
+# Also used by the completion.
+_op-samples() {
+  local root file
+  root=$(_op-workspace)
+  [[ -d $root ]] || return 1
+  for file in ${(f)"$(find $root \( -name build -o -name .git \) -prune -o \
+      -name CMakeLists.txt -path '*/samples/*' -print 2>/dev/null)"}; do
+    [[ -f ${file:h}/prj.conf || -f ${file:h}/sample.yaml ]] && print -r -- ${file:h}
+  done | sort
 }

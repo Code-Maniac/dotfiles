@@ -50,6 +50,9 @@ if [[ -n ${SDKZ_IMAGE_VERSION:-} ]]; then
   fi
 fi
 
+# `cmake --build` (which west build runs) uses this many jobs
+(( $+commands[nproc] )) && export CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
+
 # Claude Code keeps ~/.claude.json - the account record, onboarding state and
 # project history - *beside* its config directory rather than inside it. Only
 # ~/.claude is bind mounted into the container, so that file lands in the
@@ -290,6 +293,9 @@ export LESS_TERMCAP_us=$'\e[1;4;31m'
 
 # op - open a project in a new tmux window (completion in zsh/completions/_op)
 [[ ! -f ${DOTFILES}/zsh/op.zsh ]] || source ${DOTFILES}/zsh/op.zsh
+
+# check-start / check-week - when the machine woke from and went to sleep
+[[ ! -f ${DOTFILES}/zsh/wake-times.zsh ]] || source ${DOTFILES}/zsh/wake-times.zsh
 
 # leaving a window lands on its neighbour rather than window 1
 [[ ! -f ${DOTFILES}/zsh/tmux-window.zsh ]] || source ${DOTFILES}/zsh/tmux-window.zsh

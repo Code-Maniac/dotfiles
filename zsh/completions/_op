@@ -3,8 +3,8 @@
 # Completion for the op helper in zsh/op.zsh.
 #
 # The candidates follow where op will look: ~/projects on the host, the
-# workspace's apps and modules inside the container, and every west project name
-# once --west is on the line. Without the container helpers from vt.zsh there is
+# workspace's apps and modules inside the container, every west project name
+# once --west is on the line, and every sample once --sample is. Without the container helpers from vt.zsh there is
 # nothing to offer for the container case, so it offers nothing rather than
 # guessing at paths.
 
@@ -15,6 +15,15 @@ _op_projects() {
   fi
 
   local -a names
+  if (( ${words[(I)--sample]} )); then
+    # offered as the path below samples/, described by the project it is in
+    local top=$(_op-workspace) dir
+    for dir in ${(f)"$(_op-samples)"}; do
+      names+=("${${dir##*/samples/}//:/\\:}:${${dir%%/samples/*}#$top/}")
+    done
+    _describe -t samples 'sample' names
+    return
+  fi
   if (( ${words[(I)--west]} )); then
     names=(${(f)"$(west list --all -f '{name}' 2>/dev/null)"})
     _describe -t west-projects 'west project' names
@@ -29,7 +38,8 @@ _op_projects() {
 }
 
 _arguments \
-  '--west[look the name up in the full west manifest]' \
+  '(--sample)--west[look the name up in the full west manifest]' \
+  '(--west)--sample[look the name up amongst samples in the workspace]' \
   '--splits[also split the window | and then -]' \
   '(- *)'{-h,--help}'[show usage]' \
   '1:project:_op_projects'

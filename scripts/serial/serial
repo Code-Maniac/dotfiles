@@ -1,0 +1,137 @@
+#!/usr/bin/env python3
+"""Serial console for an MCU-Link: prints what the board sends and sends it
+what you type, reconnecting whenever the probe re-enumerates. Ctrl-C or Ctrl-]
+quits.
+
+    serial [PROBE] [-b BAUD]
+
+Each connected MCU-Link is /dev/mculink/<USB serial>, on the host and in the
+veethree-workspace container (see install-scripts/install-mculink-udev.sh).
+With one connected, PROBE can be left out. Otherwise give its serial, or enough
+of the start of it to be unique, or a path to any serial port.
+"""
+
+import argparse
+import os
+import select
+import sys
+import termios
+import tty
+
+import serial
+
+NODE_DIR = "/dev/mculink"
+
+# Read from the keyboard rather than relying on SIGINT, which never arrives in a
+# terminal left with -isig (a crashed screen or tio can leave it that way); there
+# Ctrl-C comes through as a plain 0x03 byte instead.
+QUIT_KEYS = (b"\x1d", b"\x03")  # Ctrl-], Ctrl-C
+
+
+class Quit(Exception):
+    pass
+
+
+def read_keys(stdin_fd):
+    """The keys typed, up to any quit key, and whether one was pressed."""
+    keys = os.read(stdin_fd, 1024)
+    if not keys:
+        return b"", True
+    for i in range(len(keys)):
+        if keys[i:i + 1] in QUIT_KEYS:
+            return keys[:i], True
+    return keys, False
+
+
+def probes():
+    try:
+        return sorted(os.listdir(NODE_DIR))
+    except FileNotFoundError:
+        return []
+
+
+def choose_port(probe):
+    """The port to open, or exits explaining why there is no single one."""
+    if probe and "/" in probe:
+        return probe
+    found = probes()
+    if probe:
+        matches = [p for p in found if p == probe] or [p for p in found if p.startswith(probe)]
+        if len(matches) > 1:
+            sys.exit(f"'{probe}' matches more than one MCU-Link: {', '.join(matches)}")
+        # not connected yet is fine - run() waits for it to appear
+        return os.path.join(NODE_DIR, matches[0] if matches else probe)
+    if len(found) == 1:
+        return os.path.join(NODE_DIR, found[0])
+    if not found:
+        sys.exit(f"no MCU-Link connected (nothing in {NODE_DIR})")
+    sys.exit("more than one MCU-Link connected - choose one by its serial:\n"
+             + "".join(f"  serial {p}\n" for p in found).rstrip("\n"))
+
+
+def run(port_path, baud, stdin_fd):
+    status = None
+    while True:
+        try:
+            with serial.Serial(port_path, baud, timeout=0) as port:
+                status = None
+                print(f"--- connected to {port_path} at {baud} (Ctrl-C to quit)", file=sys.stderr)
+                # nudge the shell so there is a prompt straight away
+                port.write(b"\r")
+                while True:
+                    ready, _, _ = select.select([port, stdin_fd], [], [], 1)
+                    if stdin_fd in ready:
+                        keys, quit = read_keys(stdin_fd)
+                        if keys:
+                            port.write(keys)
+                        if quit:
+                            raise Quit
+                    if port in ready:
+                        data = port.read(port.in_waiting or 1)
+                        sys.stdout.write(data.decode(errors="replace"))
+                        sys.stdout.flush()
+        except (serial.SerialException, OSError) as e:
+            # A missing port is the probe re-enumerating or unplugged, so wait for it.
+            # Anything else (permissions, say) is reported rather than retried silently.
+            # Each is printed once, not on every retry.
+            new = f"--- waiting for {port_path}" if not os.path.exists(port_path) else f"--- {e}"
+            if new != status:
+                status = new
+                print(status, file=sys.stderr)
+            # what is typed meanwhile has nowhere to go
+            ready, _, _ = select.select([stdin_fd], [], [], 0.5)
+            if ready and read_keys(stdin_fd)[1]:
+                raise Quit
+
+
+def main():
+    parser = argparse.ArgumentParser(description=" ".join(__doc__.split("\n\n")[0].split()))
+    parser.add_argument("probe", nargs="?", help=f"MCU-Link serial (or its start), or a port path; "
+                        f"may be left out when only one is in {NODE_DIR}")
+    parser.add_argument("-b", "--baud", type=int, default=115200, help="baud rate (default: %(default)s)")
+    args = parser.parse_args()
+
+    port_path = choose_port(args.probe)
+
+    stdin_fd = sys.stdin.fileno()
+    saved = termios.tcgetattr(stdin_fd) if os.isatty(stdin_fd) else None
+    try:
+        if saved:
+            # Keys arrive one at a time and are not echoed - the board's shell echoes
+            # them. Without ICRNL, Enter goes out as \r as it would from tio or screen;
+            # without IXON, Ctrl-S and Ctrl-Q reach the board too.
+            tty.setcbreak(stdin_fd)
+            attrs = termios.tcgetattr(stdin_fd)
+            attrs[0] &= ~(termios.ICRNL | termios.IXON)
+            termios.tcsetattr(stdin_fd, termios.TCSANOW, attrs)
+        run(port_path, args.baud, stdin_fd)
+    except (Quit, KeyboardInterrupt):
+        pass
+    finally:
+        if saved:
+            termios.tcsetattr(stdin_fd, termios.TCSADRAIN, saved)
+        print("\n--- quit", file=sys.stderr)
+
+
+if __name__ == "__main__":
+    main()

@@ -107,15 +107,6 @@
       stdin: true
       stdout: true
     - [cat oe/site.conf.sed | sed 's@~@'"$HOME"'@g' > oe/site.conf, Replace ~ in yocto site.conf]
-    -
-      command: cd vim && ./decrypt-wakatime && ln -sf vim/wakatime.cfg ~/.wakatime.cfg
-      description: Decrypt wakatime api-key
-      stdin: true
-      stdout: true
-
-# Link wakatime.cfg before running nvim to get plugins - otherwise it hangs due to prompt for key
-- link:
-    ~/.wakatime.cfg: vim/wakatime.cfg
 
 # Now run PlugInstall on nvim
 - shell:
@@ -149,6 +140,7 @@
     ~/.fonts: fonts
     ~/.config/pycodestyle: config/pycodestyle
     ~/.gitconfig: git/gitconfig
+    ~/.westconfig: west/westconfig
     ~/.subversion/config: svn/config
     ~/.config/bat: bat
     ~/.config/rustfmt/rustfmt.toml: rust/rustfmt.toml

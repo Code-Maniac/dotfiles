@@ -1,0 +1,4 @@
+#!/bin/bash
+
+cp ./serial /usr/local/bin/serial
+chmod 755 /usr/local/bin/serial
