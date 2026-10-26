@@ -9,17 +9,20 @@
 #   docker compose -f ~/.dotfiles/docker/veethree-workspace/compose.yaml up -d
 #   docker exec -it veethree-workspace zsh
 #
-# container_name is fixed so `docker exec -it veethree-workspace` keeps working,
-# along with the tmux split integration in tmux/docker-split.
+# container_name is veethree-workspace, so `docker exec -it veethree-workspace`
+# keeps working, along with the tmux split integration in tmux/docker-split.
+# sdkz-workspace --postfix <name> sets SDKZ_POSTFIX to -<name>, for a
+# veethree-workspace-<name> in a compose project of its own.
 
 name: veethree
 
 services:
   workspace:
     # Set by the sdkz-workspace script, which records the choice in .env beside
-    # this file so a plain `docker compose up` keeps using the same image.
+    # this file (.env.<postfix> for a postfixed container) so later runs keep
+    # using the same image.
     image: ${SDKZ_IMAGE:-vtsdk/veethree_sdkz:latest}
-    container_name: veethree-workspace
+    container_name: veethree-workspace${SDKZ_POSTFIX:-}
 
     # -it. The entrypoint starts Xvfb, x11vnc and noVNC and then waits.
     stdin_open: true

@@ -78,10 +78,24 @@ _sdkz_ws_ref() {
   _sdkz_ws_image_names
 }
 
+# The postfixes of the veethree-workspace-<postfix> containers already there
+_sdkz_ws_postfixes() {
+  local -a postfixes=(
+    ${(f)"$(docker ps -a --format '{{.Names}}' 2>/dev/null |
+      sed -n 's/^veethree-workspace-//p')"}
+  )
+  postfixes=( ${postfixes:#} )
+  (( $#postfixes )) || { _message 'postfix for a new veethree-workspace-<postfix>'; return 1 }
+  _describe -t postfixes 'postfix' postfixes
+}
+
+# The actions are one at a time
+local -a _sdkz_ws_actions=(--install --update --build --start --current --attach --vnc)
+
 _arguments -s -S \
-  '(--update --restore --build)--install[pull an image and recreate the container]:image:_sdkz_ws_ref' \
-  '(--install --restore --build)--update[re-pull the current image and recreate the container]' \
-  '(--install --update --restore)--build[build the image from an sdkz_docker checkout and recreate the container]:sdkz_docker checkout:_files -/' \
+  "(${_sdkz_ws_actions:#--install})--install[pull an image and recreate the container]:image:_sdkz_ws_ref" \
+  "(${_sdkz_ws_actions:#--update})--update[re-pull the current image and restart the container on it]" \
+  "(${_sdkz_ws_actions:#--build})--build[build the image from an sdkz_docker checkout and recreate the container]:sdkz_docker checkout:_files -/" \
   '--branch[BRANCH_NAME to west init]:branch:' \
   '--sdk-version[SDK_VERSION to build]:version:' \
   '--public-release[build with PUBLIC_RELEASE=true]' \
@@ -89,12 +103,11 @@ _arguments -s -S \
   '--ssh-key[private key for bitbucket]:key:_files -W ~/.ssh' \
   '--tag[tag for the built image]:image:' \
   '(- *)--list[list the images available in the registry]' \
-  '(- *)--current[show what the container is running now]' \
-  '(- *)--start[start the container for the pulled image]' \
-  '(- *)--attach[open a shell in the running container]' \
-  '(- *)--restore[swap the previous container back in]' \
-  '(--restore)--backup[with --install/--update/--build, snapshot the old container so --restore can bring it back]' \
-  "(- *)--vnc[open the container's VNC session]" \
+  "(${_sdkz_ws_actions:#--current})--current[show what each veethree-workspace* container is running now]" \
+  "(${_sdkz_ws_actions:#--start})--start[start the container, stopping any other running veethree-workspace* first]" \
+  '(- *)--attach[open a shell in a running veethree-workspace* container]' \
+  "(- *)--vnc[open the running veethree-workspace* container's VNC session]" \
+  '(--attach --vnc)--postfix[work on veethree-workspace-<postfix> instead]:postfix:_sdkz_ws_postfixes' \
   '(- *)--tags[list the tags available for one image]:image:_sdkz_ws_image_names' \
   '(- *)'{-h,--help}'[show usage]' \
   '(-y --yes)'{-y,--yes}'[skip the confirmation]'

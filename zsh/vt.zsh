@@ -51,13 +51,18 @@ ws() { _vt-cd-under ws "$(west list -f '{abspath}' manifest 2>/dev/null)" }
 
 # vtbuild - wrapper around `west build` for the C4.3 workspace.
 #
-#   vtbuild [--target|--sim] [--debug|--release] [-p] [--export] [app] [-- cmake args]
+#   vtbuild [--target|--sim] [--sdkc] [--debug|--release] [-p] [--export] [app] [-- cmake args]
 #
 # Board and shield follow the target/sim choice, matching what the container
 # test suite builds (sdkz_docker tests/container/workspaces/C4.3/test_builds.py):
 #
 #   --target  vt_rt1160/mimxrt1166/cm7  shield c4p3      (default)
 #   --sim     veethree_sim              shield c4p3_sim
+#
+# --sdkc adds the sdkc module's shield for the chosen one, sdkc_c4p3 or
+# sdkc_c4p3_sim, named by prefixing the base shield so other bases (r3rt, t5rt,
+# t7rt) follow along. sdkc's validateshields.cmake requires the base shield to
+# come first in the list, so it is passed second.
 #
 # --debug / --release set -DCMAKE_BUILD_TYPE, debug being the default. -p is
 # passed through as west's pristine flag, which is what you want when switching
@@ -78,23 +83,25 @@ vtbuild() {
   local board="vt_rt1160/mimxrt1166/cm7" shield="c4p3"
   local build_type="Debug"
   local build_dir="build"
-  local app="" export_cc=0 build_dir_given=0
+  local app="" export_cc=0 build_dir_given=0 sdkc=0
   local -a west_args cmake_args
 
   while (( $# )); do
     case $1 in
       --target)       board="vt_rt1160/mimxrt1166/cm7"; shield="c4p3" ;;
       --sim)          board="veethree_sim";             shield="c4p3_sim" ;;
+      --sdkc)         sdkc=1 ;;
       --debug)        build_type="Debug" ;;
       --release)      build_type="Release" ;;
       -p|--pristine)  west_args+=(-p) ;;
       --export)       export_cc=1 ;;
       -d|--build-dir) build_dir=$2; build_dir_given=1; west_args+=($1 $2); shift ;;
       -h|--help)
-        print "usage: vtbuild [--target|--sim] [--debug|--release] [-p] [--export] [app] [-- cmake args]"
+        print "usage: vtbuild [--target|--sim] [--sdkc] [--debug|--release] [-p] [--export] [app] [-- cmake args]"
         print "  app        directory under the workspace apps folder, default is the cwd"
         print "  --target   vt_rt1160/mimxrt1166/cm7, shield c4p3 (default)"
         print "  --sim      veethree_sim, shield c4p3_sim"
+        print "  --sdkc     add the sdkc shield, sdkc_c4p3 or sdkc_c4p3_sim"
         print "  --debug    -DCMAKE_BUILD_TYPE=Debug (default)"
         print "  --release  -DCMAKE_BUILD_TYPE=Release"
         print "  -p         pristine build"
@@ -134,7 +141,9 @@ vtbuild() {
   fi
 
   local -a cmd
-  cmd=(west build -b $board --shield $shield $west_args)
+  cmd=(west build -b $board --shield $shield)
+  (( sdkc )) && cmd+=(--shield sdkc_$shield)
+  cmd+=($west_args)
   [[ -n $source ]] && cmd+=(-s $source)
   cmd+=(-- -DCMAKE_BUILD_TYPE=$build_type $cmake_args)
 

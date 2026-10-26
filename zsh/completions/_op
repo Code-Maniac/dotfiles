@@ -38,8 +38,9 @@ _op_projects() {
 }
 
 _arguments \
-  '(--sample)--west[look the name up in the full west manifest]' \
-  '(--west)--sample[look the name up amongst samples in the workspace]' \
-  '--splits[also split the window | and then -]' \
+  '(--sample --here)--west[look the name up in the full west manifest]' \
+  '(--west --here)--sample[look the name up amongst samples in the workspace]' \
+  '(--here)--splits[also split the window | and then -]' \
+  '(- *)--here[rename this window after the current directory]' \
   '(- *)'{-h,--help}'[show usage]' \
   '1:project:_op_projects'

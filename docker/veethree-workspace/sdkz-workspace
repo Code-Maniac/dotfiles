@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
-# Point veethree-workspace at a different SDKZ image.
+# Point a veethree-workspace container at a different SDKZ image.
 #
 # Pulls from sdkz-builder:5000/vtsdk unless given a reference that already has a
-# registry or namespace in it, records the choice in .env beside compose.yaml so
-# a later plain `docker compose up` keeps using it, and recreates the container.
+# registry or namespace in it, records the choice in .env beside compose.yaml
+# (.env.<postfix> for a postfixed container) so a later run keeps using it, and
+# recreates the container.
 #
 # usage:
 #   sdkz-workspace --install <image[:tag]>   pull it and recreate the container
-#   sdkz-workspace --update                  re-pull the current image, recreate
+#   sdkz-workspace --update                  re-pull the current image and
+#                                            restart the container on it
 #   sdkz-workspace --build <dir> [options]   build the image from the sdkz_docker
 #                                            checkout at <dir> instead of pulling,
 #                                            and recreate the container
@@ -21,35 +23,29 @@
 #                                            (local/veethree_sdkz:<sdk-version>)
 #   sdkz-workspace --list                    images available in the registry
 #   sdkz-workspace --tags <image>            tags available for one image
-#   sdkz-workspace --current                 what the container is running now
-#   sdkz-workspace --start                   start the container as it is
-#   sdkz-workspace --attach                  open a shell in the container
-#   sdkz-workspace --restore                 swap the previous container back in,
-#                                            filesystem and all
-#   sdkz-workspace --vnc                     open the container's VNC session
-#   --backup                                 with --install/--update/--build: commit
-#                                            the old container first, so --restore
-#                                            can bring it back. Without it the old
-#                                            container is discarded
+#   sdkz-workspace --current                 what each veethree-workspace*
+#                                            container is running now
+#   sdkz-workspace --start                   start the container as it is,
+#                                            stopping any other running
+#                                            veethree-workspace* first
+#   sdkz-workspace --attach                  open a shell in a running
+#                                            veethree-workspace* container
+#   sdkz-workspace --vnc                     open the running veethree-workspace*
+#                                            container's VNC session
+#   --postfix <name>                         with --start/--install/--update/
+#                                            --build/--current: work on
+#                                            veethree-workspace-<name> instead
 #   -y                                       skip the confirmation
 
 set -euo pipefail
 
 REGISTRY_HOST=sdkz-builder:5000
 NAMESPACE=vtsdk
-CONTAINER=veethree-workspace
-# The previous container is preserved as a committed image rather than as a kept
-# container. A renamed container still carries compose's project and service
-# labels, and compose matches containers on those labels rather than on their
-# name - so the `compose up --force-recreate` in install() deleted the very
-# backup install() had renamed one line earlier, every time. An image is outside
-# compose's view entirely. A commit also costs only the container's writable
-# layer, since it stacks on the layers the image already has.
-BACKUP_IMAGE=veethree-workspace-backup:previous
 
-# What the snapshotted container was built from. A commit's own tag says nothing
-# about its origin, so it is recorded here for --restore and --current to show.
-ORIGIN_LABEL=sdkz-workspace.origin
+# Every workspace container is named this, plus -<postfix> for any but the
+# default one - the same names the VS Code extension gives its environments.
+# Only one runs at a time, as they all publish the same VNC ports.
+WORKSPACE=veethree-workspace
 
 # compose publishes both of these on loopback, so the viewer connects to the
 # host side rather than into the container.
@@ -62,6 +58,15 @@ LOCAL_NAMESPACE=local
 
 HERE=$(cd -- "$(dirname -- "$(readlink -f "$0")")" && pwd)
 COMPOSE=$HERE/compose.yaml
+
+# The container being worked on, and what goes with it. These are the default
+# container's; set_postfix() switches them to a postfixed one.
+POSTFIX=""
+CONTAINER=$WORKSPACE
+# The compose project. compose.yaml names the default one; a postfixed container
+# gets its own, so recreating one never touches another - compose would
+# otherwise take them all for the one `workspace` service.
+PROJECT=veethree
 ENVFILE=$HERE/.env
 
 die() { printf '%s\n' "$*" >&2; exit 1; }
@@ -69,6 +74,63 @@ die() { printf '%s\n' "$*" >&2; exit 1; }
 # The header block, up to the first line that is not a comment - so adding a
 # command to it does not mean fixing a line range down here as well.
 usage() { sed -n '2,${ /^#/!q; s/^# \{0,1\}//; p; }' "$0"; }
+
+# The same characters a docker container name allows. A project name only
+# allows lowercase letters, digits, '-' and '_', so anything else is folded
+# into one of those for it - the container keeps the name as given.
+set_postfix() {
+    [[ $1 =~ ^[a-zA-Z0-9_.-]+$ ]] ||
+        die "sdkz-workspace: --postfix may only hold letters, digits, '_', '.' and '-'"
+    POSTFIX=$1
+    CONTAINER=$WORKSPACE-$POSTFIX
+    local folded=${POSTFIX,,}
+    PROJECT=veethree-${folded//[^a-z0-9_-]/_}
+    ENVFILE=$HERE/.env.$POSTFIX
+}
+
+# compose for the container being worked on: its project, the image recorded for
+# it, and the postfix compose.yaml puts on container_name. With nothing recorded
+# yet, /dev/null rather than no --env-file at all - compose would otherwise read
+# the default container's .env from beside compose.yaml.
+compose() {
+    local envfile=$ENVFILE
+    [[ -f $envfile ]] || envfile=/dev/null
+    SDKZ_POSTFIX=${POSTFIX:+-$POSTFIX} \
+        docker compose -f "$COMPOSE" -p "$PROJECT" --env-file "$envfile" "$@"
+}
+
+# Every workspace container, or only the running ones with `running`. docker's
+# name filter is a substring match, so the name is anchored here.
+workspaces() {
+    local -a all=(-a)
+    [[ ${1:-} == running ]] && all=()
+    docker ps "${all[@]}" --filter "name=$WORKSPACE" --format '{{.Names}}' |
+        grep -E "^$WORKSPACE(-.*)?$" | sort || true
+}
+
+# They all hold ports 5900 and 6080, so another one running would stop this one
+# from starting.
+stop_others() {
+    local name
+    while read -r name; do
+        [[ -n $name && $name != "$CONTAINER" ]] || continue
+        echo "stopping $name - only one $WORKSPACE* runs at a time"
+        docker stop "$name" >/dev/null
+    done < <(workspaces running)
+}
+
+# compose only recreates containers it created itself, in this project. One made
+# some other way under the same name - by the VS Code extension, or a plain
+# docker create - would make `compose up` fail on the name, so it is removed
+# here first.
+remove_unowned() {
+    local project
+    project=$(docker inspect "$CONTAINER" \
+        --format '{{index .Config.Labels "com.docker.compose.project"}}' 2>/dev/null) || return 0
+    [[ $project == "$PROJECT" ]] && return 0
+    echo "removing $CONTAINER, which this script did not create"
+    docker rm -f "$CONTAINER" >/dev/null
+}
 
 # A tag is a colon in the final path segment - the registry's port colon is not
 # one, which is why this looks at ${ref##*/} rather than the whole reference.
@@ -103,23 +165,26 @@ print("  " + "  ".join(sorted(d.get("tags") or [])))
 '
 }
 
+# The container being worked on.
 current() {
-    docker inspect "$CONTAINER" --format 'running: {{.Config.Image}}   ({{.State.Status}})' 2>/dev/null ||
-        { echo "no $CONTAINER container exists"; return; }
-
-    # A restored container was created from a commit, so .Config.Image above is a
-    # bare image ID. Image labels come through onto the container, so the origin
-    # recorded at snapshot time says what that ID actually is.
-    local origin
-    origin=$(docker inspect "$CONTAINER" \
-        --format "{{index .Config.Labels \"$ORIGIN_LABEL\"}}" 2>/dev/null) || return 0
-    [[ -n $origin ]] && echo "  restored snapshot of: $origin"
-    return 0
+    docker inspect "$CONTAINER" --format "$CONTAINER: {{.Config.Image}}   ({{.State.Status}})" 2>/dev/null ||
+        echo "no $CONTAINER container exists"
 }
 
-# The image a previous run recorded in .env, which is the one compose will use.
-# Empty if .env is absent, in which case compose falls back to the default in
-# compose.yaml.
+# Every workspace container, for --current without a postfix.
+current_all() {
+    local -a names
+    mapfile -t names < <(workspaces)
+    (( ${#names[@]} )) || { echo "no $WORKSPACE* container exists"; return 0; }
+    local name
+    for name in "${names[@]}"; do
+        docker inspect "$name" --format "$name: {{.Config.Image}}   ({{.State.Status}})"
+    done
+}
+
+# The image a previous run recorded for this container, which is the one compose
+# will use. Empty if nothing has been recorded, in which case compose falls back
+# to the default in compose.yaml.
 env_ref() {
     [[ -f $ENVFILE ]] || return 0
     sed -n 's/^SDKZ_IMAGE=//p' "$ENVFILE" | tail -n1
@@ -139,11 +204,12 @@ ensure_tmux_dir() {
 # is whatever the last pull recorded, so this only has to get a container
 # running for it. An existing container is started in place rather than
 # recreated, which keeps its filesystem; a missing one is created by compose.
-# Deliberately no --force-recreate here - that is what the image swap in main()
-# is for.
+# Deliberately no --force-recreate here - that is what install() is for.
 start() {
     local status ref
     ref=$(env_ref)
+
+    stop_others
 
     if status=$(docker inspect "$CONTAINER" --format '{{.State.Status}}' 2>/dev/null); then
         if [[ $status == running ]]; then
@@ -158,11 +224,7 @@ start() {
         echo "no $CONTAINER container exists - creating one from:"
         echo "    ${ref:-the default in compose.yaml}"
         ensure_tmux_dir
-        if [[ -f $ENVFILE ]]; then
-            docker compose -f "$COMPOSE" --env-file "$ENVFILE" up -d
-        else
-            docker compose -f "$COMPOSE" up -d
-        fi
+        compose up -d
     fi
 
     echo
@@ -178,93 +240,35 @@ start() {
 # the shell renders like the rest of the session, TMUX and TMUX_PANE so nvim's
 # tmux-navigator inside the container can drive the tmux server on the host.
 # exec, so the shell replaces this script and its exit status is the shell's.
+#
+# Any running $WORKSPACE* container will do, not just the default one. With more
+# than one running, the choice is asked for.
 attach() {
-    docker container inspect "$CONTAINER" >/dev/null 2>&1 ||
-        die "sdkz-workspace: there is no $CONTAINER container to attach to"
-    [[ $(docker inspect "$CONTAINER" --format '{{.State.Status}}') == running ]] ||
-        die "sdkz-workspace: $CONTAINER is not running - start it with 'sdkz-workspace --start'"
+    local target names=()
+    mapfile -t names < <(workspaces running)
+
+    case ${#names[@]} in
+        0)  die "sdkz-workspace: no running $WORKSPACE* container to attach to - start one with 'sdkz-workspace --start'" ;;
+        1)  target=${names[0]} ;;
+        *)
+            [[ -t 0 ]] || die "sdkz-workspace: more than one $WORKSPACE* container is running: ${names[*]}"
+            echo "more than one $WORKSPACE* container is running:"
+            PS3="attach to: "
+            select target in "${names[@]}"; do
+                [[ -n $target ]] && break
+            done
+            [[ -n $target ]] || exit 1
+            ;;
+    esac
 
     local s shell=""
     for s in /bin/zsh /bin/bash /bin/sh; do
-        if docker exec "$CONTAINER" test -x "$s" 2>/dev/null; then shell=$s; break; fi
+        if docker exec "$target" test -x "$s" 2>/dev/null; then shell=$s; break; fi
     done
-    [[ -n $shell ]] || die "sdkz-workspace: no shell found in $CONTAINER"
+    [[ -n $shell ]] || die "sdkz-workspace: no shell found in $target"
 
     exec docker exec -it -e TERM -e COLORTERM -e TMUX -e TMUX_PANE \
-        "$CONTAINER" "$shell"
-}
-
-# Commit the current container's filesystem to $BACKUP_IMAGE so it survives the
-# recreate that follows. Everything written inside the container comes with it -
-# packages installed by hand, build trees, anything outside the host mounts.
-#
-# Stopping first is not optional in either caller: the container holds ports 5900
-# and 6080, which the replacement needs. It also means the commit is taken of a
-# quiescent filesystem rather than a running one.
-#
-# No container to snapshot is a success, not a failure - a first install has
-# nothing to preserve.
-snapshot() {
-    docker container inspect "$CONTAINER" >/dev/null 2>&1 || return 0
-
-    local origin
-    origin=$(docker inspect "$CONTAINER" --format '{{.Config.Image}}')
-
-    echo "stopping $CONTAINER"
-    docker stop "$CONTAINER" >/dev/null
-    echo "committing its filesystem to $BACKUP_IMAGE - this takes a moment"
-    docker commit --change "LABEL $ORIGIN_LABEL=\"$origin\"" \
-        "$CONTAINER" "$BACKUP_IMAGE" >/dev/null ||
-        die "sdkz-workspace: could not commit $CONTAINER - nothing has been changed"
-}
-
-# Bring back the snapshot taken when the container was last replaced. Because the
-# filesystem now lives in an image, this goes through compose like any other
-# image change - the old rename-and-start dance is gone, and so is the reason it
-# had to avoid --force-recreate.
-#
-# The swap stays reversible: whatever is running is committed over $BACKUP_IMAGE
-# on the way past, so --restore again returns to it.
-restore() {
-    local assume_yes=$1 target origin
-
-    docker image inspect "$BACKUP_IMAGE" >/dev/null 2>&1 ||
-        die "sdkz-workspace: there is no $BACKUP_IMAGE snapshot to restore"
-
-    # Pinned by ID before anything else, because snapshot() below is about to
-    # move that tag onto the container being replaced.
-    target=$(docker image inspect "$BACKUP_IMAGE" --format '{{.Id}}')
-    origin=$(docker image inspect "$BACKUP_IMAGE" \
-        --format "{{index .Config.Labels \"$ORIGIN_LABEL\"}}" 2>/dev/null) || origin=""
-
-    if (( ! assume_yes )); then
-        echo "This replaces the $CONTAINER container with the snapshot taken when it"
-        echo "was last replaced, originally built from:"
-        echo "    ${origin:-unrecorded}"
-        echo
-        echo "That container's filesystem comes back with it, not just the image."
-        echo
-        echo "Whatever is running now is committed over $BACKUP_IMAGE in its place, so"
-        echo "this is reversible - run --restore again to swap back."
-        echo
-        read -r -p "continue? [y/N] " reply
-        [[ $reply == [yY]* ]] || { echo "aborted"; return 1; }
-    fi
-
-    snapshot
-
-    # The ID, not the tag: $BACKUP_IMAGE now points at the container that was
-    # just replaced, so recording the tag would leave a later plain
-    # `docker compose up` recreating this container from the wrong snapshot.
-    printf 'SDKZ_IMAGE=%s\n' "$target" > "$ENVFILE"
-
-    ensure_tmux_dir
-    docker compose -f "$COMPOSE" --env-file "$ENVFILE" up -d --force-recreate
-
-    echo
-    current
-    echo "the container this replaced is kept as $BACKUP_IMAGE"
-    echo "the dotfiles are already installed in this one - no need to run ./install"
+        "$target" "$shell"
 }
 
 # $BROWSER first so a deliberate choice wins, then the desktop's default, then
@@ -289,11 +293,15 @@ open_browser() {
 # has to attach viewers. Both routes reach the same x11vnc, and it runs without
 # -shared, so a second client disconnects the first - hence the warning when
 # both open. Everything is detached so the shell comes straight back.
+#
+# Whichever $WORKSPACE* container is running holds the ports the viewers connect
+# to, so any one will do.
 vnc() {
-    docker container inspect "$CONTAINER" >/dev/null 2>&1 ||
-        die "sdkz-workspace: there is no $CONTAINER container to connect to"
-    [[ $(docker inspect "$CONTAINER" --format '{{.State.Status}}') == running ]] ||
-        die "sdkz-workspace: $CONTAINER is not running - start it with 'docker start $CONTAINER'"
+    local running
+    running=$(workspaces running | head -n1)
+    [[ -n $running ]] ||
+        die "sdkz-workspace: no $WORKSPACE* container is running - start one with 'sdkz-workspace --start'"
+    echo "connecting to $running"
 
     local viewer native="" browser=""
 
@@ -383,8 +391,11 @@ build_image() {
 # pull, and differ only in wording - --update comes through here with the
 # reference the last install recorded, so a re-pull and a switch of image follow
 # exactly the same path. build builds $2 from the sdkz_docker checkout instead.
+#
+# Only replacing a container that already exists is asked about. A new one
+# overwrites nothing.
 install() {
-    local assume_yes=$1 name=$2 mode=${3:-install} backup=${4:-0} ref bare
+    local assume_yes=$1 name=$2 mode=${3:-install} ref bare
 
     ref=$(resolve_ref "$name")
 
@@ -394,11 +405,11 @@ install() {
     bare=${ref##*/}
     bare=${bare%%:*}
 
-    if (( ! assume_yes )); then
+    if (( ! assume_yes )) && docker container inspect "$CONTAINER" >/dev/null 2>&1; then
         case $mode in
             update)
                 echo "This re-pulls the image the $CONTAINER container is running and"
-                echo "recreates the container from the fresh copy:"
+                echo "restarts the container on the fresh copy:"
                 echo "    $ref"
                 ;;
             build)
@@ -417,22 +428,9 @@ install() {
                 ;;
         esac
         echo
-        if (( backup )); then
-            echo "The current container's filesystem is committed to $BACKUP_IMAGE first,"
-            echo "so nothing in it is lost - bring the whole thing back with:"
-            echo "    sdkz-workspace --restore"
-        else
-            echo "The current container is discarded without a snapshot - anything"
-            echo "written inside it outside the host mounts is lost. Add --backup to keep it."
-        fi
-        echo
+        echo "Anything written inside the current container outside the host mounts is lost."
         echo "These are mounted from the host and carry over regardless:"
         echo "    the apps folder, ~/.ssh, ~/.claude, ~/.dotfiles, the tmux socket"
-        if (( backup )) && docker image inspect "$BACKUP_IMAGE" >/dev/null 2>&1; then
-            echo
-            echo "NOTE: only one snapshot is kept - the existing $BACKUP_IMAGE"
-            echo "      is replaced, and whatever it holds is no longer restorable."
-        fi
         echo
         read -r -p "continue? [y/N] " reply
         [[ $reply == [yY]* ]] || { echo "aborted"; return 1; }
@@ -447,55 +445,38 @@ install() {
         return 1
     fi
 
-    # Snapshot before .env is touched, so a failed commit leaves the recorded
-    # image still matching the container that is actually there.
-    #
-    # The old container is not kept alongside the new one. Compose will not adopt
-    # a container it did not create, and renaming the old one out of the way does
-    # not help: the rename leaves compose's project and service labels on it,
-    # compose matches on those rather than on the name, and the --force-recreate
-    # below then deletes it. Committing puts the filesystem somewhere compose
-    # cannot reach, and compose removes the container itself.
-    #
-    # Without --backup there is nothing to do here: --force-recreate stops and
-    # removes the old container itself before the new one takes its ports.
-    (( backup )) && snapshot
-
     printf 'SDKZ_IMAGE=%s\n' "$ref" > "$ENVFILE"
 
+    stop_others
+    remove_unowned
     ensure_tmux_dir
-    docker compose -f "$COMPOSE" --env-file "$ENVFILE" up -d --force-recreate
+    compose up -d --force-recreate
 
     echo
     current
-    if (( ! backup )); then
-        echo "previous container discarded (no --backup)"
-    elif docker image inspect "$BACKUP_IMAGE" >/dev/null 2>&1; then
-        echo "previous container kept as the image $BACKUP_IMAGE"
-        echo "    sdkz-workspace --restore       bring it back, filesystem and all"
-        echo "    docker cp is not needed        --restore recreates the whole thing"
-        echo "    docker rmi $BACKUP_IMAGE"
-        echo "                                   reclaim its disk when done"
-    fi
     echo "run ./install inside the new one to relink the dotfiles and install its packages:"
     echo "    docker exec -it $CONTAINER zsh -lc '~/.dotfiles/install'"
 }
 
 main() {
-    local assume_yes=0 image="" do_restore=0 do_install=0 do_update=0 do_build=0 backup=0
+    local assume_yes=0 image="" postfix=""
+    local do_install=0 do_update=0 do_build=0 do_start=0 do_current=0 do_attach=0 do_vnc=0
     local build_opts=0 tag=""
     while (( $# )); do
         case $1 in
             -y|--yes)   assume_yes=1 ;;
-            --backup)   backup=1 ;;
             --list)     list_images; return 0 ;;
             --tags)     shift; list_tags "$@"; return 0 ;;
-            --current)  current; return 0 ;;
-            --start)    start; return 0 ;;
-            --attach)   attach; return 0 ;;  # execs, so this does not come back
-            --vnc)      vnc; return 0 ;;
-            --restore)  do_restore=1 ;;
+            --current)  do_current=1 ;;
+            --start)    do_start=1 ;;
+            --attach)   do_attach=1 ;;
+            --vnc)      do_vnc=1 ;;
             --update)   do_update=1 ;;
+            --postfix)
+                [[ $# -ge 2 && $2 != -* ]] || die "sdkz-workspace: --postfix needs a name"
+                postfix=$2
+                shift
+                ;;
             --build)
                 do_build=1
                 [[ $# -ge 2 && $2 != -* ]] ||
@@ -532,22 +513,26 @@ main() {
         shift
     done
 
-    (( do_install + do_update + do_restore + do_build <= 1 )) ||
-        die "sdkz-workspace: --install, --update, --build and --restore are one at a time"
+    (( do_install + do_update + do_build + do_start + do_current + do_attach + do_vnc <= 1 )) ||
+        die "sdkz-workspace: --install, --update, --build, --start, --current, --attach and --vnc are one at a time"
 
     (( build_opts && ! do_build )) &&
         die "sdkz-workspace: --branch, --sdk-version, --public-release,
     --base-image, --ssh-key and --tag go with --build"
 
-    # --restore always commits what it replaces, to stay reversible, so --backup
-    # has nothing to switch on there.
-    (( do_restore && backup )) &&
-        die "sdkz-workspace: --backup goes with --install, --update or --build - --restore always keeps one"
+    # --attach and --vnc work on whichever workspace container is running.
+    [[ -n $postfix ]] && (( do_attach || do_vnc )) &&
+        die "sdkz-workspace: --postfix goes with --start, --install, --update, --build or --current -
+    --attach and --vnc use whichever $WORKSPACE* is running"
+    [[ -n $postfix ]] && set_postfix "$postfix"
 
-    if (( do_restore )); then
-        restore "$assume_yes"
-        return
+    if (( do_current )); then
+        if [[ -n $postfix ]]; then current; else current_all; fi
+        return 0
     fi
+    (( do_start ))  && { start; return 0; }
+    (( do_attach )) && attach  # execs, so this does not come back
+    (( do_vnc ))    && { vnc; return 0; }
 
     # --update is --install against the reference the last install recorded, so
     # it re-pulls the same name:tag and picks up whatever the registry has now.
@@ -555,11 +540,11 @@ main() {
         image=$(env_ref)
         [[ -n $image ]] ||
             die "sdkz-workspace: no image recorded in $ENVFILE - install one with
-    sdkz-workspace --install <image>"
+    sdkz-workspace${postfix:+ --postfix $postfix} --install <image>"
         [[ $image == "$LOCAL_NAMESPACE"/* ]] &&
             die "sdkz-workspace: $image was built here, not pulled - rebuild it with
-    sdkz-workspace --build"
-        install "$assume_yes" "$image" update "$backup"
+    sdkz-workspace${postfix:+ --postfix $postfix} --build"
+        install "$assume_yes" "$image" update
         return
     fi
 
@@ -588,12 +573,12 @@ main() {
     (id_rsa, id_ed25519, ...) - $BUILD_SSH_KEY would never be offered" ;;
         esac
 
-        install "$assume_yes" "${tag:-$LOCAL_NAMESPACE/veethree_sdkz:$BUILD_SDK_VERSION}" build "$backup"
+        install "$assume_yes" "${tag:-$LOCAL_NAMESPACE/veethree_sdkz:$BUILD_SDK_VERSION}" build
         return
     fi
 
     (( do_install )) || { usage; return 1; }
-    install "$assume_yes" "$image" install "$backup"
+    install "$assume_yes" "$image" install
 }
 
 main "$@"

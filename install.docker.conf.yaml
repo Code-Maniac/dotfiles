@@ -89,6 +89,12 @@
 - shell:
     # zshrc sources this directly - without it the shell is unusable.
     - [curl -L git.io/antigen > ~/.antigen/antigen.zsh, Installing antigen]
+    # Accepts the SDKZ EULA on your behalf. Without the marker, C4.3_workspace's
+    # eula.cmake puts up a whiptail dialog mid-build, which leaves the terminal's
+    # output processing off afterwards. ~ is in the container's own filesystem,
+    # so a recreated container needs this again. Must stay underscores - that is
+    # the name eula.cmake checks for. Idempotent.
+    - [touch ~/.sdkz_eula_accepted, Accepting the SDKZ EULA]
     # The pyOCD debug configurations target mimxrt1166cvm5a, which comes from NXP's
     # CMSIS pack rather than being built into pyOCD. The pack cache is per user, so
     # this runs here rather than under sudo. Idempotent.

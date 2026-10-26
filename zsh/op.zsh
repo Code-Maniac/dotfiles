@@ -1,6 +1,7 @@
 # op - Open Project: a new tmux window named after the project, started in it.
 #
 #   op [--west | --sample] [--splits] <name>
+#   op --here
 #
 # On the host the project is ~/projects/<name>, the same place p looks.
 #
@@ -21,6 +22,10 @@
 # windows get a 🏠 in front and container windows a 🐳, so the two stand apart in
 # the status bar.
 #
+# --here opens nothing: it renames the current window after the current directory,
+# with the 🏠 or 🐳 for wherever this shell is running. For a window that was not
+# opened by op, or one that has since been cd'd into another project.
+#
 # --splits lays the window out as the | and - bindings in tmux.conf would: a side
 # by side split, then the new right hand pane split top and bottom, all three in
 # the project. Focus goes back to the full height pane on the left.
@@ -30,19 +35,22 @@
 # runs `docker exec` back into this container at the project directory, as
 # tmux/docker-split -w does. The hostname is the container id, as in docker.zsh.
 op() {
-  local west=0 sample=0 splits=0 name=""
+  local west=0 sample=0 splits=0 here=0 name=""
   while (( $# )); do
     case $1 in
       --west)   west=1 ;;
       --sample) sample=1 ;;
       --splits) splits=1 ;;
+      --here)   here=1 ;;
       -h|--help)
         print "usage: op [--west | --sample] [--splits] <name>"
+        print "       op --here"
         print "  host       open ~/projects/<name>"
         print "  container  open apps/<name>, else modules/<name>"
         print "  --west     container only: any project in the west manifest"
         print "  --sample   container only: a sample within the workspace, e.g. hello-nafe"
         print "  --splits   also split the window | and then -"
+        print "  --here     rename this window after the current directory"
         return 0
         ;;
       -*) print -u2 "op: unknown option '$1'"; return 1 ;;
@@ -50,6 +58,24 @@ op() {
     esac
     shift
   done
+
+  if (( here )); then
+    if [[ -n $name ]] || (( west || sample || splits )); then
+      print -u2 "op: --here takes no name and no other options"
+      return 1
+    fi
+    if [[ -z ${TMUX} ]]; then
+      print -u2 "op: not inside tmux"
+      return 1
+    fi
+    local icon="🏠"
+    [[ -n ${SDKZ_IMAGE_VERSION:-} ]] && icon="🐳"
+    # -t the pane, so it is this shell's window that is renamed rather than
+    # whichever one the client is looking at. Like new-window -n, a rename turns
+    # automatic-rename off for the window, so the name stays.
+    tmux rename-window -t "$TMUX_PANE" "$icon ${PWD:t}"
+    return
+  fi
 
   if [[ -z $name ]]; then
     print -u2 "usage: op [--west | --sample] [--splits] <name>"

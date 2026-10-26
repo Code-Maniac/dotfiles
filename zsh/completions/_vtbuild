@@ -21,6 +21,7 @@ _vtbuild_apps() {
 _arguments -s \
   '(--sim)--target[build for the board: vt_rt1160/mimxrt1166/cm7, shield c4p3]' \
   '(--target)--sim[build for the simulator: veethree_sim, shield c4p3_sim]' \
+  '--sdkc[add the sdkc shield: sdkc_c4p3, or sdkc_c4p3_sim with --sim]' \
   '(--release)--debug[CMAKE_BUILD_TYPE=Debug (default)]' \
   '(--debug)--release[CMAKE_BUILD_TYPE=Release]' \
   '(-p --pristine)'{-p,--pristine}'[pristine build]' \

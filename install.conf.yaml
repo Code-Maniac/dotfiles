@@ -107,6 +107,11 @@
       stdin: true
       stdout: true
     - [cat oe/site.conf.sed | sed 's@~@'"$HOME"'@g' > oe/site.conf, Replace ~ in yocto site.conf]
+    # Accepts the SDKZ EULA on your behalf. Without the marker, C4.3_workspace's
+    # eula.cmake puts up a whiptail dialog mid-build, which leaves the terminal's
+    # output processing off afterwards. Must stay underscores - that is the name
+    # eula.cmake checks for. Idempotent.
+    - [touch ~/.sdkz_eula_accepted, Accepting the SDKZ EULA]
 
 # Now run PlugInstall on nvim
 - shell:
